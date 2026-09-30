@@ -67,3 +67,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/zikiai)]
 
 * Role: Developer
+
+### fuhlie
+
+<img src="images/fuhlie.png" width="200px" alt="Profile photo of fuhlie">
+
+[[github](https://github.com/fuhlie)]
+
+* Role: Developer
+* Responsibilities: Documentation
