@@ -59,3 +59,11 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: UI
+
+### zikiai
+
+<img src="images/zikiai.png" width="200px" alt="Profile photo of zikiai">
+
+[[github](https://github.com/zikiai)]
+
+* Role: Developer
