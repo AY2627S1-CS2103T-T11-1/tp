@@ -58,3 +58,13 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Testing, Git Expert
 * Responsibilities: Model
+
+### zikiai
+
+<img src="images/zikiai.png" width="200px" alt="Profile photo of zikiai">
+
+[[github](https://github.com/zikiai)]
+
+* Role: Team lead
+* Responsibilities: Integration
+* Component: None (backup on Logic)
