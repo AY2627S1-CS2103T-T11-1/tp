@@ -11,15 +11,6 @@ You can reach us via zikiai at the email `e1525973@u.nus.edu`
 
 ## Project team
 
-### aerodart
-
-<img src="images/aerodart.png" width="200px">
-
-[[github](https://github.com/aerodart)]
-
-* Role: Testing, Git Expert
-* Responsibilities: Model
-
 ### zikiai
 
 <img src="images/zikiai.png" width="200px" alt="Profile photo of zikiai">
@@ -28,6 +19,15 @@ You can reach us via zikiai at the email `e1525973@u.nus.edu`
 
 * Role: Team lead
 * Responsibilities: Integration
+
+### aerodart
+
+<img src="images/aerodart.png" width="200px">
+
+[[github](https://github.com/aerodart)]
+
+* Role: Testing, Git Expert
+* Responsibilities: Model
 
 ### fuhlie
 
@@ -38,7 +38,6 @@ You can reach us via zikiai at the email `e1525973@u.nus.edu`
 * Role: Code quality
 * Responsibilities: Logic
 
-
 ### srivatsanj27
 
 <img src="images/srivatsanj27.png" width="200px" alt="Profile photo of srivatsanj27">
@@ -47,3 +46,12 @@ You can reach us via zikiai at the email `e1525973@u.nus.edu`
 
 * Role: Scheduling tracking and deliverables
 * Responsibilities: Storage
+
+### cibichandar
+
+<img src="images/cibichandar.png" width="200px" alt="Profile photo of cibichandar">
+
+[[github](https://github.com/cibichandar)]
+
+* Role: Documentation
+* Responsibilities: UI
