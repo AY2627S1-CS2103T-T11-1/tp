@@ -50,7 +50,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
 
-### Au Yeung Chi Hung Jonathan
+### aerodart
 
 <img src="images/aerodart.png" width="200px">
 
