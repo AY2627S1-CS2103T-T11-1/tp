@@ -68,3 +68,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Team lead
 * Responsibilities: Integration
 * Component: None (backup on Logic)
+
+### fuhlie
+
+<img src="images/fuhlie.png" width="200px" alt="Profile photo of fuhlie">
+
+[[github](https://github.com/fuhlie)]
+
+* Role: Code quality
+* Responsibilities: Logic
