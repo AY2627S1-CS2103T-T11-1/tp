@@ -66,4 +66,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/zikiai)]
 
-* Role: Developer
+* Role: Team lead
+* Responsibilities: Integration
+* Component: None (backup on Logic)
