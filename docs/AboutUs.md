@@ -50,15 +50,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
 
-### James Doe
+### aerodart
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/aerodart.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/aerodart)]
 
-* Role: Developer
-* Responsibilities: UI
+* Role: Testing, Git Expert
+* Responsibilities: Model
 
 ### zikiai
 
@@ -66,7 +65,9 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/zikiai)]
 
-* Role: Developer
+* Role: Team lead
+* Responsibilities: Integration
+* Component: None (backup on Logic)
 
 ### fuhlie
 
