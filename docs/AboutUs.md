@@ -77,3 +77,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Code quality
 * Responsibilities: Logic
+
+### cibichandar
+
+<img src="images/cibichandar.png" width="200px" alt="Profile photo of cibichandar">
+
+[[github](https://github.com/cibichandar)]
+
+* Role: Documentation
+* Responsibilities: UI
