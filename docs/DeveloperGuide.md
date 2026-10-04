@@ -296,32 +296,203 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `TutorLah` and the **Actor** is the `Tutor`, unless specified otherwise)
 
-**Use case: Delete a person**
+**Use case: UC01 - Add a student**
+
+**Guarantees:** The student is added only if all required details are valid and no student with the same name and phone number already exists in the system.
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1.  Tutor requests to add a student by providing the necessary details.
+2.  TutorLah adds the student and shows the details of the added student.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. Tutor leaves out one or more required details.
 
-  Use case ends.
+    * 1a1. TutorLah shows an error message with the expected format.
 
-* 3a. The given index is invalid.
+      Use case resumes at step 1.
 
-    * 3a1. AddressBook shows an error message.
+* 1b. One or more of the given details are invalid.
+
+    * 1b1. TutorLah shows an error message describing the invalid detail.
+
+      Use case resumes at step 1.
+
+* 1c. A student with the same name and phone number already exists.
+
+    * 1c1. TutorLah informs Tutor that this student already exists.
+
+      Use case ends.
+
+**Use case: UC02 - List all students**
+
+**MSS**
+
+1.  Tutor requests to view all students.
+2.  TutorLah shows the list of all students.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. There are no students.
+
+    * 2a1. TutorLah informs Tutor that there are no students.
+
+      Use case ends.
+
+**Use case: UC03 - Delete a student**
+
+**Guarantees:** The student's lesson records are deleted together with the student. Other students and their respective lesson records are not affected.
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u>.
+2.  Tutor requests to delete a specific student in the list.
+3.  TutorLah deletes the student and their lesson records, and shows the details of the deleted student.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
 
       Use case resumes at step 2.
 
-*{More to be added}*
+**Use case: UC04 - Log a lesson for a student**
+
+**Guarantees:** The lesson is recorded only against the chosen student. The student's existing lesson records are not changed.
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u>.
+2.  Tutor requests to log a lesson for a specific student in the list, providing what was covered.
+3.  TutorLah records the lesson and shows the student's name together with what was covered.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The lesson content is missing, blank, or too long.
+
+    * 2b1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+**Use case: UC05 - View a student's lesson records**
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u>.
+2.  Tutor requests to view the lesson records of a specific student in the list.
+3.  TutorLah shows the student's lesson records.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 3a. The student has no lesson records.
+
+    * 3a1. TutorLah informs Tutor that no lessons have been logged for the student.
+
+      Use case ends.
+
+**Use case: UC06 - Edit a student's details**
+
+**Guarantees:** The student's lesson records are kept after the edit.
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u>.
+2.  Tutor requests to edit a specific student in the list, providing the new details.
+3.  TutorLah updates the student and shows the updated details.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. Tutor does not provide any new details.
+
+    * 2b1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2c. One or more of the new details are invalid.
+
+    * 2c1. TutorLah shows an error message describing the invalid detail.
+
+      Use case resumes at step 2.
+
+* 2d. The edited student would have the same name and phone number as another existing student.
+
+    * 2d1. TutorLah informs Tutor that a student with the same particulars already exists.
+
+      Use case resumes at step 2.
+
+**Use case: UC07 - Delete a lesson record**
+
+**Guarantees:** Only the chosen lesson record is deleted. The student and their other lesson records are not affected.
+
+**MSS**
+
+1.  Tutor <u>views a student's lesson records (UC05)</u>.
+2.  Tutor requests to delete a specific lesson record of that student.
+3.  TutorLah deletes the lesson record and shows the details of the deleted record.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given lesson record does not exist.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+**Use case: UC08 - Archive a student**
+
+**Guarantees:** The archived student no longer appears in the active student list, but their details and lesson records are retained, unlike <u>UC03</u>.
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u>.
+2.  Tutor requests to archive a specific student in the list.
+3.  TutorLah archives the student and shows the details of the archived student.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
 
 ### Non-Functional Requirements
 
