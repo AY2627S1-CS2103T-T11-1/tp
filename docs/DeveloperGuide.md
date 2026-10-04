@@ -496,11 +496,18 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+1.  **Platform independence:** TutorLah should work on Windows, Linux and macOS without relying on OS-specific libraries or features.
+2.  **Java version:** TutorLah should work on a computer that has Java `25`.
+3.  **Portable distribution:** TutorLah should be usable without an installer.
+4.  **Single-file distribution:** TutorLah should be packaged in a single JAR file that does not exceed `100 MB`.
+5.  **Typing-first interaction:** TutorLah should allow the tutor to complete every product workflow using typed commands. Adding a student and logging a lesson should each be possible using a single command.
+6.  **Error feedback:** Every rejected command should display a message that explains why the command was rejected and states the expected format.
+7.  **Data persistence:** After each successful command that changes data, TutorLah should save the updated student and lesson data to the local data file before accepting another command.
+8.  **Data integrity:** When a command is rejected, no student or lesson record should be added, deleted or modified.
+9.  **Human-editable storage:** TutorLah should store its data locally in a human-editable text file without requiring a database management system.
+10. **Offline operation:** Every TutorLah feature should work without an internet connection or a remote server. Student and lesson data should remain on the tutor's computer.
+11. **Screen support:** The GUI should work well at resolutions of `1920x1080` and higher with 100% and 125% scaling. It should remain usable at resolutions of `1280x720` and higher with 150% scaling.
+12. **Single-user operation:** TutorLah should support one tutor using one local data file on their own computer. It should not support shared use of the same data file by multiple users.
 
 ### Glossary
 
