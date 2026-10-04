@@ -287,21 +287,21 @@ The stories marked `Yes` in the **MVP** column form the proposed MVP.
 
 | Priority | MVP | As a … | I want to … | So that I can… |
 |----------|-----|--------|-------------|----------------|
-| `* * *` | Yes | tutor moving from a paper notebook | add a student's details | keep their information in one place |
-| `* * *` | Yes | tutor managing several students | see a list of my students | identify the student whose information or lesson records I need |
-| `* * *` | Yes | tutor who no longer needs to retain a student's information | delete the student and their associated lesson records | ensure those details are no longer kept in TutorLah |
-| `* * *` | Yes | tutor finishing a lesson | add a dated record of what I covered to that student | avoid relying on memory before the next lesson |
-| `* * *` | Yes | tutor preparing for a student's next lesson | view their lesson records with the most recent first | see where we stopped and what we covered previously |
-| `* *` | No | tutor maintaining student records | edit a student's details | keep their information accurate when it changes |
-| `* *` | No | tutor who needs to contact a student or parent | store the student's phone number and address | reach them and find their home when needed |
+| `* * *` | Yes | tutor | add a student's details | keep their information in one place |
+| `* * *` | Yes | tutor | see a list of my students | identify the student whose information or lesson records I need |
+| `* * *` | Yes | tutor | delete the student and their associated lesson records | ensure those details are no longer kept in TutorLah |
+| `* * *` | Yes | tutor | add a dated record of what I covered to that student | avoid relying on memory before the next lesson |
+| `* * *` | Yes | tutor | view their lesson records with the most recent first | see where we stopped and what we covered previously |
+| `* *` | No | tutor | edit a student's details | keep their information accurate when it changes |
+| `* *` | No | tutor | store the student's phone number and address | reach them and find their home when needed |
 | `* *` | No | tutor managing many students | find a student by name | access the correct student's information quickly |
-| `* *` | No | tutor arranging recurring lessons | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
-| `* *` | No | tutor correcting a record | delete an incorrect lesson record | keep the student's lesson history accurate |
-| `* *` | No | tutor retaining historical records | archive a former student | remove them from the active list without losing their history |
-| `*` | No | tutor who communicates with students and parents | store multiple contact methods for a student | contact the appropriate person when needed |
-| `*` | No | tutor handling changing schedules | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
-| `*` | No | tutor onboarding a group of students | add students in batches | avoid entering each student separately |
-| `*` | No | tutor recovering from a mistake | restore archived or deleted information | recover records removed accidentally |
+| `* *` | No | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
+| `* *` | No | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
+| `* *` | No | tutor | archive a former student | remove them from the active list without losing their history |
+| `*` | No | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
+| `*` | No | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
+| `*` | No | tutor managing many students | add students in batches | avoid entering each student separately |
+| `*` | No | tutor | restore archived or deleted information | recover records removed accidentally |
 
 ### Use cases
 
