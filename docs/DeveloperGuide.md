@@ -511,8 +511,55 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Glossary
 
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Active student**: A student who has not been archived and is available for
+  normal student-management operations.
+
+* **Archived student**: A student who no longer appears in the student list but
+  whose student details and lesson records are retained.
+
+* **Data file**: The JSON file on the user's computer where TutorLah stores all
+  student and lesson data.
+
+* **Duplicate student**: A student with the same name and phone number as an
+  existing student. TutorLah does not allow duplicate students.
+
+* **Lesson**: A teaching session between the tutor and a student.
+
+* **Lesson history**: All lesson records associated with a student.
+
+* **Lesson record**: A dated record of a completed lesson that describes what
+  was covered. It is distinct from a scheduled lesson.
+
+* **Level**: The student's stage of education, such as Secondary 3 or Year 1
+  of university.
+
+* **One-off lesson**: A scheduled lesson that is not part of a weekly lesson
+  slot.
+
+* **Rescheduling**: Changing the date or time of a scheduled lesson.
+
+* **Scheduled lesson**: A planned lesson that has not yet taken place, either
+  in a weekly lesson slot or as a one-off lesson.
+
+* **Student**: A learner whose student details and lesson records are managed
+  in TutorLah.
+
+* **Student details**: The information stored for a student, including their
+  name, phone number, address, level and subject.
+
+* **Student index**: The position of a student in the currently displayed
+  student list, starting from 1. Commands such as `delete 3` and `log 3` use
+  this index rather than a permanent identifier, so a student's index can
+  change when the displayed list changes.
+
+* **Student list**: The list of active students currently displayed by
+  TutorLah.
+
+* **Tutor**: The freelance or private tutor who uses TutorLah to manage
+  students and lessons.
+
+* **Weekly lesson slot**: A fixed day and time reserved each week for a
+  student's regular lesson.
 
 --------------------------------------------------------------------------------------------------------------------
 
