@@ -270,29 +270,38 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a freelance or private tutor who manages multiple students and recurring lessons
+* needs to keep student details and lesson histories in one place
+* reviews previous lesson records when preparing for each student's next lesson
+* prefers a desktop application with keyboard-driven interaction
+* is comfortable entering text commands
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: Manage student details and lesson records quickly in one keyboard-driven desktop application, so tutors can prepare for upcoming lessons without relying on scattered notes or memory.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+The stories marked `Yes` in the **MVP** column form the proposed MVP.
 
-*{More to be added}*
+| Priority | MVP | As a … | I want to … | So that I can… |
+|----------|-----|--------|-------------|----------------|
+| `* * *` | Yes | tutor | add a student's details | keep their information in one place |
+| `* * *` | Yes | tutor | see a list of my students | identify the student whose information or lesson records I need |
+| `* * *` | Yes | tutor | delete the student and their associated lesson records | ensure those details are no longer kept in TutorLah |
+| `* * *` | Yes | tutor | add a dated record of what I covered to that student | avoid relying on memory before the next lesson |
+| `* * *` | Yes | tutor | view their lesson records with the most recent first | see where we stopped and what we covered previously |
+| `* *` | No | tutor | edit a student's details | keep their information accurate when it changes |
+| `* *` | No | tutor | store the student's phone number and address | reach them and find their home when needed |
+| `* *` | No | tutor managing many students | find a student by name | access the correct student's information quickly |
+| `* *` | No | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
+| `* *` | No | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
+| `* *` | No | tutor | archive a former student | remove them from the active list without losing their history |
+| `*` | No | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
+| `*` | No | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
+| `*` | No | tutor managing many students | add students in batches | avoid entering each student separately |
+| `*` | No | tutor | restore archived or deleted information | recover records removed accidentally |
 
 ### Use cases
 
