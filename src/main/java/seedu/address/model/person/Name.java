@@ -9,14 +9,18 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Name {
 
+    public static final int MAX_LENGTH = 100;
+
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain alphanumeric characters and spaces, and should not be blank";
+            "Names should contain only letters, spaces, apostrophes, hyphens, periods and slashes, "
+                    + "and must not be blank.";
 
     /*
-     * The first character of the name must not be a whitespace,
-     * otherwise " " (a blank string) becomes a valid input.
+     * Letters include accented and non-Latin letters, with their combining marks.
+     * '/' is allowed so that names such as "Ramesh s/o Kumar" can be entered.
+     * The first character must not be a whitespace, otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}'.\\-/][\\p{L}\\p{M}'.\\-/ ]*";
 
     public final String fullName;
 
@@ -35,9 +39,8 @@ public class Name {
      * Returns true if a given string is a valid name.
      */
     public static boolean isValidName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
     }
-
 
     @Override
     public String toString() {
