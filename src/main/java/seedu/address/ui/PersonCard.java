@@ -33,6 +33,10 @@ public class PersonCard extends UiPart<Region> {
     private Label phone;
     @FXML
     private Label address;
+    @FXML
+    private Label level;
+    @FXML
+    private Label subject;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -44,5 +48,7 @@ public class PersonCard extends UiPart<Region> {
         name.setText(person.getName().fullName);
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
+        level.setText(person.getLevel().value);
+        subject.setText(person.getSubject().value);
     }
 }
