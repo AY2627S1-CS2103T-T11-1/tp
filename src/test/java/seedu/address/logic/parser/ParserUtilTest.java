@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -174,5 +175,22 @@ public class ParserUtilTest {
         String subjectWithWhitespace = WHITESPACE + VALID_SUBJECT + WHITESPACE;
         Subject expectedSubject = new Subject(VALID_SUBJECT);
         assertEquals(expectedSubject, ParserUtil.parseSubject(subjectWithWhitespace));
+    }
+
+    @Test
+    public void parseLessonContent_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseLessonContent(null));
+    }
+
+    @Test
+    public void parseLessonContent_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, () -> ParserUtil.parseLessonContent(WHITESPACE));
+        assertThrows(ParseException.class, () -> ParserUtil.parseLessonContent("a".repeat(Lesson.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseLessonContent_validValueWithWhitespace_returnsTrimmedLesson() throws Exception {
+        Lesson expectedLesson = new Lesson("Surds  and  indices");
+        assertEquals(expectedLesson, ParserUtil.parseLessonContent(WHITESPACE + "Surds  and  indices" + WHITESPACE));
     }
 }
