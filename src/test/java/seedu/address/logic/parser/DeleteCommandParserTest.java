@@ -38,6 +38,11 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_indexTooLarge_throwsInvalidIndexMessage() {
+        assertParseFailure(parser, "2147483648", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
     public void parse_missingIndex_throwsInvalidCommandFormat() {
         assertParseFailure(parser, "", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
     }
