@@ -39,12 +39,12 @@ public class Messages {
         builder.append(person.getName())
                 .append("; Phone: ")
                 .append(person.getPhone())
-                .append("; Email: ")
-                .append(person.getEmail())
                 .append("; Address: ")
                 .append(person.getAddress())
-                .append("; Tags: ");
-        person.getTags().forEach(builder::append);
+                .append("; Level: ")
+                .append(person.getLevel())
+                .append("; Subject: ")
+                .append(person.getSubject());
         return builder.toString();
     }
 
