@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -105,5 +106,20 @@ public class ParserUtil {
             throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
         }
         return new Subject(trimmedSubject);
+    }
+
+    /**
+     * Parses a {@code String content} into a {@code Lesson}.
+     * Leading and trailing whitespaces will be trimmed; spaces inside the content are kept.
+     *
+     * @throws ParseException if the given {@code content} is invalid.
+     */
+    public static Lesson parseLessonContent(String content) throws ParseException {
+        requireNonNull(content);
+        String trimmedContent = content.trim();
+        if (!Lesson.isValidContent(trimmedContent)) {
+            throw new ParseException(Lesson.MESSAGE_CONSTRAINTS);
+        }
+        return new Lesson(trimmedContent);
     }
 }

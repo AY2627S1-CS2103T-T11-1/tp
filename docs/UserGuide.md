@@ -144,6 +144,23 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Logging a lesson: `log`
+
+Records what you covered in a lesson for the specified student.
+
+Format: `log INDEX c/CONTENT`
+
+* Logs a lesson for the student at the specified `INDEX`.
+* The index refers to the index number shown in the displayed student list.
+* The index **must be a positive integer** 1, 2, 3, ...
+* `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot be blank.
+* Lessons are kept in the order they are logged. Logging the same content twice records two lessons.
+* There is currently no way to edit or delete a logged lesson, so check the student's name in the confirmation message.
+
+Examples:
+* `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
+* `log 1 c/Revision of trigonometric identities, Q1-5 for homework` logs a lesson for the 1st student in the list.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -201,4 +218,5 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Log**    | `log INDEX c/CONTENT`<br> e.g., `log 3 c/Quadratic inequalities`
 **Help**   | `help`
