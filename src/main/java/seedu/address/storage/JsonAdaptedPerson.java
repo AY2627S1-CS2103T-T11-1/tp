@@ -1,9 +1,13 @@
 package seedu.address.storage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -23,19 +27,25 @@ class JsonAdaptedPerson {
     private final String address;
     private final String level;
     private final String subject;
+    private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
+     * A missing {@code lessons} field is treated as no lessons, so data files saved before
+     * lessons were added can still be loaded.
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("address") String address, @JsonProperty("level") String level,
-            @JsonProperty("subject") String subject) {
+            @JsonProperty("subject") String subject, @JsonProperty("lessons") List<JsonAdaptedLesson> lessons) {
         this.name = name;
         this.phone = phone;
         this.address = address;
         this.level = level;
         this.subject = subject;
+        if (lessons != null) {
+            this.lessons.addAll(lessons);
+        }
     }
 
     /**
@@ -47,6 +57,7 @@ class JsonAdaptedPerson {
         address = source.getAddress().value;
         level = source.getLevel().value;
         subject = source.getSubject().value;
+        source.getLessons().forEach(lesson -> lessons.add(new JsonAdaptedLesson(lesson)));
     }
 
     /**
@@ -95,7 +106,12 @@ class JsonAdaptedPerson {
         }
         final Subject modelSubject = new Subject(subject);
 
-        return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject);
+        final List<Lesson> modelLessons = new ArrayList<>();
+        for (JsonAdaptedLesson lesson : lessons) {
+            modelLessons.add(lesson.toModelType());
+        }
+
+        return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelLessons);
     }
 
 }

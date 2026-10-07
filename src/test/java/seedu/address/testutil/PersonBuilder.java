@@ -1,5 +1,10 @@
 package seedu.address.testutil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -23,6 +28,7 @@ public class PersonBuilder {
     private Address address;
     private Level level;
     private Subject subject;
+    private List<Lesson> lessons;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -33,6 +39,7 @@ public class PersonBuilder {
         address = new Address(DEFAULT_ADDRESS);
         level = new Level(DEFAULT_LEVEL);
         subject = new Subject(DEFAULT_SUBJECT);
+        lessons = new ArrayList<>();
     }
 
     /**
@@ -44,6 +51,7 @@ public class PersonBuilder {
         address = personToCopy.getAddress();
         level = personToCopy.getLevel();
         subject = personToCopy.getSubject();
+        lessons = new ArrayList<>(personToCopy.getLessons());
     }
 
     /**
@@ -86,8 +94,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the lesson records of the {@code Person} that we are building, in the order given.
+     */
+    public PersonBuilder withLessons(String... lessonContents) {
+        this.lessons = new ArrayList<>(Arrays.stream(lessonContents).map(Lesson::new).toList());
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, address, level, subject);
+        return new Person(name, phone, address, level, subject, lessons);
     }
 
 }

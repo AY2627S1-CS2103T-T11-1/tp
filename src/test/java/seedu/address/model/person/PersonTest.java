@@ -8,11 +8,15 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_LEVEL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_SUBJECT_BOB;
+import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.lesson.Lesson;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
@@ -99,10 +103,57 @@ public class PersonTest {
     }
 
     @Test
+    public void getLessons_newPerson_returnsEmptyList() {
+        assertEquals(List.of(), new PersonBuilder().build().getLessons());
+    }
+
+    @Test
+    public void getLessons_modifyList_throwsUnsupportedOperationException() {
+        Person person = new PersonBuilder().withLessons("Quadratic inequalities").build();
+        assertThrows(UnsupportedOperationException.class, () -> person.getLessons().add(new Lesson("Surds")));
+    }
+
+    @Test
+    public void withLessonAdded_validLesson_returnsNewPersonWithLessonAtEnd() {
+        Person original = new PersonBuilder(ALICE).withLessons("Quadratic inequalities").build();
+        Person updated = original.withLessonAdded(new Lesson("Binomial theorem"));
+
+        assertEquals(List.of(new Lesson("Quadratic inequalities"), new Lesson("Binomial theorem")),
+                updated.getLessons());
+        // original student is not modified
+        assertEquals(List.of(new Lesson("Quadratic inequalities")), original.getLessons());
+        // other details are kept
+        assertTrue(updated.isSamePerson(original));
+        assertEquals(original.getAddress(), updated.getAddress());
+        assertEquals(original.getLevel(), updated.getLevel());
+        assertEquals(original.getSubject(), updated.getSubject());
+    }
+
+    @Test
+    public void withLessonAdded_sameLessonTwice_keepsBoth() {
+        Lesson lesson = new Lesson("Quadratic inequalities");
+        Person updated = new PersonBuilder().build().withLessonAdded(lesson).withLessonAdded(lesson);
+        assertEquals(List.of(lesson, lesson), updated.getLessons());
+    }
+
+    @Test
+    public void withLessonAdded_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ALICE.withLessonAdded(null));
+    }
+
+    @Test
+    public void equals_differentLessons_returnsFalse() {
+        Person withLesson = new PersonBuilder(ALICE).withLessons("Quadratic inequalities").build();
+        assertFalse(ALICE.equals(withLesson));
+        // lessons do not affect identity
+        assertTrue(ALICE.isSamePerson(withLesson));
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", address=" + ALICE.getAddress() + ", level=" + ALICE.getLevel()
-                + ", subject=" + ALICE.getSubject() + "}";
+                + ", subject=" + ALICE.getSubject() + ", lessons=" + ALICE.getLessons() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }
