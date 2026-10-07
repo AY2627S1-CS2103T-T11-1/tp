@@ -52,6 +52,26 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_personWithLessons_lessonsKept() {
+        Person personWithLessons = new PersonBuilder().withLessons("Quadratic inequalities", "Binomial theorem")
+                .build();
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(personWithLessons);
+        Model modelWithLessons = new ModelManager(addressBook, new UserPrefs());
+
+        Person editedPerson = new PersonBuilder(personWithLessons).withName(VALID_NAME_BOB).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(addressBook), new UserPrefs());
+        expectedModel.setPerson(personWithLessons, editedPerson);
+
+        assertCommandSuccess(editCommand, modelWithLessons, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void execute_someFieldsSpecifiedUnfilteredList_success() {
         Index indexLastPerson = Index.fromOneBased(model.getFilteredPersonList().size());
         Person lastPerson = model.getFilteredPersonList().get(indexLastPerson.getZeroBased());

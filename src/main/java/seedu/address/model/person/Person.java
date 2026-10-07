@@ -1,10 +1,14 @@
 package seedu.address.model.person;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.lesson.Lesson;
 
 /**
  * Represents a student in the address book.
@@ -20,17 +24,28 @@ public class Person {
     private final Address address;
     private final Level level;
     private final Subject subject;
+    private final List<Lesson> lessons;
 
     /**
+     * Creates a student with no lesson records.
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Address address, Level level, Subject subject) {
-        requireAllNonNull(name, phone, address, level, subject);
+        this(name, phone, address, level, subject, List.of());
+    }
+
+    /**
+     * Creates a student with the given lesson records, kept in the order given.
+     * Every field must be present and not null.
+     */
+    public Person(Name name, Phone phone, Address address, Level level, Subject subject, List<Lesson> lessons) {
+        requireAllNonNull(name, phone, address, level, subject, lessons);
         this.name = name;
         this.phone = phone;
         this.address = address;
         this.level = level;
         this.subject = subject;
+        this.lessons = List.copyOf(lessons);
     }
 
     public Name getName() {
@@ -51,6 +66,25 @@ public class Person {
 
     public Subject getSubject() {
         return subject;
+    }
+
+    /**
+     * Returns an immutable list of this student's lesson records, in the order they were logged,
+     * which throws {@code UnsupportedOperationException} if modification is attempted.
+     */
+    public List<Lesson> getLessons() {
+        return lessons;
+    }
+
+    /**
+     * Returns a copy of this student with {@code lesson} added after the existing lesson records.
+     * This student is not modified.
+     */
+    public Person withLessonAdded(Lesson lesson) {
+        requireNonNull(lesson);
+        List<Lesson> updatedLessons = new ArrayList<>(lessons);
+        updatedLessons.add(lesson);
+        return new Person(name, phone, address, level, subject, updatedLessons);
     }
 
     /**
@@ -87,13 +121,14 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && address.equals(otherPerson.address)
                 && level.equals(otherPerson.level)
-                && subject.equals(otherPerson.subject);
+                && subject.equals(otherPerson.subject)
+                && lessons.equals(otherPerson.lessons);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, address, level, subject);
+        return Objects.hash(name, phone, address, level, subject, lessons);
     }
 
     @Override
@@ -104,6 +139,7 @@ public class Person {
                 .add("address", address)
                 .add("level", level)
                 .add("subject", subject)
+                .add("lessons", lessons)
                 .toString();
     }
 

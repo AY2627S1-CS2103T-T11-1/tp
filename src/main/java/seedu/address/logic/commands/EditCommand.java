@@ -91,7 +91,7 @@ public class EditCommand extends Command {
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
 
         return new Person(updatedName, updatedPhone, updatedAddress, personToEdit.getLevel(),
-                personToEdit.getSubject());
+                personToEdit.getSubject(), personToEdit.getLessons());
     }
 
     @Override
