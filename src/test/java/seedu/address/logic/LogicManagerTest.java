@@ -13,6 +13,7 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -51,6 +53,46 @@ public class LogicManagerTest {
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(addressBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
+    }
+
+    @Test
+    public void execute_logReloadThenView_returnsPersistedHistoryWithoutChangingFile() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("log 1 c/Algebra");
+        logic.execute("log 1 c/Geometry");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(dataFile);
+        Model reloadedModel = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        StorageManager storage = new StorageManager(addressBookStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json")));
+        Logic reloadedLogic = new LogicManager(reloadedModel, storage);
+
+        assertEquals("Lesson records for " + AMY.getName()
+                + " (most recently logged first):\n1. Geometry\n2. Algebra",
+                reloadedLogic.execute("view 1").getFeedbackToUser());
+        assertEquals(model.getAddressBook(), reloadedModel.getAddressBook());
+        assertEquals(savedData, Files.readString(dataFile));
+    }
+
+    @Test
+    public void execute_viewInvalidFormat_reportsUsageWithoutChangingModel() {
+        model.addPerson(AMY);
+        assertParseException("view 1 extra", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                ViewCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void execute_viewInvalidIndex_reportsCommandErrorWithoutChangingModel() {
+        model.addPerson(AMY);
+        assertCommandException("view 2", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void execute_viewNoLessons_returnsMessage() throws Exception {
+        model.addPerson(AMY);
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        assertCommandSuccess("view 1", "No lesson records for " + AMY.getName() + ".", expectedModel);
     }
 
     @Test

@@ -144,6 +144,21 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Viewing a student's lesson records: `view`
+
+Shows all lesson records for one student in the command result area.
+
+Format: `view INDEX`
+
+* `INDEX` is a positive integer from the currently displayed student list. After `find`, use the index in the filtered list.
+* Records appear with the most recently logged first, numbered from 1. These numbers identify rows in the output, not student indexes.
+* Lessons currently store content only, so ordering is by when records were logged, not by lesson date.
+* Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
+* A student with no records produces `No lesson records for NAME.`
+* Missing indexes, non-positive indexes, non-integers, oversized indexes, and extra arguments are rejected. An index outside the displayed list produces `The student index provided is invalid.`
+
+Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra.
+
 ### Logging a lesson: `log`
 
 Records what you covered in a lesson for the specified student.
@@ -218,5 +233,6 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT`<br> e.g., `log 3 c/Quadratic inequalities`
 **Help**   | `help`
