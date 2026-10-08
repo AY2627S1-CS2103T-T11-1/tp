@@ -33,7 +33,7 @@ public class ViewCommandTest {
                 .withLessonAdded(new Lesson("Calculus")));
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         String expected = "Lesson records for " + student.getName()
-                + " (most recently logged first):\n1. Calculus\n2. Algebra\n3. Geometry\n4. Algebra";
+                + " (4):\n1. Calculus\n2. Algebra\n3. Geometry\n4. Algebra";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model, expected, expectedModel);
     }
@@ -43,7 +43,7 @@ public class ViewCommandTest {
         Person student = model.getFilteredPersonList().get(0);
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
-                "No lesson records for " + student.getName() + ".", expectedModel);
+                "No lessons logged yet for " + student.getName() + ".", expectedModel);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ViewCommandTest {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
         String expected = "Lesson records for " + student.getName()
-                + " (most recently logged first):\n1. Only this student's lesson";
+                + " (1):\n1. Only this student's lesson";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model, expected, expectedModel);
         assertCommandFailure(new ViewCommand(INDEX_SECOND_PERSON), model,

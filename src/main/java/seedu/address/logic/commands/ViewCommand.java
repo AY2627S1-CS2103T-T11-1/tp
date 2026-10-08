@@ -22,8 +22,8 @@ public class ViewCommand extends Command {
             + ": Views lesson records for the student identified by the displayed student index.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
-    public static final String MESSAGE_NO_LESSONS = "No lesson records for %1$s.";
-    public static final String MESSAGE_LESSONS_HEADER = "Lesson records for %1$s (most recently logged first):";
+    public static final String MESSAGE_NO_LESSONS = "No lessons logged yet for %1$s.";
+    public static final String MESSAGE_LESSONS_HEADER = "Lesson records for %1$s (%2$d):";
 
     private final Index targetIndex;
 
@@ -49,7 +49,8 @@ public class ViewCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
         }
 
-        StringBuilder result = new StringBuilder(String.format(MESSAGE_LESSONS_HEADER, student.getName()));
+        StringBuilder result = new StringBuilder(String.format(MESSAGE_LESSONS_HEADER,
+                student.getName(), lessons.size()));
         for (int i = lessons.size() - 1; i >= 0; i--) {
             result.append("\n").append(lessons.size() - i).append(". ").append(lessons.get(i).content);
         }
@@ -58,8 +59,16 @@ public class ViewCommand extends Command {
 
     @Override
     public boolean equals(Object other) {
-        return other == this || (other instanceof ViewCommand otherViewCommand
-                && targetIndex.equals(otherViewCommand.targetIndex));
+        if (other == this) {
+            return true;
+        }
+
+        // instanceof handles nulls
+        if (!(other instanceof ViewCommand otherViewCommand)) {
+            return false;
+        }
+
+        return targetIndex.equals(otherViewCommand.targetIndex);
     }
 
     @Override

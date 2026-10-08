@@ -154,8 +154,9 @@ Format: `view INDEX`
 * Records appear with the most recently logged first, numbered from 1. These numbers identify rows in the output, not student indexes.
 * Lessons currently store content only, so ordering is by when records were logged, not by lesson date.
 * Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
-* A student with no records produces `No lesson records for NAME.`
-* Missing indexes, non-positive indexes, non-integers, oversized indexes, and extra arguments are rejected. An index outside the displayed list produces `The student index provided is invalid.`
+* A student with no records produces `No lessons logged yet for NAME.`
+* The header is `Lesson records for NAME (COUNT):`, followed by one numbered line per record.
+* Missing indexes, non-integers, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, integers too large to parse, and indexes outside the displayed list produce `The student index provided is invalid.`
 
 Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra.
 

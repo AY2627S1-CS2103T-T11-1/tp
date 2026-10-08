@@ -69,7 +69,7 @@ public class LogicManagerTest {
         Logic reloadedLogic = new LogicManager(reloadedModel, storage);
 
         assertEquals("Lesson records for " + AMY.getName()
-                + " (most recently logged first):\n1. Geometry\n2. Algebra",
+                + " (2):\n1. Geometry\n2. Algebra",
                 reloadedLogic.execute("view 1").getFeedbackToUser());
         assertEquals(model.getAddressBook(), reloadedModel.getAddressBook());
         assertEquals(savedData, Files.readString(dataFile));
@@ -92,7 +92,7 @@ public class LogicManagerTest {
     public void execute_viewNoLessons_returnsMessage() throws Exception {
         model.addPerson(AMY);
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
-        assertCommandSuccess("view 1", "No lesson records for " + AMY.getName() + ".", expectedModel);
+        assertCommandSuccess("view 1", "No lessons logged yet for " + AMY.getName() + ".", expectedModel);
     }
 
     @Test
