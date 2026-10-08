@@ -81,8 +81,8 @@ recorded about them, not building a new kind of app.
 
 - **No lesson date** in the MVP. `log` takes content only.
 - **View order:** most recently logged first (reverse logging order), as
-  confirmed by zikiai on Oct 8 for issue #12 and PR #63. This supersedes
-  the earlier order-logged proposal.
+  agreed by the team on Oct 8. Implemented in PR #63. This replaces the
+  earlier order-logged proposal.
 - **Email and tags are removed.** They may return post-MVP as optional
   fields.
 - **`edit`, `find` and `clear` are removed for the MVP** and can be restored

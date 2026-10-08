@@ -3,7 +3,11 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 8, 2026, checked against `master` on that date.
+Last updated: Oct 9, 2026, checked against `master` on that date.
+
+**Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
+in the same PR that changes a decision, message or interface, and refresh
+the date above.
 
 If anything here disagrees with an older document, this file wins. If it
 disagrees with the code on `master`, stop and ask the team.
@@ -82,12 +86,12 @@ Other messages:
 | # | Decision | Status on `master` |
 |---|---|---|
 | 1 | No lesson date in the MVP. `log` takes content only. | Done |
-| 2 | **Order shown by `view`: most recently logged first.** Lessons have no dates, so this means reverse logging order. | Confirmed by zikiai on Oct 8 for issue #12 and PR #63; supersedes the earlier order-logged proposal. |
+| 2 | **Order shown by `view`: most recently logged first.** Lessons have no dates, so this means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. |
 | 3 | Email and tags removed from `Person`. They may return post-MVP as optional fields. | Done (PR #51) |
 | 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | **Not done yet.** All three still exist (task 2A). Do not extend them. |
 | 5 | `/` allowed in names | Done (PR #51) |
 | 6 | Case-insensitive duplicate names | Done (PR #51) |
-| 7 | **Invalid index behaviour.** See below. | **Undecided. Ask the team before coding this.** |
+| 7 | **Invalid index behaviour.** See below. | `delete` and `view` follow the W6 version (PRs #60 and #63). The final rule for every command is still open in #59. |
 
 **On decision 7.** Two versions exist:
 
