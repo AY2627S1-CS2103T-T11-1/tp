@@ -108,6 +108,10 @@ class JsonAdaptedPerson {
 
         final List<Lesson> modelLessons = new ArrayList<>();
         for (JsonAdaptedLesson lesson : lessons) {
+            if (lesson == null) {
+                throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                        Lesson.class.getSimpleName()));
+            }
             modelLessons.add(lesson.toModelType());
         }
 
