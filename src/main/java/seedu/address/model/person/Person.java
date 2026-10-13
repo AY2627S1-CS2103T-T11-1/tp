@@ -24,6 +24,7 @@ public class Person {
     private final Address address;
     private final Level level;
     private final Subject subject;
+    private final Remark remark;
     private final List<Lesson> lessons;
 
     /**
@@ -31,7 +32,7 @@ public class Person {
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Address address, Level level, Subject subject) {
-        this(name, phone, address, level, subject, List.of());
+        this(name, phone, address, level, subject, new Remark(""), List.of());
     }
 
     /**
@@ -39,12 +40,22 @@ public class Person {
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Address address, Level level, Subject subject, List<Lesson> lessons) {
-        requireAllNonNull(name, phone, address, level, subject, lessons);
+        this(name, phone, address, level, subject, new Remark(""), lessons);
+    }
+
+    /**
+     * Creates a student with the given lesson records and remark.
+     * Every field must be present and not null.
+     */
+    public Person(Name name, Phone phone, Address address, Level level, Subject subject,
+            Remark remark, List<Lesson> lessons) {
+        requireAllNonNull(name, phone, address, level, subject, remark, lessons);
         this.name = name;
         this.phone = phone;
         this.address = address;
         this.level = level;
         this.subject = subject;
+        this.remark = remark;
         this.lessons = List.copyOf(lessons);
     }
 
@@ -69,6 +80,13 @@ public class Person {
     }
 
     /**
+     * Returns this student's remark.
+     */
+    public Remark getRemark() {
+        return remark;
+    }
+
+    /**
      * Returns an immutable list of this student's lesson records, in the order they were logged,
      * which throws {@code UnsupportedOperationException} if modification is attempted.
      */
@@ -84,7 +102,7 @@ public class Person {
         requireNonNull(lesson);
         List<Lesson> updatedLessons = new ArrayList<>(lessons);
         updatedLessons.add(lesson);
-        return new Person(name, phone, address, level, subject, updatedLessons);
+        return new Person(name, phone, address, level, subject, remark, updatedLessons);
     }
 
     /**
@@ -122,13 +140,14 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && level.equals(otherPerson.level)
                 && subject.equals(otherPerson.subject)
+                && remark.equals(otherPerson.remark)
                 && lessons.equals(otherPerson.lessons);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, address, level, subject, lessons);
+        return Objects.hash(name, phone, address, level, subject, remark, lessons);
     }
 
     @Override
@@ -139,6 +158,7 @@ public class Person {
                 .add("address", address)
                 .add("level", level)
                 .add("subject", subject)
+                .add("remark", remark)
                 .add("lessons", lessons)
                 .toString();
     }

@@ -95,6 +95,10 @@ public class PersonTest {
         // different subject -> returns false
         editedAlice = new PersonBuilder(ALICE).withSubject(VALID_SUBJECT_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // different remark -> returns false
+        editedAlice = new PersonBuilder(ALICE).withRemark("Needs follow-up").build();
+        assertFalse(ALICE.equals(editedAlice));
     }
 
     @Test
@@ -153,7 +157,8 @@ public class PersonTest {
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", address=" + ALICE.getAddress() + ", level=" + ALICE.getLevel()
-                + ", subject=" + ALICE.getSubject() + ", lessons=" + ALICE.getLessons() + "}";
+                + ", subject=" + ALICE.getSubject() + ", remark=" + ALICE.getRemark()
+                + ", lessons=" + ALICE.getLessons() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }

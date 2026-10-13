@@ -13,6 +13,7 @@ import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Remark;
 import seedu.address.model.person.Subject;
 
 /**
@@ -27,6 +28,7 @@ class JsonAdaptedPerson {
     private final String address;
     private final String level;
     private final String subject;
+    private final String remark;
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
 
     /**
@@ -37,15 +39,28 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("address") String address, @JsonProperty("level") String level,
-            @JsonProperty("subject") String subject, @JsonProperty("lessons") List<JsonAdaptedLesson> lessons) {
+            @JsonProperty("subject") String subject, @JsonProperty("remark") String remark,
+            @JsonProperty("lessons") List<JsonAdaptedLesson> lessons) {
         this.name = name;
         this.phone = phone;
         this.address = address;
         this.level = level;
         this.subject = subject;
+        this.remark = remark;
         if (lessons != null) {
             this.lessons.addAll(lessons);
         }
+    }
+
+    /**
+     * Constructs a person adapted from the pre-remark storage format.
+     *
+     * @deprecated use the constructor that includes {@code remark}
+     */
+    @Deprecated
+    public JsonAdaptedPerson(String name, String phone, String address, String level,
+            String subject, List<JsonAdaptedLesson> lessons) {
+        this(name, phone, address, level, subject, null, lessons);
     }
 
     /**
@@ -57,6 +72,7 @@ class JsonAdaptedPerson {
         address = source.getAddress().value;
         level = source.getLevel().value;
         subject = source.getSubject().value;
+        remark = source.getRemark().value;
         source.getLessons().forEach(lesson -> lessons.add(new JsonAdaptedLesson(lesson)));
     }
 
@@ -106,12 +122,14 @@ class JsonAdaptedPerson {
         }
         final Subject modelSubject = new Subject(subject);
 
+        final Remark modelRemark = new Remark(remark == null ? "" : remark);
+
         final List<Lesson> modelLessons = new ArrayList<>();
         for (JsonAdaptedLesson lesson : lessons) {
             modelLessons.add(lesson.toModelType());
         }
 
-        return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelLessons);
+        return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelRemark, modelLessons);
     }
 
 }

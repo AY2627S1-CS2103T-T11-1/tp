@@ -30,6 +30,7 @@
       <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
       <Label fx:id="level" styleClass="cell_small_label" text="\$level" />
       <Label fx:id="subject" styleClass="cell_small_label" text="\$subject" />
+      <Label fx:id="remark" styleClass="cell_small_label" text="\$remark" />
     </VBox>
   </GridPane>
 </HBox>

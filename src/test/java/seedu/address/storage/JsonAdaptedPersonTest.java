@@ -51,6 +51,14 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_personWithRemark_returnsPersonWithRemark() throws Exception {
+        Person personWithRemark = new PersonBuilder(BENSON).withRemark("Prefers weekend lessons").build();
+        Person loaded = new JsonAdaptedPerson(personWithRemark).toModelType();
+        assertEquals(personWithRemark, loaded);
+        assertEquals("Prefers weekend lessons", loaded.getRemark().value);
+    }
+
+    @Test
     public void toModelType_nullLessons_returnsPersonWithNoLessons() throws Exception {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS, VALID_LEVEL, VALID_SUBJECT, null);

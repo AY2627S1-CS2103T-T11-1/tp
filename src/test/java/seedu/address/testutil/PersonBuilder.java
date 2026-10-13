@@ -10,6 +10,7 @@ import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Remark;
 import seedu.address.model.person.Subject;
 
 /**
@@ -22,12 +23,14 @@ public class PersonBuilder {
     public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
     public static final String DEFAULT_LEVEL = "Sec 4";
     public static final String DEFAULT_SUBJECT = "E-Math";
+    public static final String DEFAULT_REMARK = "";
 
     private Name name;
     private Phone phone;
     private Address address;
     private Level level;
     private Subject subject;
+    private Remark remark;
     private List<Lesson> lessons;
 
     /**
@@ -39,6 +42,7 @@ public class PersonBuilder {
         address = new Address(DEFAULT_ADDRESS);
         level = new Level(DEFAULT_LEVEL);
         subject = new Subject(DEFAULT_SUBJECT);
+        remark = new Remark(DEFAULT_REMARK);
         lessons = new ArrayList<>();
     }
 
@@ -51,6 +55,7 @@ public class PersonBuilder {
         address = personToCopy.getAddress();
         level = personToCopy.getLevel();
         subject = personToCopy.getSubject();
+        remark = personToCopy.getRemark();
         lessons = new ArrayList<>(personToCopy.getLessons());
     }
 
@@ -95,6 +100,14 @@ public class PersonBuilder {
     }
 
     /**
+     * Sets the remark of the {@code Person} that we are building.
+     */
+    public PersonBuilder withRemark(String remark) {
+        this.remark = new Remark(remark);
+        return this;
+    }
+
+    /**
      * Sets the lesson records of the {@code Person} that we are building, in the order given.
      */
     public PersonBuilder withLessons(String... lessonContents) {
@@ -103,7 +116,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, address, level, subject, lessons);
+        return new Person(name, phone, address, level, subject, remark, lessons);
     }
 
 }
