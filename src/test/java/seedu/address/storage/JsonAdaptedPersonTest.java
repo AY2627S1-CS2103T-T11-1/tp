@@ -58,6 +58,16 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_nullLessonEntry_throwsIllegalValueException() {
+        // a hand-edited data file such as "lessons": [ null ] must be rejected, not crash loading
+        List<JsonAdaptedLesson> lessonsWithNull = java.util.Arrays.asList((JsonAdaptedLesson) null);
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
+                VALID_LEVEL, VALID_SUBJECT, lessonsWithNull);
+        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Lesson.class.getSimpleName());
+        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
     public void toModelType_invalidLesson_throwsIllegalValueException() {
         List<JsonAdaptedLesson> invalidLessons = List.of(new JsonAdaptedLesson(" "));
         JsonAdaptedPerson person =
