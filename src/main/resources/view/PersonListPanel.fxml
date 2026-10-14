@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <ListView fx:id="personListView" VBox.vgrow="ALWAYS" />
-</VBox>
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <ListView fx:id="personListView" />
+  <VBox fx:id="emptyState" alignment="CENTER" spacing="8" mouseTransparent="true">
+    <Label styleClass="empty-state-title" text="No students yet." />
+    <Label styleClass="empty-state-text" text="To add your first student:" />
+    <Label styleClass="empty-state-command"
+           text="add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT"
+           wrapText="true" />
+    <Label styleClass="empty-state-text" text="Example:" />
+    <Label styleClass="empty-state-command"
+           text="add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math"
+           wrapText="true" />
+  </VBox>
+</StackPane>

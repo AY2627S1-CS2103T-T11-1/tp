@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
@@ -35,7 +37,7 @@ import seedu.address.model.person.Subject;
 import seedu.address.testutil.PersonBuilder;
 
 /**
- * Verifies student-card layout in a real scene, including resizing and reused list cells.
+ * Verifies empty-state switching and student-card layout, including resizing and reused list cells.
  */
 public class PersonListPanelTest {
 
@@ -101,6 +103,39 @@ public class PersonListPanelTest {
             assertEquals(wideHeight, cellAt(list, 1).getHeight(), LAYOUT_TOLERANCE,
                     "Widening must not retain the taller wrapped-row height");
             assertVisibleCardsFit(list);
+        });
+    }
+
+    /**
+     * Verifies that adding and removing students toggles both visibility and layout participation.
+     */
+    @Test
+    public void personListChanges_emptyStateTracksListContents() throws Exception {
+        runOnJavaFxThread(() -> {
+            ObservableList<Person> persons = FXCollections.observableArrayList();
+            PersonListPanel panel = new PersonListPanel(persons);
+            StackPane root = (StackPane) panel.getRoot();
+            ListView<?> personListView = (ListView<?>) root.getChildren().get(0);
+            VBox emptyState = (VBox) root.getChildren().get(1);
+
+            assertTrue(emptyState.isVisible());
+            assertTrue(emptyState.isManaged());
+            assertFalse(personListView.isVisible());
+            assertFalse(personListView.isManaged());
+
+            persons.add(ALICE);
+
+            assertFalse(emptyState.isVisible());
+            assertFalse(emptyState.isManaged());
+            assertTrue(personListView.isVisible());
+            assertTrue(personListView.isManaged());
+
+            persons.remove(ALICE);
+
+            assertTrue(emptyState.isVisible());
+            assertTrue(emptyState.isManaged());
+            assertFalse(personListView.isVisible());
+            assertFalse(personListView.isManaged());
         });
     }
 
@@ -264,6 +299,7 @@ public class PersonListPanelTest {
     /**
      * Runs layout assertions on the JavaFX thread and reports failures back to JUnit.
      *
+     * @param action operation that accesses JavaFX controls
      * @throws InterruptedException if interrupted while waiting for the assertions
      */
     private static void runOnJavaFxThread(Runnable action) throws InterruptedException {
@@ -279,9 +315,14 @@ public class PersonListPanelTest {
             }
         });
         assertTrue(completed.await(FX_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS),
-                "Timed out waiting for JavaFX layout assertions");
-        if (failure.get() != null) {
-            throw new AssertionError(failure.get());
+                "Timed out while waiting for the JavaFX application thread");
+
+        Throwable thrown = failure.get();
+        if (thrown instanceof AssertionError assertionError) {
+            throw assertionError;
+        }
+        if (thrown != null) {
+            throw new AssertionError(thrown);
         }
     }
 }
