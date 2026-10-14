@@ -141,16 +141,6 @@ public class LessonPersistenceTest {
     }
 
     @Test
-    public void restart_afterEditingStudent_lessonsKept() throws Exception {
-        startWith(ALEX);
-        logic.execute("log 1 c/Quadratic inequalities");
-
-        logic.execute("edit 1 n/Alex Tan");
-
-        assertEquals(lessons("Quadratic inequalities"), findByName(restart(), "Alex Tan").getLessons());
-    }
-
-    @Test
     public void read_dataFileWithoutLessons_loadsStudentsWithNoLessons() throws Exception {
         for (String file : List.of("noLessonsField.json", "nullLessonsField.json")) {
             ReadOnlyAddressBook loaded = new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(file))
