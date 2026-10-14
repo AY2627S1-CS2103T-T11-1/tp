@@ -86,8 +86,7 @@ recorded about them, not building a new kind of app.
 - **Email and tags are removed.** They may return post-MVP as optional
   fields.
 - **`edit`, `find` and `clear` are removed for the MVP** and can be restored
-  from Git history later. On Oct 8 they were still in the code, waiting for
-  task 2A.
+  from Git history later. Removed from the code in issue #72 (Oct 14).
 - **`view` replaces `lessons`** as the command for viewing a student's lessons.
 - **`/` is allowed in names** so that s/o and d/o work. `a/l` and `a/p` still
   fail because ` a/` is the address prefix, a documented MVP limitation.

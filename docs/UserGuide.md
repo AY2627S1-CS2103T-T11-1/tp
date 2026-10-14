@@ -35,8 +35,6 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
-   * `clear` : Deletes all contacts.
-
    * `exit` : Exits the app.
 
 1. Refer to the [Features](#features) section below for details of each command.
@@ -61,7 +59,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for `help` and `exit` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -97,39 +95,6 @@ Shows a list of all persons in the address book.
 
 Format: `list`
 
-### Editing a person: `edit`
-
-Edits an existing person in the address book.
-
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
-
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
-
-Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
-
-### Locating persons by name: `find`
-
-Finds persons whose names contain any of the given keywords.
-
-Format: `find KEYWORD [MORE_KEYWORDS]`
-
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
-
-Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
-
 ### Deleting a person: `delete`
 
 Deletes the specified person from the address book.
@@ -142,7 +107,6 @@ Format: `delete INDEX`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
 ### Viewing a student's lesson records: `view`
 
@@ -150,7 +114,7 @@ Shows all lesson records for one student in the command result area.
 
 Format: `view INDEX`
 
-* `INDEX` is a positive integer from the currently displayed student list. After `find`, use the index in the filtered list.
+* `INDEX` is a positive integer from the currently displayed student list.
 * Records appear with the most recently logged first, numbered from 1. These numbers identify rows in the output, not student indexes.
 * Lessons currently store content only, so ordering is by when records were logged, not by lesson date.
 * Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
@@ -176,12 +140,6 @@ Format: `log INDEX c/CONTENT`
 Examples:
 * `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
 * `log 1 c/Revision of trigonometric identities, Q1-5 for homework` logs a lesson for the 1st student in the list.
-
-### Clearing all entries: `clear`
-
-Clears all entries from the address book.
-
-Format: `clear`
 
 ### Exiting the program: `exit`
 
@@ -221,6 +179,7 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+3. **Names with `a/` after a space**, such as `Muthu a/l Raju`, are rejected because ` a/` marks the start of the address. The remedy is to type it in capitals, e.g. `n/Muthu A/L Raju`, as prefixes are case-sensitive.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -229,10 +188,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT`<br> e.g., `log 3 c/Quadratic inequalities`

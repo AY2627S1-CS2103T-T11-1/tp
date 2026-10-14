@@ -3,7 +3,7 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 9, 2026, checked against `master` on that date.
+Last updated: Oct 14, 2026, checked against `master` on that date.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -88,7 +88,7 @@ Other messages:
 | 1 | No lesson date in the MVP. `log` takes content only. | Done |
 | 2 | **Order shown by `view`: most recently logged first.** Lessons have no dates, so this means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. |
 | 3 | Email and tags removed from `Person`. They may return post-MVP as optional fields. | Done (PR #51) |
-| 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | **Not done yet.** All three still exist (task 2A). Do not extend them. |
+| 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72) |
 | 5 | `/` allowed in names | Done (PR #51) |
 | 6 | Case-insensitive duplicate names | Done (PR #51) |
 | 7 | **Invalid index behaviour.** See below. | `delete` and `view` follow the W6 version (PRs #60 and #63). The final rule for every command is still open in #59. |
@@ -140,7 +140,6 @@ them.
 - `log` still uses `The person index provided is invalid.` (issue #59).
 - `MESSAGE_INVALID_PERSON_DISPLAYED_INDEX` and
   `MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX` both exist in `Messages`.
-- `edit`, `find` and `clear` still exist (decision 4, task 2A).
 - Ui.png still shows `lessons 1` in the command box.
 
 ---
