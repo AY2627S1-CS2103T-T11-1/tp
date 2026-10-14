@@ -27,16 +27,21 @@ public class PersonListPanelTest {
 
     private static final long FX_THREAD_TIMEOUT_SECONDS = 5;
 
+    /** Records successful startup so cleanup never waits for a failed toolkit. */
+    private static boolean isJavaFxStarted;
+
     /**
      * Starts the JavaFX toolkit before tests create controls.
+     *
+     * @throws InterruptedException if interrupted while waiting for startup
      */
     @BeforeAll
-    static void initialiseJavaFxToolkit() {
-        try {
-            Platform.startup(() -> { });
-        } catch (IllegalStateException exception) {
-            // The toolkit may already be running when the test suite is executed.
-        }
+    static void initialiseJavaFxToolkit() throws InterruptedException {
+        CountDownLatch started = new CountDownLatch(1);
+        Platform.startup(started::countDown);
+        assertTrue(started.await(FX_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                "Timed out waiting for JavaFX startup to complete");
+        isJavaFxStarted = true;
     }
 
     /**
@@ -44,9 +49,14 @@ public class PersonListPanelTest {
      */
     @AfterAll
     static void shutDownJavaFxToolkit() {
-        Platform.exit();
+        if (isJavaFxStarted) {
+            Platform.exit();
+        }
     }
 
+    /**
+     * Verifies that adding and removing students toggles both visibility and layout participation.
+     */
     @Test
     public void personListChanges_emptyStateTracksListContents() throws Exception {
         runOnJavaFxThread(() -> {
@@ -68,7 +78,7 @@ public class PersonListPanelTest {
             assertTrue(personListView.isVisible());
             assertTrue(personListView.isManaged());
 
-            persons.clear();
+            persons.remove(ALICE);
 
             assertTrue(emptyState.isVisible());
             assertTrue(emptyState.isManaged());
