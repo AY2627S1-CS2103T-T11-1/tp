@@ -99,7 +99,8 @@
       "headings": {
         "testing-guide": "Testing guide",
         "running-tests": "Running tests",
-        "types-of-tests": "Types of tests"
+        "types-of-tests": "Types of tests",
+        "student-card-layout-checks": "Student-card layout checks"
       },
       "headingKeywords": {}
     },
