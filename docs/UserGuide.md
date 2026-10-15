@@ -22,7 +22,7 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 
 1. Copy the file to the folder you want to use as the _home folder_ for TutorLah. Your data will be saved in this folder.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar TutorLah.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample students.<br>
    ![Ui](images/Ui.png)
 
