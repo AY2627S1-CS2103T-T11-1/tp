@@ -3,14 +3,19 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
+import seedu.address.commons.core.index.Index;
 
 public class CommandResultTest {
     @Test
@@ -67,6 +72,27 @@ public class CommandResultTest {
         assertEquals(viewResult.hashCode(), new CommandResult("feedback", INDEX_FIRST_PERSON).hashCode());
         assertNotEquals(viewResult.hashCode(), new CommandResult("feedback", INDEX_SECOND_PERSON).hashCode());
         assertNotEquals(commandResult.hashCode(), viewResult.hashCode());
+    }
+
+    @Test
+    public void hashCode_equalDistinctIndexes_worksInHashSet() {
+        for (int oneBasedIndex : new int[] {1, 2, 1001, Integer.MAX_VALUE}) {
+            Index firstIndex = Index.fromOneBased(oneBasedIndex);
+            Index equalIndex = Index.fromOneBased(oneBasedIndex);
+            assertNotSame(firstIndex, equalIndex);
+            CommandResult firstResult = new CommandResult("feedback", firstIndex);
+            CommandResult equalResult = new CommandResult("feedback", equalIndex);
+            assertEquals(firstResult, equalResult);
+            assertEquals(firstResult.hashCode(), equalResult.hashCode());
+
+            Set<CommandResult> results = new HashSet<>();
+            results.add(firstResult);
+            assertTrue(results.contains(equalResult));
+            assertFalse(results.add(equalResult));
+            assertEquals(1, results.size());
+            assertTrue(results.remove(equalResult));
+            assertTrue(results.isEmpty());
+        }
     }
 
     @Test

@@ -91,7 +91,8 @@ public class CommandResult {
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedbackToUser, showHelp, exit, viewedStudentIndex);
+        Integer indexValue = viewedStudentIndex == null ? null : viewedStudentIndex.getOneBased();
+        return Objects.hash(feedbackToUser, showHelp, exit, indexValue);
     }
 
     @Override
