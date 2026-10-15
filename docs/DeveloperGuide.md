@@ -624,3 +624,59 @@ testers are expected to do more *exploratory* testing.
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Lesson-history command sequences
+
+Run these checks in a separate test directory using `java -jar /absolute/path/to/TutorLah.jar`.
+The application stores data in the working directory; keep real student data out of this directory.
+Add two test students, Amy and Ben, and use their current displayed indexes in the commands below.
+
+1. Enter `view INDEX` for Amy before logging a lesson.
+   Expected: `No lessons logged yet for Amy.`.
+1. Enter `log INDEX c/Algebra` for Amy, then view Amy.
+   Expected: `Lesson records for Amy (1):` followed by `1. Algebra`.
+1. Log `Geometry`, then `Algebra` again for Amy, and view Amy.
+   Expected: count 3, with `Algebra`, `Geometry`, `Algebra` in that order.
+   Both Algebra records remain because repeated content is allowed.
+1. View Ben before logging a lesson, then log `Calculus` for Ben and view him.
+   Expected: Ben's empty-history message first, then count 1 and `1. Calculus`.
+   View Amy again: only Amy's three records are shown, with her name in the header.
+1. After a successful view, try an index past the end of the student list,
+   `view abc`, and `log INDEX c/`.
+   Expected: each error replaces the history with its own message and marks the
+   command box as an error. The failed command remains available for correction.
+   A subsequent valid view clears the error state and shows the original records.
+1. Delete Amy, then view Ben using his updated displayed index.
+   Expected: only Ben's Calculus record. The former out-of-range index remains invalid.
+1. Prepare a student with 40 lesson records, including a 300-character record.
+   View the student and scroll to the bottom.
+   Expected: the header identifies the student and count 40; row 1 is the latest
+   record, and row 40 is reachable. Long content wraps within the result area.
+   View another student: their feedback replaces the history and starts at the top.
+1. Repeat with the minimum window size (450 by 600) and a larger window. Drag the
+   horizontal result divider both ways. The command box and student list must
+   remain usable, and all records must remain reachable by scrolling.
+
+#### Integration verification for v1.3
+
+Verified on 15 October 2026 against team commit `938b7122`, which includes the
+result-area changes (#81), branding (#86), and light theme (#88).
+
+* Automated: `LogicManagerTest` verifies record counts, reverse logging order,
+  repeated content, student isolation, error recovery, and indexes after deletion.
+* Automated: `PersonListPanelTest` sends commands through the real command-box
+  Enter handler and checks the displayed results and error styles. Its long-history
+  test covers 40 records, a maximum-length record, narrow and wide layouts, both
+  divider positions, scrolling, and switching back to an unchanged history.
+* GUI checks on macOS with Java 25: empty, single, multiple and repeated records;
+  switching Amy/Ben; invalid index, invalid format, and empty-content errors;
+  recovery; and Ben's updated index after deleting Amy all matched the expected outputs.
+* GUI checks with a separate 40-record student: the latest record appeared first,
+  the oldest 300-character record was reachable and wrapped, and switching from
+  the scrolled history replaced it with Ben's result at the top. Expanding the
+  result area left the command box and student list usable.
+* The minimum-size 450-by-600 window showed the long-history header, command box,
+  and student cards together. The automated layout and scroll checks also cover
+  that width and a wider layout. All 297 tests and both Checkstyle tasks passed.
+
+No production-code changes were needed for the behaviours exercised by these checks.
