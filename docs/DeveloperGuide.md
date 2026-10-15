@@ -656,27 +656,3 @@ Add two test students, Amy and Ben, and use their current displayed indexes in t
 1. Repeat with the minimum window size (450 by 600) and a larger window. Drag the
    horizontal result divider both ways. The command box and student list must
    remain usable, and all records must remain reachable by scrolling.
-
-#### Integration verification for v1.3
-
-Verified on 15 October 2026 against team commit `938b7122`, which includes the
-result-area changes (#81), branding (#86), and light theme (#88).
-
-* Automated: `LogicManagerTest` verifies record counts, reverse logging order,
-  repeated content, student isolation, error recovery, and indexes after deletion.
-* Automated: `PersonListPanelTest` sends commands through the real command-box
-  Enter handler and checks the displayed results and error styles. Its long-history
-  test covers 40 records, a maximum-length record, narrow and wide layouts, both
-  divider positions, scrolling, and switching back to an unchanged history.
-* GUI checks on macOS with Java 25: empty, single, multiple and repeated records;
-  switching Amy/Ben; invalid index, invalid format, and empty-content errors;
-  recovery; and Ben's updated index after deleting Amy all matched the expected outputs.
-* GUI checks with a separate 40-record student: the latest record appeared first,
-  the oldest 300-character record was reachable and wrapped, and switching from
-  the scrolled history replaced it with Ben's result at the top. Expanding the
-  result area left the command box and student list usable.
-* The minimum-size 450-by-600 window showed the long-history header, command box,
-  and student cards together. The automated layout and scroll checks also cover
-  that width and a wider layout. All 297 tests and both Checkstyle tasks passed.
-
-No production-code changes were needed for the behaviours exercised by these checks.
