@@ -3,8 +3,8 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 15, 2026, for issues #59 and #90 (index validation
-and student-card clicks).
+Last updated: Oct 15, 2026, for issues #59, #90 and #93 (index validation,
+student-card clicks and the website screenshot).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -149,7 +149,8 @@ accepted by the parser. Commands apply these errors consistently:
 These are mismatches with this brief. Fix them only if your task covers
 them.
 
-- Ui.png still shows `lessons 1` in the command box.
+No known mismatches recorded. `docs/images/Ui.png` shows the current TutorLah
+GUI with `view 1` and fictional student and lesson details (issue #93).
 
 ---
 

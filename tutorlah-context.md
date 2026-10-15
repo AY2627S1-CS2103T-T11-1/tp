@@ -1,7 +1,7 @@
 # TutorLah: context
 
-Last updated: Oct 15, 2026, for issues #59 and #90 (index validation
-and student-card clicks).
+Last updated: Oct 15, 2026, for issues #59, #90 and #93 (index validation,
+student-card clicks and the website screenshot).
 
 ## What it is
 
@@ -65,6 +65,9 @@ recorded about them, not building a new kind of app.
   Successful views from either input method highlight the matching card and scroll
   it into view. Card presses are handled before selection updates, so switching
   from typed commands needs only one click.
+
+The README, website home page and User Guide share `docs/images/Ui.png`,
+a screenshot of the current GUI using fictional student and lesson details.
 
 ## MVP commands
 
