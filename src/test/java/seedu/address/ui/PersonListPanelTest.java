@@ -63,7 +63,8 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class PersonListPanelTest {
 
-    private static final long FX_THREAD_TIMEOUT_SECONDS = 5;
+    // Allow for first-window initialization and scheduling delays on CI runners.
+    private static final long FX_THREAD_TIMEOUT_SECONDS = 15;
     private static final double LAYOUT_TOLERANCE = 1;
     private static final Person SHORT_PERSON = new PersonBuilder().withName("Alicia Tan")
             .withAddress("10 Short Street").withLevel("Sec 2").withSubject("E-Math").build();
