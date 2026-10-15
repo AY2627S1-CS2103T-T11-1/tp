@@ -1,5 +1,7 @@
 # TutorLah: context
 
+Last updated: Oct 15, 2026, for issue #71 (list feedback).
+
 ## What it is
 
 TutorLah is a desktop app for freelance maths tutors in Singapore. They use it
@@ -33,7 +35,7 @@ recorded about them, not building a new kind of app.
 | **Name rule** | letters and digits only (`[\p{Alnum}][\p{Alnum} ]*`) | Unicode letters, spaces, `'` `-` `.` `/`, with no digits, so names like Mary-Anne, O'Brien and Ramesh s/o Kumar work |
 | **Phone rule** | digits only, at least 3 | exactly 8 digits, since every Singapore number is 8 digits and a fixed length catches typos |
 | **Duplicate** | same name (`isSamePerson`) | same phone **and** same name ignoring case, since two students can both be "Tan Wei Ming" |
-| **`list`** | ignores any extra text | rejects parameters, and gives a clear message when the list is empty |
+| **`list`** | ignores any extra text | rejects parameters; reports `Listed {COUNT} students.` or `No students found. Use add to create a student.` |
 | **New entity** | none | **Lesson**: a record of what was covered, owned by a student |
 | **New commands** | none | `log INDEX c/CONTENT` and `view INDEX` |
 
