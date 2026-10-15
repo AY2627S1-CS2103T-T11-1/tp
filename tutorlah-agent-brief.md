@@ -3,7 +3,8 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 15, 2026, for issue #90 (student-card clicks).
+Last updated: Oct 15, 2026, for issues #59 and #90 (index validation
+and student-card clicks).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -98,20 +99,17 @@ Other messages:
 | 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72) |
 | 5 | `/` allowed in names | Done (PR #51) |
 | 6 | Case-insensitive duplicate names | Done (PR #51) |
-| 7 | **Invalid index behaviour.** See below. | `delete` and `view` follow the W6 version (PRs #60 and #63). The final rule for every command is still open in #59. |
+| 7 | **Invalid index behaviour.** See below. | Applied consistently to `delete`, `log`, and `view` in issue #59. |
 
-**On decision 7.** Two versions exist:
+**On decision 7.** An index is a positive integer without leading zeros.
+There is no arbitrary limit of 1000; any value representable by `Index` is
+accepted by the parser. Commands apply these errors consistently:
 
-- **W6 spec, as `delete` implements it on `master` (PR #60):** zero,
-  negative and out-of-range numbers give `The student index provided is
-  invalid.` Words give the invalid command format message with usage.
-- **0A proposal (AB3's split):** zero, negative, leading zeros and values
-  above 1000 give the invalid command format message. Only a well-formed
-  index past the end of the list gives the invalid index message.
-
-Issue #59 will apply one rule to every index command. Until the team
-picks one, new commands should copy `delete`'s current behaviour, and
-tests must not assert that indexes above 1000 are accepted.
+- Zero, negative integers, leading-zero integers, values too large for
+  `Index`, and indexes outside the displayed list give
+  `The student index provided is invalid.`
+- Missing indexes, words, decimals, signs such as `+1`, and extra command
+  parts give the invalid command format message with that command's usage.
 
 ---
 
@@ -146,14 +144,11 @@ tests must not assert that indexes above 1000 are accepted.
 
 ---
 
-## 6. Known gaps on `master` (Oct 8)
+## 6. Known gaps on `master` (Oct 15)
 
 These are mismatches with this brief. Fix them only if your task covers
 them.
 
-- `log` still uses `The person index provided is invalid.` (issue #59).
-- `MESSAGE_INVALID_PERSON_DISPLAYED_INDEX` and
-  `MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX` both exist in `Messages`.
 - Ui.png still shows `lessons 1` in the command box.
 
 ---

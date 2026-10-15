@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.DeleteCommand;
 
 /**
@@ -24,6 +25,7 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_validArgs_returnsDeleteCommand() {
         assertParseSuccess(parser, "1", new DeleteCommand(INDEX_FIRST_PERSON));
+        assertParseSuccess(parser, "1001", new DeleteCommand(Index.fromOneBased(1001)));
     }
 
     @Test
@@ -35,6 +37,12 @@ public class DeleteCommandParserTest {
     public void parse_nonPositiveIndex_throwsInvalidIndexMessage() {
         assertParseFailure(parser, "0", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
         assertParseFailure(parser, "-1", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void parse_leadingZeroIndex_throwsInvalidIndexMessage() {
+        assertParseFailure(parser, "01", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertParseFailure(parser, "001", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
 
     @Test

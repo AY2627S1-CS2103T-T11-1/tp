@@ -1,6 +1,7 @@
 # TutorLah: context
 
-Last updated: Oct 15, 2026, for issue #90 (student-card clicks).
+Last updated: Oct 15, 2026, for issues #59 and #90 (index validation
+and student-card clicks).
 
 ## What it is
 
@@ -99,12 +100,14 @@ recorded about them, not building a new kind of app.
   fail because ` a/` is the address prefix, a documented MVP limitation.
 - **Duplicates** are the same phone with the same name ignoring case.
 
-## Still open
+## Shared index policy
 
-- **Invalid index messages:** `delete` on `master` follows the W6 spec (zero,
-  negative and out-of-range numbers give "The student index provided is
-  invalid."). The 0A proposal kept AB3's split instead. Issue #59 will apply
-  one rule to every index command once the team picks one.
+- **Invalid index messages:** `delete`, `log`, and `view` accept positive
+  integers without leading zeros. There is no arbitrary 1000 cap. Zero,
+  negative integers, leading-zero integers, values too large to parse, and
+  indexes outside the displayed list give "The student index provided is
+  invalid." Missing or malformed command parts keep the command's invalid
+  format message and usage.
 
 For coding agents, use `tutorlah-agent-brief.md`, which has the full rules,
 messages and interfaces.
