@@ -59,7 +59,7 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 * Parameters with prefixes can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
-* `INDEX` refers to the number shown beside a student in the currently displayed student list. It must be a positive integer such as 1, 2, 3, ...
+* `INDEX` refers to the number shown beside a student in the currently displayed student list. It must be a positive integer without leading zeros, such as 1, 2, 3, ...
 
 * Extraneous parameters for `help` and `exit` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -128,7 +128,7 @@ Format: `view INDEX`
 * Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
 * A student with no records produces `No lessons logged yet for NAME.`
 * The header is `Lesson records for NAME (COUNT):`, followed by one numbered line per record.
-* Missing indexes, non-integers, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, integers too large to parse, and indexes outside the displayed list produce `The student index provided is invalid.`
+* Missing indexes, non-integers, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, leading-zero integers, integers too large to parse, and indexes outside the displayed list produce `The student index provided is invalid.`
 
 Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra.
 

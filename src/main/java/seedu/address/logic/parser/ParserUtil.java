@@ -1,6 +1,8 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
@@ -22,14 +24,40 @@ public class ParserUtil {
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
-     * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
+     * @throws ParseException if the specified index is not a positive integer without leading zeros.
      */
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
         String trimmedIndex = oneBasedIndex.trim();
-        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex) || trimmedIndex.startsWith("0")) {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses a student index used by a command.
+     *
+     * <p>Numeric-looking but invalid indexes use the shared student-index error. Other malformed input uses the
+     * command's usage message.</p>
+     *
+     * @param oneBasedIndex index text to parse
+     * @param commandUsage usage text for the command being parsed
+     * @throws ParseException if the specified index is invalid or malformed
+     */
+    public static Index parseStudentIndex(String oneBasedIndex, String commandUsage) throws ParseException {
+        requireNonNull(oneBasedIndex);
+        requireNonNull(commandUsage);
+
+        String trimmedIndex = oneBasedIndex.trim();
+        if (!trimmedIndex.matches("-?\\d+")) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, commandUsage));
+        }
+
+        try {
+            return parseIndex(trimmedIndex);
+        } catch (ParseException pe) {
+            throw new ParseException(MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, pe);
+        }
     }
 
     /**

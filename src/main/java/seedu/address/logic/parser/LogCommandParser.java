@@ -28,11 +28,7 @@ public class LogCommandParser implements Parser<LogCommand> {
         }
 
         Index index;
-        try {
-            index = ParserUtil.parseIndex(argMultimap.getPreamble());
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE), pe);
-        }
+        index = ParserUtil.parseStudentIndex(argMultimap.getPreamble(), LogCommand.MESSAGE_USAGE);
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_CONTENT);
         Lesson lesson = ParserUtil.parseLessonContent(argMultimap.getValue(PREFIX_CONTENT).get());

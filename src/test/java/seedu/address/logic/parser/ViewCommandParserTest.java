@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.ViewCommand;
 
 public class ViewCommandParserTest {
@@ -18,6 +19,7 @@ public class ViewCommandParserTest {
     public void parse_validIndex_success() {
         assertParseSuccess(parser, "1", new ViewCommand(INDEX_FIRST_PERSON));
         assertParseSuccess(parser, " \t1 \t", new ViewCommand(INDEX_FIRST_PERSON));
+        assertParseSuccess(parser, "1001", new ViewCommand(Index.fromOneBased(1001)));
     }
 
     @Test
@@ -30,7 +32,8 @@ public class ViewCommandParserTest {
 
     @Test
     public void parse_invalidNumericIndex_reportsInvalidStudentIndex() {
-        for (String args : new String[]{"0", "-1", " 0 ", "2147483648", "999999999999999999999999"}) {
+        for (String args : new String[]{"0", "-1", " 0 ", "01", "001", "2147483648",
+            "999999999999999999999999"}) {
             assertParseFailure(parser, args, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
         }
     }
