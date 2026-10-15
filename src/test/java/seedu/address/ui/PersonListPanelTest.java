@@ -230,6 +230,7 @@ public class PersonListPanelTest {
                 assertTrue(result.getHeight() > smallHeight);
                 assertTrue(result.getHeight() >= 100);
                 assertTrue(students.getHeight() >= 180);
+                assertTrue(students.getWidth() >= 340);
                 assertTrue(command.getHeight() > 0);
                 assertTrue(command.getBoundsInParent().getMaxY() <= split.getLayoutY());
             }
@@ -252,11 +253,15 @@ public class PersonListPanelTest {
             assertFalse(text.isEditable());
             text.positionCaret(history.length());
             text.setScrollTop(500);
+            root.layout();
+            assertTrue(text.getScrollTop() > 0, "The history must be scrolled before testing the reset");
             display.setFeedbackToUser(history);
+            root.layout();
             assertEquals(history, text.getText());
             assertEquals(0, text.getCaretPosition());
             assertEquals(0, text.getScrollTop());
             display.setFeedbackToUser("The student index provided is invalid.");
+            root.layout();
             assertEquals("The student index provided is invalid.", text.getText());
             assertEquals(0, text.getScrollTop());
         });

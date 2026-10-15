@@ -47,7 +47,7 @@
             </padding>
           </StackPane>
 
-          <VBox fx:id="personList" styleClass="pane-with-border" minWidth="0" minHeight="180">
+          <VBox fx:id="personList" styleClass="pane-with-border" minWidth="340" prefWidth="340" minHeight="180">
             <padding>
               <Insets top="10" right="10" bottom="10" left="10" />
             </padding>
