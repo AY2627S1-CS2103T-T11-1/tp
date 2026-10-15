@@ -56,6 +56,49 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_lessonSequences_returnsLatestStudentsHistory() throws Exception {
+        model.addPerson(AMY);
+        Person otherStudent = new PersonBuilder().withName("Ben Tan").withPhone("81234567").build();
+        model.addPerson(otherStudent);
+        assertEquals("No lessons logged yet for " + AMY.getName() + ".",
+                logic.execute("view 1").getFeedbackToUser());
+
+        logic.execute("log 1 c/Algebra");
+        assertEquals("Lesson records for " + AMY.getName() + " (1):\n1. Algebra",
+                logic.execute("view 1").getFeedbackToUser());
+        logic.execute("log 1 c/Geometry");
+        logic.execute("log 1 c/Algebra");
+        String amyHistory = "Lesson records for " + AMY.getName()
+                + " (3):\n1. Algebra\n2. Geometry\n3. Algebra";
+        assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
+        assertEquals("No lessons logged yet for Ben Tan.", logic.execute("view 2").getFeedbackToUser());
+        logic.execute("log 2 c/Calculus");
+        assertEquals("Lesson records for Ben Tan (1):\n1. Calculus",
+                logic.execute("view 2").getFeedbackToUser());
+        assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
+
+        assertCommandException("view 3", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertParseException("view 1 extra", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                ViewCommand.MESSAGE_USAGE));
+        assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
+        assertEquals("Lesson records for Ben Tan (1):\n1. Calculus",
+                logic.execute("view 2").getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_deleteThenView_usesUpdatedStudentIndexes() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(new PersonBuilder().withName("Ben Tan").withPhone("81234567").build());
+        logic.execute("log 1 c/Algebra");
+        logic.execute("log 2 c/Calculus");
+        logic.execute("view 1");
+        logic.execute("delete 1");
+        assertEquals("Lesson records for Ben Tan (1):\n1. Calculus",
+                logic.execute("view 1").getFeedbackToUser());
+        assertCommandException("view 2", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
     public void execute_logReloadThenView_returnsPersistedHistoryWithoutChangingFile() throws Exception {
         model.addPerson(AMY);
         logic.execute("log 1 c/Algebra");

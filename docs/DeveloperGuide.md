@@ -624,3 +624,35 @@ testers are expected to do more *exploratory* testing.
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Lesson-history command sequences
+
+Run these checks in a separate test directory using `java -jar /absolute/path/to/TutorLah.jar`.
+The application stores data in the working directory; keep real student data out of this directory.
+Add two test students, Amy and Ben, and use their current displayed indexes in the commands below.
+
+1. Enter `view INDEX` for Amy before logging a lesson.
+   Expected: `No lessons logged yet for Amy.`.
+1. Enter `log INDEX c/Algebra` for Amy, then view Amy.
+   Expected: `Lesson records for Amy (1):` followed by `1. Algebra`.
+1. Log `Geometry`, then `Algebra` again for Amy, and view Amy.
+   Expected: count 3, with `Algebra`, `Geometry`, `Algebra` in that order.
+   Both Algebra records remain because repeated content is allowed.
+1. View Ben before logging a lesson, then log `Calculus` for Ben and view him.
+   Expected: Ben's empty-history message first, then count 1 and `1. Calculus`.
+   View Amy again: only Amy's three records are shown, with her name in the header.
+1. After a successful view, try an index past the end of the student list,
+   `view abc`, and `log INDEX c/`.
+   Expected: each error replaces the history with its own message and marks the
+   command box as an error. The failed command remains available for correction.
+   A subsequent valid view clears the error state and shows the original records.
+1. Delete Amy, then view Ben using his updated displayed index.
+   Expected: only Ben's Calculus record. The former out-of-range index remains invalid.
+1. Prepare a student with 40 lesson records, including a 300-character record.
+   View the student and scroll to the bottom.
+   Expected: the header identifies the student and count 40; row 1 is the latest
+   record, and row 40 is reachable. Long content wraps within the result area.
+   View another student: their feedback replaces the history and starts at the top.
+1. Repeat with the minimum window size (450 by 600) and a larger window. Drag the
+   horizontal result divider both ways. The command box and student list must
+   remain usable, and all records must remain reachable by scrolling.
