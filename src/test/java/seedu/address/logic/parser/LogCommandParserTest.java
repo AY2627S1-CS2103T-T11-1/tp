@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -8,6 +9,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.model.lesson.Lesson;
@@ -28,6 +30,10 @@ public class LogCommandParserTest {
 
         // extra whitespace around the index and content is ignored
         assertParseSuccess(parser, "   1   " + PREFIX_CONTENT + "  " + VALID_CONTENT + "  ", expectedCommand);
+
+        // there is no arbitrary upper limit such as 1000
+        assertParseSuccess(parser, " 1001 " + PREFIX_CONTENT + VALID_CONTENT,
+                new LogCommand(Index.fromOneBased(1001), new Lesson(VALID_CONTENT)));
     }
 
     @Test
@@ -50,15 +56,34 @@ public class LogCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndex_failure() {
+    public void parse_invalidNumericIndex_reportsInvalidStudentIndex() {
         // zero
-        assertParseFailure(parser, " 0 " + PREFIX_CONTENT + VALID_CONTENT, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 " + PREFIX_CONTENT + VALID_CONTENT,
+                MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
 
         // negative
-        assertParseFailure(parser, " -1 " + PREFIX_CONTENT + VALID_CONTENT, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " -1 " + PREFIX_CONTENT + VALID_CONTENT,
+                MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
 
+        // leading zero
+        assertParseFailure(parser, " 01 " + PREFIX_CONTENT + VALID_CONTENT,
+                MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+
+        // too large to parse
+        assertParseFailure(parser, " 2147483648 " + PREFIX_CONTENT + VALID_CONTENT,
+                MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void parse_malformedIndex_reportsInvalidCommandFormat() {
         // not a number
         assertParseFailure(parser, " a " + PREFIX_CONTENT + VALID_CONTENT, MESSAGE_INVALID_FORMAT);
+
+        // decimal
+        assertParseFailure(parser, " 1.5 " + PREFIX_CONTENT + VALID_CONTENT, MESSAGE_INVALID_FORMAT);
+
+        // explicit positive sign
+        assertParseFailure(parser, " +1 " + PREFIX_CONTENT + VALID_CONTENT, MESSAGE_INVALID_FORMAT);
     }
 
     @Test

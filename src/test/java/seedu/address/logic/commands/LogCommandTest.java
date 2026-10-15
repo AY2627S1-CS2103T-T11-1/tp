@@ -97,7 +97,7 @@ public class LogCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         LogCommand logCommand = new LogCommand(outOfBoundIndex, LESSON_QUADRATICS);
 
-        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class LogCommandTest {
 
         LogCommand logCommand = new LogCommand(outOfBoundIndex, LESSON_QUADRATICS);
 
-        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
 
     @Test

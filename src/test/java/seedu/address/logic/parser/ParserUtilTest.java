@@ -1,12 +1,15 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
@@ -32,7 +35,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseIndex_invalidInput_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
+        for (String input : new String[]{"0", "-1", "+1", "1.5", "10 a", "01", "001"}) {
+            assertThrows(ParseException.class, () -> ParserUtil.parseIndex(input));
+        }
     }
 
     @Test
@@ -48,6 +53,28 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+
+        // There is no arbitrary upper limit such as 1000
+        assertEquals(Index.fromOneBased(1001), ParserUtil.parseIndex("1001"));
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseIndex(Integer.toString(Integer.MAX_VALUE)));
+    }
+
+    @Test
+    public void parseStudentIndex_invalidNumericInput_throwsStudentIndexMessage() {
+        for (String input : new String[]{"0", "-1", "01", "001", "2147483648"}) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, ()
+                    -> ParserUtil.parseStudentIndex(input, "usage"));
+        }
+    }
+
+    @Test
+    public void parseStudentIndex_malformedInput_throwsCommandUsage() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, "usage");
+        for (String input : new String[]{"", "+1", "1.5", "one", "1 2"}) {
+            assertThrows(ParseException.class, expectedMessage, ()
+                    -> ParserUtil.parseStudentIndex(input, "usage"));
+        }
     }
 
     @Test
