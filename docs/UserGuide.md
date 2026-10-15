@@ -89,11 +89,17 @@ Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
 * `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
 
-### Listing all persons: `list`
+### Listing all students: `list`
 
-Shows a list of all persons in the address book.
+Shows all students and reports the number displayed.
 
 Format: `list`
+
+* With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
+  For one student, the message is `Listed 1 students.`.
+* Without students: `No students found. Use add to create a student.`
+* Extra arguments, such as `list 3`, are rejected with
+  `The list command does not accept parameters.`. No student data is changed.
 
 ### Deleting a person: `delete`
 

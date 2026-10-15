@@ -110,7 +110,18 @@ public class LogicManagerTest {
     @Test
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
-        assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+        assertCommandSuccess(listCommand, ListCommand.MESSAGE_EMPTY, model);
+    }
+
+    @Test
+    public void execute_listAfterAddingAndDeleting_updatesCount() throws Exception {
+        logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
+                + ADDRESS_DESC_AMY + LEVEL_DESC_AMY + SUBJECT_DESC_AMY);
+        assertEquals("Listed 1 students.", logic.execute("list").getFeedbackToUser());
+        assertParseException("list extra", ListCommand.MESSAGE_INVALID_ARGUMENTS);
+        assertEquals("Listed 1 students.", logic.execute("list").getFeedbackToUser());
+        logic.execute("delete 1");
+        assertEquals("No students found. Use add to create a student.", logic.execute("list").getFeedbackToUser());
     }
 
     @Test

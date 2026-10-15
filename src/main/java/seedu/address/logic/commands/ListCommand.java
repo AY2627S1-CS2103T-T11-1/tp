@@ -6,13 +6,14 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import seedu.address.model.Model;
 
 /**
- * Lists all persons in the address book to the user.
+ * Lists all students and reports how many are shown.
  */
 public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
 
-    public static final String MESSAGE_SUCCESS = "Listed all persons.";
+    public static final String MESSAGE_SUCCESS = "Listed %1$d students.";
+    public static final String MESSAGE_EMPTY = "No students found. Use add to create a student.";
     public static final String MESSAGE_INVALID_ARGUMENTS = "The list command does not accept parameters.";
 
 
@@ -20,6 +21,8 @@ public class ListCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        return new CommandResult(MESSAGE_SUCCESS);
+        int studentCount = model.getFilteredPersonList().size();
+        return new CommandResult(studentCount == 0
+                ? MESSAGE_EMPTY : String.format(MESSAGE_SUCCESS, studentCount));
     }
 }
