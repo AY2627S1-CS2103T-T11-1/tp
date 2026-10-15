@@ -16,13 +16,22 @@ public class ResultDisplay extends UiPart<Region> {
     @FXML
     private TextArea resultDisplay;
 
+    /**
+     * Creates a read-only command result display.
+     */
     public ResultDisplay() {
         super(FXML);
     }
 
+    /**
+     * Shows the latest feedback from its beginning, including when the text is unchanged.
+     */
     public void setFeedbackToUser(String feedbackToUser) {
         requireNonNull(feedbackToUser);
         resultDisplay.setText(feedbackToUser);
+        resultDisplay.positionCaret(0);
+        resultDisplay.setScrollTop(0);
+        resultDisplay.setScrollLeft(0);
     }
 
 }

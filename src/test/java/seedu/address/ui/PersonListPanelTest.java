@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -25,15 +26,23 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import seedu.address.logic.LogicManager;
+import seedu.address.model.ModelManager;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Subject;
+import seedu.address.storage.JsonAddressBookStorage;
+import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -192,6 +201,69 @@ public class PersonListPanelTest {
             persons.clear();
             layout(list, 400);
             assertTrue(visibleCells(list).isEmpty());
+        });
+    }
+
+    @Test
+    public void mainWindow_resizeDivider_preservesCommandAndStudentAreas() throws Exception {
+        runOnJavaFxThread(() -> {
+            Path data = Path.of("unused-layout-test.json");
+            StorageManager storage = new StorageManager(new JsonAddressBookStorage(data),
+                    new JsonUserPrefsStorage(data));
+            Stage stage = new Stage();
+            MainWindow window = new MainWindow(stage, new LogicManager(new ModelManager(), storage), data);
+            window.fillInnerParts();
+            Region root = (Region) stage.getScene().getRoot();
+            root.applyCss();
+            SplitPane split = (SplitPane) root.lookup(".split-pane");
+            Region result = (Region) root.lookup("#resultDisplayPlaceholder");
+            Region students = (Region) root.lookup("#personList");
+            Region command = (Region) root.lookup("#commandBoxPlaceholder");
+            for (double width : new double[] {450, 900}) {
+                root.resize(width, 560);
+                root.layout();
+                split.setDividerPositions(0.1);
+                root.layout();
+                double smallHeight = result.getHeight();
+                split.setDividerPositions(0.9);
+                root.layout();
+                assertTrue(result.getHeight() > smallHeight);
+                assertTrue(result.getHeight() >= 100);
+                assertTrue(students.getHeight() >= 180);
+                assertTrue(students.getWidth() >= 340);
+                assertTrue(command.getHeight() > 0);
+                assertTrue(command.getBoundsInParent().getMaxY() <= split.getLayoutY());
+            }
+            stage.close();
+        });
+    }
+
+    @Test
+    public void resultDisplay_longHistoryThenNewFeedback_resetsScrollAndKeepsText() throws Exception {
+        runOnJavaFxThread(() -> {
+            ResultDisplay display = new ResultDisplay();
+            StackPane root = new StackPane(display.getRoot());
+            new Scene(root, 400, 120);
+            TextArea text = (TextArea) root.lookup("#resultDisplay");
+            String history = "Lesson records for Amy (40):\n" + "Long lesson content ".repeat(600);
+            display.setFeedbackToUser(history);
+            root.applyCss();
+            root.layout();
+            assertTrue(text.isWrapText());
+            assertFalse(text.isEditable());
+            text.positionCaret(history.length());
+            text.setScrollTop(500);
+            root.layout();
+            assertTrue(text.getScrollTop() > 0, "The history must be scrolled before testing the reset");
+            display.setFeedbackToUser(history);
+            root.layout();
+            assertEquals(history, text.getText());
+            assertEquals(0, text.getCaretPosition());
+            assertEquals(0, text.getScrollTop());
+            display.setFeedbackToUser("The student index provided is invalid.");
+            root.layout();
+            assertEquals("The student index provided is invalid.", text.getText());
+            assertEquals(0, text.getScrollTop());
         });
     }
 

@@ -126,6 +126,13 @@ Format: `view INDEX`
 
 Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra.
 
+### Reading long command results
+
+Drag the horizontal divider below the result box to give lesson histories more
+space. Long text wraps automatically; scroll inside the result box to read older
+records. Each command displays its feedback from the beginning. The command box
+remains above the result area, and the student list remains below it.
+
 ### Logging a lesson: `log`
 
 Records what you covered in a lesson for the specified student.
