@@ -4,7 +4,7 @@
 
 TutorLah is a desktop application being developed for freelance tutors who prefer typing commands to manage student details and lesson records. It aims to keep student information and notes on completed lessons in one place, making it easier to prepare for the next lesson.
 
-<img src="docs/images/Ui.png" alt="TutorLah interface" width="726">
+![TutorLah interface](docs/images/Ui.png)
 
 ## Planned MVP
 
