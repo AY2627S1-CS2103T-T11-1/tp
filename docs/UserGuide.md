@@ -175,6 +175,13 @@ _Details coming soon ..._
 
 --------------------------------------------------------------------------------------------------------------------
 
+### Reading long command results
+
+Drag the horizontal divider below the result box to give lesson histories more
+space. Long text wraps automatically; scroll inside the result box to read older
+records. Each command displays its feedback from the beginning. The command box
+remains above the result area, and the student list remains below it.
+
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
