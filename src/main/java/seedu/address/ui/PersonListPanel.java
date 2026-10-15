@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.commons.core.LogsCenter;
@@ -49,6 +50,15 @@ public class PersonListPanel extends UiPart<Region> {
     }
 
     /**
+     * Highlights and scrolls to the displayed student without moving focus from the command box.
+     */
+    public void selectPerson(Index index) {
+        requireNonNull(index);
+        personListView.getSelectionModel().clearAndSelect(index.getZeroBased());
+        personListView.scrollTo(index.getZeroBased());
+    }
+
+    /**
      * Custom {@code ListCell} that displays the graphics of a {@code Person} using a {@code PersonCard}.
      */
     class PersonListViewCell extends ListCell<Person> {
@@ -57,7 +67,7 @@ public class PersonListPanel extends UiPart<Region> {
          */
         PersonListViewCell() {
             setPrefWidth(0);
-            setOnMouseClicked(event -> {
+            addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
                 if (event.getButton() == MouseButton.PRIMARY && !isEmpty()) {
                     onPersonClick.accept(Index.fromZeroBased(getIndex()));
                 }

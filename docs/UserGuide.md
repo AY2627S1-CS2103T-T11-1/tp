@@ -124,7 +124,9 @@ Format: `view INDEX`
 
 You can also left-click a student's card to view the same lesson history.
 Clicking the same card again refreshes its history, for example after logging a
-lesson. Any text you are typing in the command box is preserved.
+lesson. Viewing by either method highlights the student's card and scrolls it
+into view. A single left-click switches histories directly from the command box.
+Any text you are typing in the command box is preserved.
 
 * `INDEX` is a positive integer from the currently displayed student list.
 * Records appear with the most recently logged first, numbered from 1. These numbers identify rows in the output, not student indexes.

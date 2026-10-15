@@ -195,6 +195,7 @@ public class MainWindow extends UiPart<Stage> {
             CommandResult commandResult = logic.execute(commandText);
             logger.info("Result: " + commandResult.getFeedbackToUser());
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
+            commandResult.getViewedStudentIndex().ifPresent(personListPanel::selectPerson);
 
             if (commandResult.isShowHelp()) {
                 handleHelp();

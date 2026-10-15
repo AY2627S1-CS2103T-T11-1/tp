@@ -35,7 +35,8 @@ public class ViewCommandTest {
         String expected = "Lesson records for " + student.getName()
                 + " (4):\n1. Calculus\n2. Algebra\n3. Geometry\n4. Algebra";
 
-        assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model, expected, expectedModel);
+        assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
+                new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
     }
 
     @Test
@@ -43,7 +44,17 @@ public class ViewCommandTest {
         Person student = model.getFilteredPersonList().get(0);
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
-                "No lessons logged yet for " + student.getName() + ".", expectedModel);
+                new CommandResult("No lessons logged yet for " + student.getName() + ".", INDEX_FIRST_PERSON),
+                expectedModel);
+    }
+
+    @Test
+    public void execute_secondStudent_identifiesDisplayedStudentToHighlight() {
+        Person student = model.getFilteredPersonList().get(1);
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        assertCommandSuccess(new ViewCommand(INDEX_SECOND_PERSON), model,
+                new CommandResult("No lessons logged yet for " + student.getName() + ".", INDEX_SECOND_PERSON),
+                expectedModel);
     }
 
     @Test
@@ -56,7 +67,8 @@ public class ViewCommandTest {
         String expected = "Lesson records for " + student.getName()
                 + " (1):\n1. Only this student's lesson";
 
-        assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model, expected, expectedModel);
+        assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
+                new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
         assertCommandFailure(new ViewCommand(INDEX_SECOND_PERSON), model,
                 Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }

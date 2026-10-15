@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -145,13 +146,69 @@ public class PersonListPanelTest {
             new Scene(root, 450, 450);
             ListView<?> list = (ListView<?>) root.lookup("#personListView");
             layout(list, 450);
-            list.scrollTo(44);
+            panel.selectPerson(Index.fromOneBased(45));
             layout(list, 450);
+            assertEquals(44, list.getSelectionModel().getSelectedIndex());
+            assertTrue(clicked.isEmpty());
             clickNode(label(cellAt(list, 44), "name"), MouseButton.PRIMARY);
             list.scrollTo(0);
             layout(list, 450);
             clickNode(label(cellAt(list, 0), "name"), MouseButton.PRIMARY);
             assertEquals(List.of(Index.fromOneBased(45), Index.fromOneBased(1)), clicked);
+        });
+    }
+
+    @Test
+    public void commandBox_viewMovesHighlight_retainsSelectionOnError(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "view 2");
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 1");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 999");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 2");
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void studentCard_firstPressAfterView_showsAndHighlightsStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                enterClickTestCommand(root, "view 2");
+                TextField input = (TextField) root.lookup("#commandTextField");
+                input.requestFocus();
+                label(cellAt(list, 0), "name").fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, MouseButton.PRIMARY));
+                root.applyCss();
+                root.layout();
+                assertEquals("Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra", result.getText());
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 1");
+                label(cellAt(list, 1), "name").fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, MouseButton.PRIMARY));
+                root.layout();
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
         });
     }
 
@@ -288,11 +345,23 @@ public class PersonListPanelTest {
     }
 
     /**
-     * Creates a released-button click event for a card or blank list cell.
+     * Sends a complete mouse gesture and verifies that one press is sufficient to trigger the action.
      */
     private static void clickNode(Node node, MouseButton button) {
-        node.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 1, 1, 1, 1, button, 1,
-                false, false, false, false, false, false, false, false, false, true, null));
+        for (EventType<MouseEvent> type : List.of(MouseEvent.MOUSE_PRESSED,
+                MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED)) {
+            node.fireEvent(mouseEvent(type, button));
+        }
+    }
+
+    /**
+     * Creates mouse events with button state matching the press or release phase.
+     */
+    private static MouseEvent mouseEvent(EventType<MouseEvent> type, MouseButton button) {
+        boolean pressed = type == MouseEvent.MOUSE_PRESSED;
+        return new MouseEvent(type, 1, 1, 1, 1, button, 1, false, false, false, false,
+                pressed && button == MouseButton.PRIMARY, pressed && button == MouseButton.MIDDLE,
+                pressed && button == MouseButton.SECONDARY, false, false, true, null);
     }
 
     /**

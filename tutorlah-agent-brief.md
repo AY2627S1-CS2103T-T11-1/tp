@@ -56,6 +56,8 @@ Any older document that says `lessons INDEX`, `LessonsCommand` or
 **GUI shortcut:** left-clicking a populated student card runs `view INDEX` for
 its current displayed index. Clicking it again refreshes the output. Existing
 history messages and newest-first ordering apply, and typed command text is kept.
+Successful views also highlight and scroll to that student's card. The shortcut
+runs on the first primary mouse press, before selection can rebuild the cell.
 List updates and programmatic selection changes do not execute this shortcut.
 
 Other messages:
@@ -132,6 +134,11 @@ tests must not assert that indexes above 1000 are accepted.
 - `PersonListPanel(ObservableList<Person>, Consumer<Index>)` invokes the callback
   for primary-button clicks on populated cards. `MainWindow` routes that index
   through `Logic.execute("view " + index.getOneBased())` and displays its result.
+- `ViewCommand` returns `CommandResult(feedback, Index)`. The optional
+  `getViewedStudentIndex()` identifies the displayed student to highlight.
+  Other commands leave it empty. `MainWindow` passes successful view indexes to
+  `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
+  executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
