@@ -46,7 +46,7 @@ public class ViewCommand extends Command {
         Person student = students.get(targetIndex.getZeroBased());
         List<Lesson> lessons = student.getLessons();
         if (lessons.isEmpty()) {
-            return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
+            return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()), targetIndex);
         }
 
         StringBuilder result = new StringBuilder(String.format(MESSAGE_LESSONS_HEADER,
@@ -54,7 +54,7 @@ public class ViewCommand extends Command {
         for (int i = lessons.size() - 1; i >= 0; i--) {
             result.append("\n").append(lessons.size() - i).append(". ").append(lessons.get(i).content);
         }
-        return new CommandResult(result.toString());
+        return new CommandResult(result.toString(), targetIndex);
     }
 
     @Override

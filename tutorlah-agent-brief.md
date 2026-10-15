@@ -3,7 +3,8 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 15, 2026, for issue #59 (student index validation).
+Last updated: Oct 15, 2026, for issues #59 and #90 (index validation
+and student-card clicks).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -52,6 +53,13 @@ disagrees with the code on `master`, stop and ask the team.
 **`view` replaces `lessons`.** The team renamed the command on Oct 8.
 Any older document that says `lessons INDEX`, `LessonsCommand` or
 `lessons-command` means `view`.
+
+**GUI shortcut:** left-clicking a populated student card runs `view INDEX` for
+its current displayed index. Clicking it again refreshes the output. Existing
+history messages and newest-first ordering apply, and typed command text is kept.
+Successful views also highlight and scroll to that student's card. The shortcut
+runs on the first primary mouse press, before selection can rebuild the cell.
+List updates and programmatic selection changes do not execute this shortcut.
 
 Other messages:
 
@@ -121,6 +129,14 @@ accepted by the parser. Commands apply these errors consistently:
   Deleting a student removes their lessons, because lessons live inside
   `Person`.
 - `Messages.format(Person)` prints the add and delete format above.
+- `PersonListPanel(ObservableList<Person>, Consumer<Index>)` invokes the callback
+  for primary-button clicks on populated cards. `MainWindow` routes that index
+  through `Logic.execute("view " + index.getOneBased())` and displays its result.
+- `ViewCommand` returns `CommandResult(feedback, Index)`. The optional
+  `getViewedStudentIndex()` identifies the displayed student to highlight.
+  Other commands leave it empty. `MainWindow` passes successful view indexes to
+  `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
+  executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no

@@ -13,8 +13,10 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -114,7 +116,7 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
-        personListPanel = new PersonListPanel(logic.getFilteredPersonList());
+        personListPanel = new PersonListPanel(logic.getFilteredPersonList(), this::handlePersonClick);
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 
         resultDisplay = new ResultDisplay();
@@ -125,6 +127,18 @@ public class MainWindow extends UiPart<Stage> {
 
         CommandBox commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+    }
+
+    /**
+     * Views a clicked student's lessons through the same command path as typed input.
+     */
+    private void handlePersonClick(Index index) {
+        try {
+            executeCommand(ViewCommand.COMMAND_WORD + " " + index.getOneBased());
+        } catch (CommandException | ParseException e) {
+            // executeCommand has already displayed the error in the result area.
+            logger.warning("Unable to view student lessons: " + e.getMessage());
+        }
     }
 
     /**
@@ -181,6 +195,7 @@ public class MainWindow extends UiPart<Stage> {
             CommandResult commandResult = logic.execute(commandText);
             logger.info("Result: " + commandResult.getFeedbackToUser());
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
+            commandResult.getViewedStudentIndex().ifPresent(personListPanel::selectPerson);
 
             if (commandResult.isShowHelp()) {
                 handleHelp();

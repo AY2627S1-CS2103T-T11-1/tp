@@ -1,6 +1,7 @@
 # TutorLah: context
 
-Last updated: Oct 15, 2026, for issue #59 (student index validation).
+Last updated: Oct 15, 2026, for issues #59 and #90 (index validation
+and student-card clicks).
 
 ## What it is
 
@@ -58,7 +59,12 @@ recorded about them, not building a new kind of app.
 - **Storage:** `JsonAdaptedPerson` saves level, subject and lessons. This is the
   same pattern as the `remark` tutorial.
 - **UI:** the person card shows level and subject. Lessons appear in the result
-  box in the MVP (Feature 5).
+  box. Tutors can type `view INDEX` or left-click a student card to view that
+  student's history. Repeated clicks refresh it, while command text is preserved.
+  The click callback uses the current displayed index and the existing command path.
+  Successful views from either input method highlight the matching card and scroll
+  it into view. Card presses are handled before selection updates, so switching
+  from typed commands needs only one click.
 
 ## MVP commands
 

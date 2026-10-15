@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -31,15 +33,20 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
@@ -56,7 +63,8 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class PersonListPanelTest {
 
-    private static final long FX_THREAD_TIMEOUT_SECONDS = 5;
+    // Allow for first-window initialization and scheduling delays on CI runners.
+    private static final long FX_THREAD_TIMEOUT_SECONDS = 15;
     private static final double LAYOUT_TOLERANCE = 1;
     private static final Person SHORT_PERSON = new PersonBuilder().withName("Alicia Tan")
             .withAddress("10 Short Street").withLevel("Sec 2").withSubject("E-Math").build();
@@ -96,6 +104,278 @@ public class PersonListPanelTest {
         }
     }
 
+    @Test
+    public void studentCard_primaryClicksOnly_reportsCurrentDisplayedIndex() throws Exception {
+        runOnJavaFxThread(() -> {
+            ObservableList<Person> persons = FXCollections.observableArrayList(SHORT_PERSON, CHARLOTTE);
+            List<Index> clicked = new ArrayList<>();
+            PersonListPanel panel = new PersonListPanel(persons, clicked::add);
+            StackPane root = new StackPane(panel.getRoot());
+            new Scene(root, 450, 450);
+            ListView<?> list = (ListView<?>) root.lookup("#personListView");
+            layout(list, 450);
+            clickNode(label(cellAt(list, 1), "name"), MouseButton.PRIMARY);
+            assertEquals(List.of(Index.fromOneBased(2)), clicked);
+
+            clickNode(cellAt(list, 1), MouseButton.SECONDARY);
+            clickNode(cellAt(list, 1), MouseButton.MIDDLE);
+            ListCell<?> emptyCell = list.lookupAll(".list-cell").stream()
+                    .filter(node -> node instanceof ListCell<?> cell && cell.isEmpty())
+                    .map(node -> (ListCell<?>) node).findFirst().orElseThrow();
+            clickNode(emptyCell, MouseButton.PRIMARY);
+            list.getSelectionModel().select(0);
+            persons.remove(0);
+            layout(list, 450);
+            assertEquals(List.of(Index.fromOneBased(2)), clicked);
+
+            clickNode(label(cellAt(list, 0), "address"), MouseButton.PRIMARY);
+            clickNode(cellAt(list, 0), MouseButton.PRIMARY);
+            assertEquals(List.of(Index.fromOneBased(2), Index.fromOneBased(1), Index.fromOneBased(1)), clicked);
+        });
+    }
+
+    @Test
+    public void studentCard_scrollAndReuse_reportsCurrentIndex() throws Exception {
+        runOnJavaFxThread(() -> {
+            ObservableList<Person> persons = FXCollections.observableArrayList();
+            for (int index = 0; index < 48; index++) {
+                persons.add(index % 2 == 0 ? SHORT_PERSON : CHARLOTTE);
+            }
+            List<Index> clicked = new ArrayList<>();
+            PersonListPanel panel = new PersonListPanel(persons, clicked::add);
+            StackPane root = new StackPane(panel.getRoot());
+            new Scene(root, 450, 450);
+            ListView<?> list = (ListView<?>) root.lookup("#personListView");
+            layout(list, 450);
+            panel.selectPerson(Index.fromOneBased(45));
+            layout(list, 450);
+            assertEquals(44, list.getSelectionModel().getSelectedIndex());
+            assertTrue(clicked.isEmpty());
+            clickNode(label(cellAt(list, 44), "name"), MouseButton.PRIMARY);
+            list.scrollTo(0);
+            layout(list, 450);
+            clickNode(label(cellAt(list, 0), "name"), MouseButton.PRIMARY);
+            assertEquals(List.of(Index.fromOneBased(45), Index.fromOneBased(1)), clicked);
+        });
+    }
+
+    @Test
+    public void commandBox_viewMovesHighlight_retainsSelectionOnError(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "view 2");
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 1");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 999");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 2");
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void studentCard_firstPressAfterView_showsAndHighlightsStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                enterClickTestCommand(root, "view 2");
+                TextField input = (TextField) root.lookup("#commandTextField");
+                input.requestFocus();
+                label(cellAt(list, 0), "name").fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, MouseButton.PRIMARY));
+                root.applyCss();
+                root.layout();
+                assertEquals("Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra", result.getText());
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                enterClickTestCommand(root, "view 1");
+                label(cellAt(list, 1), "name").fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, MouseButton.PRIMARY));
+                root.layout();
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void studentCard_clickAndView_showsSameHistoryAndKeepsCommandText(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                TextField input = (TextField) root.lookup("#commandTextField");
+                String amyHistory = "Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra";
+                List<Person> beforeClick = List.copyOf(logic.getFilteredPersonList());
+                clickStudent(root, 0);
+                assertEquals(amyHistory, result.getText());
+                assertEquals(beforeClick, logic.getFilteredPersonList());
+                enterClickTestCommand(root, "view 1");
+                assertEquals(amyHistory, result.getText());
+                clickStudent(root, 1);
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                enterClickTestCommand(root, "log 2 c/Calculus");
+                assertEquals("Logged lesson for Ben: Calculus", result.getText());
+                input.setText("log 2 c/");
+                clickStudent(root, 1);
+                assertEquals("Lesson records for Ben (1):\n1. Calculus", result.getText());
+                assertEquals("log 2 c/", input.getText());
+                clickStudent(root, 0);
+                assertEquals(amyHistory, result.getText());
+                assertEquals("log 2 c/", input.getText());
+                enterClickTestCommand(root, "view 999");
+                clickStudent(root, 0);
+                assertEquals(amyHistory, result.getText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void studentCard_afterDeleteAndFilter_viewsCurrentStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                model.updateFilteredPersonList(person -> person.getName().fullName.equals("Ben"));
+                root.layout();
+                clickStudent(root, 0);
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                enterClickTestCommand(root, "list");
+                clickStudent(root, 0);
+                enterClickTestCommand(root, "delete 1");
+                assertTrue(result.getText().startsWith("Deleted student: Amy;"));
+                clickStudent(root, 0);
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                enterClickTestCommand(root, "add n/Carol p/81234569 a/Test Address l/JC1 sub/H2 Math");
+                assertTrue(result.getText().startsWith("New student added: Carol;"));
+                clickStudent(root, 1);
+                assertEquals("No lessons logged yet for Carol.", result.getText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void studentCard_commandFailure_displaysErrorWithoutThrowing(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(directory.resolve("students.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new IOException("disk unavailable");
+                }
+            };
+            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), failingStorage, directory),
+                    directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                clickStudent(root, 0);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                assertEquals(String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable"), result.getText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
+     * Creates distinct test students with repeated lessons for Amy and no lessons for Ben.
+     */
+    private static ModelManager clickTestModel() {
+        ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder().withName("Amy").withPhone("81234567")
+                .withLessons("Algebra", "Geometry", "Algebra").build());
+        model.addPerson(new PersonBuilder().withName("Ben").withPhone("81234568").build());
+        return model;
+    }
+
+    /**
+     * Creates real logic with isolated student and preference storage for click tests.
+     */
+    private static Logic clickTestLogic(ModelManager model, JsonAddressBookStorage storage, Path directory) {
+        return new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(directory.resolve("preferences.json"))));
+    }
+
+    /**
+     * Loads the real main window and settles its controls before clicking cards.
+     */
+    private static MainWindow createClickableWindow(Logic logic, Path directory) {
+        MainWindow window = new MainWindow(new Stage(), logic, directory.resolve("students.json"));
+        window.fillInnerParts();
+        Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+        root.resize(450, 560);
+        root.applyCss();
+        root.layout();
+        return window;
+    }
+
+    /**
+     * Fires a mouse click on a card's child label to exercise event bubbling into the list cell.
+     */
+    private static void clickStudent(Region root, int index) {
+        ListView<?> list = (ListView<?>) root.lookup("#personListView");
+        clickNode(label(cellAt(list, index), "name"), MouseButton.PRIMARY);
+        root.applyCss();
+        root.layout();
+    }
+
+    /**
+     * Sends a complete mouse gesture and verifies that one press is sufficient to trigger the action.
+     */
+    private static void clickNode(Node node, MouseButton button) {
+        for (EventType<MouseEvent> type : List.of(MouseEvent.MOUSE_PRESSED,
+                MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED)) {
+            node.fireEvent(mouseEvent(type, button));
+        }
+    }
+
+    /**
+     * Creates mouse events with button state matching the press or release phase.
+     */
+    private static MouseEvent mouseEvent(EventType<MouseEvent> type, MouseButton button) {
+        boolean pressed = type == MouseEvent.MOUSE_PRESSED;
+        return new MouseEvent(type, 1, 1, 1, 1, button, 1, false, false, false, false,
+                pressed && button == MouseButton.PRIMARY, pressed && button == MouseButton.MIDDLE,
+                pressed && button == MouseButton.SECONDARY, false, false, true, null);
+    }
+
+    /**
+     * Submits a typed command through the command box before checking subsequent clicks.
+     */
+    private static void enterClickTestCommand(Region root, String command) {
+        TextField input = (TextField) root.lookup("#commandTextField");
+        input.setText(command);
+        input.fireEvent(new ActionEvent());
+        root.applyCss();
+        root.layout();
+    }
+
     /**
      * Verifies that a wrapped address grows its row and that widening restores the compact height.
      */
@@ -131,7 +411,7 @@ public class PersonListPanelTest {
     public void personListChanges_emptyStateTracksListContents() throws Exception {
         runOnJavaFxThread(() -> {
             ObservableList<Person> persons = FXCollections.observableArrayList();
-            PersonListPanel panel = new PersonListPanel(persons);
+            PersonListPanel panel = new PersonListPanel(persons, index -> {});
             StackPane root = (StackPane) panel.getRoot();
             ListView<?> personListView = (ListView<?>) root.getChildren().get(0);
             VBox emptyState = (VBox) root.getChildren().get(1);
@@ -396,7 +676,7 @@ public class PersonListPanelTest {
      * Creates the real list panel in a scene using the application's stylesheets.
      */
     private static ListView<?> createList(ObservableList<Person> persons) {
-        PersonListPanel panel = new PersonListPanel(persons);
+        PersonListPanel panel = new PersonListPanel(persons, index -> {});
         StackPane root = new StackPane(panel.getRoot());
         Scene scene = new Scene(root, 740, 450);
         scene.getStylesheets().addAll(PersonListPanel.class.getResource("/view/DarkTheme.css").toExternalForm(),

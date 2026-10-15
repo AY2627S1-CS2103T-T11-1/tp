@@ -1,5 +1,8 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javafx.beans.binding.Bindings;
@@ -8,9 +11,12 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 
 /**
@@ -19,6 +25,7 @@ import seedu.address.model.person.Person;
 public class PersonListPanel extends UiPart<Region> {
     private static final String FXML = "PersonListPanel.fxml";
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
+    private final Consumer<Index> onPersonClick;
 
     @FXML
     private ListView<Person> personListView;
@@ -27,10 +34,11 @@ public class PersonListPanel extends UiPart<Region> {
     private VBox emptyState;
 
     /**
-     * Creates a {@code PersonListPanel} with the given {@code ObservableList}.
+     * Creates a panel that passes a clicked student's displayed index to {@code onPersonClick}.
      */
-    public PersonListPanel(ObservableList<Person> personList) {
+    public PersonListPanel(ObservableList<Person> personList, Consumer<Index> onPersonClick) {
         super(FXML);
+        this.onPersonClick = requireNonNull(onPersonClick);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
 
@@ -42,6 +50,15 @@ public class PersonListPanel extends UiPart<Region> {
     }
 
     /**
+     * Highlights and scrolls to the displayed student without moving focus from the command box.
+     */
+    public void selectPerson(Index index) {
+        requireNonNull(index);
+        personListView.getSelectionModel().clearAndSelect(index.getZeroBased());
+        personListView.scrollTo(index.getZeroBased());
+    }
+
+    /**
      * Custom {@code ListCell} that displays the graphics of a {@code Person} using a {@code PersonCard}.
      */
     class PersonListViewCell extends ListCell<Person> {
@@ -50,6 +67,11 @@ public class PersonListPanel extends UiPart<Region> {
          */
         PersonListViewCell() {
             setPrefWidth(0);
+            addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                if (event.getButton() == MouseButton.PRIMARY && !isEmpty()) {
+                    onPersonClick.accept(Index.fromZeroBased(getIndex()));
+                }
+            });
         }
 
         @Override
