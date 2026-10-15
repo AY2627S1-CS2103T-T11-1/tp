@@ -24,7 +24,7 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar TutorLah.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample students.<br>
-   ![Ui](images/Ui.png)
+   <img src="images/Ui.png" alt="TutorLah interface" width="726">
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:

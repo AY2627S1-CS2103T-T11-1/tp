@@ -8,7 +8,7 @@
 [![Java CI](https://github.com/AY2627S1-CS2103T-T11-1/tp/actions/workflows/gradle.yml/badge.svg?branch=master)](https://github.com/AY2627S1-CS2103T-T11-1/tp/actions/workflows/gradle.yml)
 [![codecov](https://codecov.io/gh/AY2627S1-CS2103T-T11-1/tp/branch/master/graph/badge.svg)](https://codecov.io/gh/AY2627S1-CS2103T-T11-1/tp)
 
-![Ui](images/Ui.png)
+<img src="images/Ui.png" alt="TutorLah interface" width="726">
 
 **TutorLah is a desktop application for managing your contact details.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
 
