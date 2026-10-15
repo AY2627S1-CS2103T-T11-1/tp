@@ -6,7 +6,7 @@
 
 # TutorLah User Guide
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+TutorLah is a **desktop application for freelance tutors to keep track of their students and the lessons they have taught them, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). Store each student's contact details, level and subject, record what you covered after every lesson, and look back at a student's lesson history before the next one, without relying on scattered notes or memory. If you type quickly, TutorLah lets you do this faster than a typical mouse-driven application.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -18,22 +18,26 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-T11-1/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for TutorLah. Your data will be saved in this folder.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample students.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all students.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `log 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
+
+   * `view 1` : Shows the lesson records of the 1st student in the list, most recent first.
+
+   * `delete 3` : Deletes the 3rd student shown in the current list, together with their lesson records.
 
    * `exit` : Exits the app.
 
@@ -48,16 +52,14 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 **Notes about the command format:**<br>
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
-  For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
+  For example, in `add n/NAME`, replace `NAME` with a value such as `Tan Wei Ming`.
 
-* Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
+* Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
 
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+* Parameters with prefixes can be in any order.<br>
+  For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
-* Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+* `INDEX` refers to the number shown beside a student in the currently displayed student list. It must be a positive integer such as 1, 2, 3, ...
 
 * Extraneous parameters for `help` and `exit` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
