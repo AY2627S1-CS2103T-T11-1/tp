@@ -16,10 +16,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -28,13 +30,17 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.Messages;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.ModelManager;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -46,7 +52,7 @@ import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
- * Verifies empty-state switching and student-card layout, including resizing and reused list cells.
+ * Verifies student-card layout, empty states and command feedback in the main window.
  */
 public class PersonListPanelTest {
 
@@ -62,6 +68,9 @@ public class PersonListPanelTest {
 
     /** Records successful startup so cleanup never waits for a failed toolkit. */
     private static boolean isJavaFxStarted;
+
+    @TempDir
+    public Path temporaryFolder;
 
     /**
      * Starts JavaFX and waits until its application thread is ready.
@@ -265,6 +274,122 @@ public class PersonListPanelTest {
             assertEquals("The student index provided is invalid.", text.getText());
             assertEquals(0, text.getScrollTop());
         });
+    }
+
+    @Test
+    public void commandBox_viewSequences_displaysLatestHistoryAndErrors() throws Exception {
+        runOnJavaFxThread(() -> {
+            MainWindow window = createLessonWindow();
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertFeedback(root, "view 1", "No lessons logged yet for Amy.", false);
+                assertFeedback(root, "log 1 c/Algebra", "Logged lesson for Amy: Algebra", false);
+                assertFeedback(root, "view 1", "Lesson records for Amy (1):\n1. Algebra", false);
+                assertFeedback(root, "log 1 c/Geometry", "Logged lesson for Amy: Geometry", false);
+                assertFeedback(root, "log 1 c/Algebra", "Logged lesson for Amy: Algebra", false);
+                String amyHistory = "Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra";
+                assertFeedback(root, "view 1", amyHistory, false);
+                assertFeedback(root, "view 2", "No lessons logged yet for Ben.", false);
+                assertFeedback(root, "log 2 c/Calculus", "Logged lesson for Ben: Calculus", false);
+                assertFeedback(root, "view 2", "Lesson records for Ben (1):\n1. Calculus", false);
+                assertFeedback(root, "view 1", amyHistory, false);
+                assertFeedback(root, "view 3", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
+                assertFeedback(root, "view abc", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                        ViewCommand.MESSAGE_USAGE), true);
+                assertFeedback(root, "log 1 c/", Lesson.MESSAGE_CONSTRAINTS, true);
+                assertFeedback(root, "view 1", amyHistory, false);
+                submitCommand(root, "delete 1");
+                assertFeedback(root, "view 1", "Lesson records for Ben (1):\n1. Calculus", false);
+                assertFeedback(root, "view 2", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_longHistoryAndStudentSwitch_resetsScrollWithoutLosingRecords() throws Exception {
+        runOnJavaFxThread(() -> {
+            MainWindow window = createLessonWindow();
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                String boundaryContent = "A".repeat(Lesson.MAX_LENGTH);
+                submitCommand(root, "log 1 c/" + boundaryContent);
+                for (int index = 2; index <= 40; index++) {
+                    submitCommand(root, "log 1 c/Topic " + index);
+                }
+                StringBuilder expected = new StringBuilder("Lesson records for Amy (40):");
+                for (int index = 40; index >= 2; index--) {
+                    expected.append("\n").append(41 - index).append(". Topic ").append(index);
+                }
+                expected.append("\n40. ").append(boundaryContent);
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                SplitPane split = (SplitPane) root.lookup(".split-pane");
+                for (double width : new double[] {450, 900}) {
+                    root.resize(width, 560);
+                    root.layout();
+                    for (double dividerPosition : new double[] {0.1, 0.9}) {
+                        split.setDividerPositions(dividerPosition);
+                        root.layout();
+                        assertFeedback(root, "view 1", expected.toString(), false);
+                        assertTrue(result.isWrapText());
+                        assertEquals(0, result.getScrollTop());
+                        result.positionCaret(result.getLength());
+                        result.setScrollTop(Double.MAX_VALUE);
+                        root.layout();
+                        assertTrue(result.getScrollTop() > 0, "Older records must be reachable by scrolling");
+                        assertFeedback(root, "view 2", "No lessons logged yet for Ben.", false);
+                        assertEquals(0, result.getScrollTop());
+                        assertFeedback(root, "view 1", expected.toString(), false);
+                        assertEquals(0, result.getScrollTop());
+                    }
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
+     * Creates a main window with isolated storage and two students without lessons.
+     */
+    private MainWindow createLessonWindow() {
+        ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder().withName("Amy").withPhone("81234567").build());
+        model.addPerson(new PersonBuilder().withName("Ben").withPhone("81234568").build());
+        Path data = temporaryFolder.resolve("students.json");
+        StorageManager storage = new StorageManager(new JsonAddressBookStorage(data),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json")));
+        MainWindow window = new MainWindow(new Stage(), new LogicManager(model, storage), data);
+        window.fillInnerParts();
+        Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+        root.resize(450, 560);
+        root.applyCss();
+        root.layout();
+        return window;
+    }
+
+    /**
+     * Sends input through the command box's Enter handler and settles the real scene layout.
+     */
+    private static void submitCommand(Region root, String command) {
+        TextField input = (TextField) root.lookup("#commandTextField");
+        input.setText(command);
+        input.fireEvent(new ActionEvent());
+        root.applyCss();
+        root.layout();
+    }
+
+    /**
+     * Checks the displayed feedback and command-box error state after a command.
+     */
+    private static void assertFeedback(Region root, String command, String expected, boolean isError) {
+        submitCommand(root, command);
+        TextArea result = (TextArea) root.lookup("#resultDisplay");
+        TextField input = (TextField) root.lookup("#commandTextField");
+        assertEquals(expected, result.getText());
+        assertEquals(isError, input.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+        assertEquals(isError ? command : "", input.getText());
     }
 
     /**
