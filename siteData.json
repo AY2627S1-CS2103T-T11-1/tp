@@ -116,6 +116,7 @@
         "listing-all-persons-list": "Listing all persons: list",
         "deleting-a-person-delete": "Deleting a person: delete",
         "viewing-a-student-s-lesson-records-view": "Viewing a student's lesson records: view",
+        "reading-long-command-results": "Reading long command results",
         "logging-a-lesson-log": "Logging a lesson: log",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
