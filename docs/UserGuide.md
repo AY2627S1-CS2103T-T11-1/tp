@@ -98,7 +98,6 @@ Shows all students and reports the number displayed.
 Format: `list`
 
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
-  For one student, the message is `Listed 1 students.`.
 * Without students: `No students found. Use add to create a student.`
 * Extra arguments, such as `list 3`, are rejected with
   `The list command does not accept parameters.`. No student data is changed.
