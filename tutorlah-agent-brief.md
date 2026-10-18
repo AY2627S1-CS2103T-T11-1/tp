@@ -3,8 +3,7 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 15, 2026, for issues #59, #90 and #93 (index validation,
-student-card clicks and the website screenshot).
+Last updated: Oct 16, 2026, for issue #85 (singular list message).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -46,7 +45,7 @@ disagrees with the code on `master`, stop and ask the team.
 |---|---|---|
 | Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
-| List | `list` | `Listed {COUNT} students.` or `No students found. Use add to create a student.` |
+| List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME}: {CONTENT}` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one numbered line per lesson, or `No lessons logged yet for {NAME}.` |
 
