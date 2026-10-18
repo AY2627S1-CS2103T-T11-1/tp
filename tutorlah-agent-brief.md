@@ -3,7 +3,9 @@
 Paste this whole file into your coding agent before giving it your task.
 It replaces the "Shared rules" and "Shared conventions and agreed
 interfaces" sections of the Oct 5 work plan, which are out of date.
-Last updated: Oct 16, 2026, for issue #85 (singular list message).
+
+Last updated: Oct 18, 2026, for issues #85 (singular list message) and
+#103 (CI check command and Codecov target).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -29,8 +31,11 @@ disagrees with the code on `master`, stop and ask the team.
   branch. Do not rebase.
 - **Keep the PR to the task.** Do not rename classes, packages or files
   outside the task. In particular, do not rename `Person` to `Student`.
-- **Checks:** `./gradlew clean test checkstyleMain checkstyleTest` must pass.
-  New code needs tests. Codecov's patch target is about 75%.
+- **Checks:** `./gradlew clean check coverage` must pass. This is what CI
+  runs (`.github/workflows/gradle.yml`), and it includes the tests and
+  Checkstyle. New code needs tests. Codecov's patch target is the current
+  coverage of `master` (about 85% on Oct 18), so new and changed lines must
+  be covered at least that well.
 - **Style:** match the surrounding AB3 code. Javadoc on public classes and
   methods. Write `equals` in the same layout as `Address#equals`.
   Use `ToStringBuilder` for `toString`. No wildcard imports.
@@ -159,8 +164,7 @@ Ask the agent to run each check and report the result. Open the PR only
 when all pass.
 
 - [ ] Branch made from an up-to-date `master`. No commits on `master`.
-- [ ] `./gradlew clean test` passes.
-- [ ] `./gradlew checkstyleMain checkstyleTest` passes.
+- [ ] `./gradlew clean check coverage` passes (tests and Checkstyle, as in CI).
 - [ ] Every acceptance criterion in the task is met. Quote each one and say
       how it was checked.
 - [ ] Every user-facing message matches this brief character for character.
