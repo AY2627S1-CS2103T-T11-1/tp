@@ -53,7 +53,7 @@ public class ListCommandTest {
         singleStudentModel.addPerson(AMY);
         Model expectedSingleStudentModel = new ModelManager(singleStudentModel.getAddressBook(), new UserPrefs());
         assertCommandSuccess(new ListCommand(), singleStudentModel,
-                "Listed 1 students.", expectedSingleStudentModel);
+                "Listed 1 student.", expectedSingleStudentModel);
     }
 
     @Test
