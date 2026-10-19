@@ -1,18 +1,47 @@
 # TutorLah agent brief
 
-Paste this whole file into your coding agent before giving it your task.
-It replaces the "Shared rules" and "Shared conventions and agreed
-interfaces" sections of the Oct 5 work plan, which are out of date.
+Coding agents load this file through `AGENTS.md` in the repo root. Claude
+Code users add a local `CLAUDE.md` containing `@AGENTS.md` (Git ignores
+it). If your tool reads neither, paste this file in before your task. It
+replaces the "Shared rules" and "Shared conventions and agreed interfaces"
+sections of the Oct 5 work plan.
 
-Last updated: Oct 18, 2026, for issues #85 (singular list message) and
-#103 (CI check command and Codecov target).
+Last updated: Oct 18, 2026, for issue #106 (automatic loading and team
+process rules).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
 the date above.
 
-If anything here disagrees with an older document, this file wins. If it
-disagrees with the code on `master`, stop and ask the team.
+**Order of authority:** course rules (section 9) come first, then this
+file, then older team documents, then the agent's own defaults. If this
+file disagrees with the code on `master`, or two sources disagree, stop and
+ask the team. Do not guess.
+
+---
+
+## Non-negotiables
+
+- Changes reach `master` only through a reviewed PR. Never push to the
+  team repo (`upstream`).
+- **Agents do not commit, push, or post issues, PRs, comments, reviews or
+  releases.** The human does that after reading the change.
+- No `Co-Authored-By:` trailers or "Generated with" lines for AI tools in
+  commits or PR text. Credit AI use in the DG Acknowledgements instead, as
+  the course's [reuse policy][reuse] requires for widespread use.
+- Credit reused or adapted code and text next to where it is used and in
+  the DG Acknowledgements. This includes other teams' tP work, which the
+  course checks for automatically.
+- Use made-up student data in tests, screenshots and examples. Run manual
+  tests from an empty folder, never against your own `data/` folder.
+- Report checks that failed or were skipped. Never describe intended
+  behaviour as tested.
+- Check the source before stating a fact: open the file, page or command
+  output instead of answering from memory, and confirm a path exists
+  before giving it.
+- Before drafting an issue, search the open issues for the same scope.
+- Use straight quotes (`"` and `'`) in code, messages and docs. Curly
+  quotes break exact-text tests and copied commands.
 
 ---
 
@@ -23,19 +52,39 @@ disagrees with the code on `master`, stop and ask the team.
   (`git pull upstream master` first). Never commit on `master`.
 - **One PR per task**, linked to its issue (`Fixes #N`), with the current
   milestone and one reviewer from the team.
-- **Commit subjects** follow the course Git convention: imperative mood,
-  capitalised, no full stop, **at most 50 characters** (72 is the hard
+- **Commit subjects** follow the course [Git convention][git]: imperative
+  mood, capitalised, no full stop, **at most 50 characters** (72 is the hard
   limit). If a body is needed, leave a blank line and wrap at 72.
+- **Commit bodies** say what and why, not how. Describe the situation in the
+  present tense, then introduce the change with "Let's ...". Avoid
+  "currently" and "originally".
+- **PR text** (descriptions, issues, comments) is not wrapped: write each
+  paragraph or bullet as one line, because GitHub shows every line break.
+- **PR description:** `Fixes #N`, or `Fixes part of #N` for a partial fix.
+  Add before-and-after screenshots for UI changes. Open the PR as a draft
+  until CI passes. See the [GitHub conventions][github-conv].
+- **Before merging:** merge the latest `master` into the branch and wait for
+  CI to pass on that result. Never merge while CI is failing or has not run.
 - **Merging:** use "Create a merge commit". Do not squash or rebase, and do
   not delete merged branches. To catch up with `master`, merge it into your
-  branch. Do not rebase.
+  branch. Do not rebase. These protect the course's grading scripts
+  ([Appendix E][appendix-e]).
+- **Merge commit subject:** type `Issue title #N (#PR)` into GitHub's merge
+  title box, within 72 characters. For example:
+  `Update UG command summary to TutorLah formats #99 (#105)`
 - **Keep the PR to the task.** Do not rename classes, packages or files
   outside the task. In particular, do not rename `Person` to `Student`.
+  Do not reformat or tidy files the task does not need: it hides the real
+  change and credits the lines to the wrong author in RepoSense.
 - **Checks:** `./gradlew clean check coverage` must pass. This is what CI
   runs (`.github/workflows/gradle.yml`), and it includes the tests and
   Checkstyle. New code needs tests. Codecov's patch target is the current
   coverage of `master` (about 85% on Oct 18), so new and changed lines must
   be covered at least that well.
+- **Java 25:** the build needs JDK 25. If Gradle fails with
+  `invalid source release: 25`, the shell is using an older JDK. Agent
+  shells often skip SDKMAN, so set it first, for example on macOS:
+  `export JAVA_HOME="$HOME/.sdkman/candidates/java/current"`.
 - **Style:** match the surrounding AB3 code. Javadoc on public classes and
   methods. Write `equals` in the same layout as `Address#equals`.
   Use `ToStringBuilder` for `toString`. No wildcard imports.
@@ -172,9 +221,109 @@ when all pass.
       section 3.
 - [ ] Only the files the task needs changed (`git diff --stat master`).
 - [ ] The app starts with `./gradlew run` and the feature works by hand.
+      For a release, test the JAR as in section 11.
 - [ ] Commit subjects: imperative, capitalised, no full stop, at most 50
       characters.
 - [ ] PR: base `AY2627S1-CS2103T-T11-1/tp` `master`, `Fixes #N`, current
       milestone, one reviewer.
 - [ ] After merge: `git switch master`, `git pull upstream master`,
       `git push origin master`.
+
+When the agent finishes, it reports in four parts:
+
+- **Changed:** the files, and why each one changed.
+- **Verified:** the exact commands or steps, with their output.
+- **Not verified:** what was not checked, and why.
+- **Risks:** anything the team needs to decide or approve.
+
+---
+
+## 8. Designing user-facing behaviour
+
+From the course guidance on [functionality bugs][bugs] and
+[feature flaws][flaws]. A PE tester judges the app by what a reasonable
+tutor expects, not by what was easy to parse.
+
+- Plan for likely mistakes, not only the normal case. A typo must not crash
+  the app, corrupt the data file or leave the app unusable.
+- Do not restrict input just to make parsing easier. Real names, addresses
+  and levels must be possible to enter. Known gap: names with `a/l` or
+  `a/p` (UG Known issue 3).
+- Prefer a warning to a rejection for unusual but harmless input. Reject
+  only when accepting would make the data ambiguous or wrong.
+- Error messages name the field that is wrong and say why.
+- Duplicate checks compare normalised values (case, repeated spaces). The
+  UG states what the check does not catch.
+- Long values must not break the student cards or hide the result box.
+- The data file stays editable by hand. After a format change, files saved
+  by the previous release must still load, with a test that proves it.
+- Every restriction a user can run into is in the UG.
+- Change validation rules in their own issue, not inside an unrelated PR.
+- **Open question (#106):** is "exactly 8 digits" too strict for a phone
+  number, for example an overseas parent's number? The rule stands until
+  the team decides.
+
+---
+
+## 9. Course constraints
+
+From the [tP constraints][constraints] page. These are course rules, not
+team choices.
+
+- Typing is the main way to use the app. It is for a single user.
+- Data is stored locally in a human-editable text file. No database
+  (DBMS) and no remote server run by the team.
+- It runs on Windows, macOS and Linux with only Java 25 installed, without
+  an installer.
+- Third-party libraries need approval from the teaching team first.
+- The GUI works well at 1920x1080 and above at 100% and 125% scale, and is
+  usable at 1280x720 and above at 150% scale.
+- The product is one JAR file of at most 100 MB.
+
+---
+
+## 10. Reviewing PRs
+
+From [Appendix E][appendix-e] and the [SE-EDU review guide][reviewing].
+
+- Put most feedback in inline comments on the relevant lines, plus one
+  overall comment. The course values location-specific comments more in
+  grading.
+- Ask questions rather than give orders, and include the input that fails
+  and a possible fix. Say what works well and why ("I like how ...").
+- Run anything you call a bug before you post it, or say that you did not.
+- Do not repeat a comment at every occurrence. Note that it appears in
+  other places too. Do not repeat another reviewer's comment either: reply
+  to it with new evidence instead.
+- Check that the PR is one complete change, with tests and docs updated, a
+  correct title and description, and no unrelated edits.
+- Point out overlaps with other open PRs, and say whether a conflict was
+  actually checked.
+- Approve only after your earlier comments are addressed.
+- Use plain English with no slang. Agents may draft review comments, but
+  the reviewer reads, edits and posts them.
+
+---
+
+## 11. Iterations and releases
+
+- Before closing a milestone, compare it with what actually shipped, and
+  move unfinished issues to the next milestone.
+- A release has the version tag, the JAR from `./gradlew shadowJar`
+  (`build/libs/TutorLah.jar`), and notes listing what changed since the
+  previous release, with screenshots committed under `docs/images/`.
+- Before publishing, copy the JAR to an empty folder and run it with
+  `java -jar TutorLah.jar` under Java 25. Add, log, view and exit, then
+  start it again and check that the data was kept.
+- For the feature freeze and final submission, read the live
+  [Week 12 page][w12]. Do not rely on remembered limits.
+
+[reuse]: https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html#policy-on-reuse
+[appendix-e]: https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html
+[constraints]: https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-constraints.html
+[bugs]: https://nus-cs2103-ay2627-s1.github.io/website/schedule/week8/project.html#triaging-functionality-bugs
+[flaws]: https://nus-cs2103-ay2627-s1.github.io/website/schedule/week8/project.html#triaging-feature-flaw-bugs
+[w12]: https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-w12.html
+[git]: https://se-education.org/guides/conventions/git.html
+[github-conv]: https://se-education.org/guides/conventions/github.html
+[reviewing]: https://se-education.org/guides/guidelines/PRs-reviewing.html

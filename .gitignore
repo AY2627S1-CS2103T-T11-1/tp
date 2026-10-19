@@ -22,7 +22,7 @@ src/test/data/sandbox/
 docs/_site/
 
 # AI Agents
-AGENTS.md
+# AGENTS.md is shared by the team. CLAUDE.md and tool folders are personal.
 CLAUDE.md
 /.claude/
 /.codex/
