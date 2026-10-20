@@ -8,8 +8,9 @@
 <StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <ListView fx:id="personListView" />
   <VBox fx:id="emptyState" alignment="CENTER" spacing="8" mouseTransparent="true">
-    <Label styleClass="empty-state-title" text="No students yet." />
-    <Label styleClass="empty-state-text" text="To add your first student:" />
+    <Label styleClass="empty-state-title" text="No students to display." />
+    <Label styleClass="empty-state-text" text="Type list to show all students." />
+    <Label styleClass="empty-state-text" text="To add a student:" />
     <Label styleClass="empty-state-command"
            text="add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT"
            wrapText="true" />
