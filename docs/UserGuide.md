@@ -117,6 +117,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
 * Lesson records logged for the student are not changed, and `view` shows them as before.
 * Editing a student so that they have the same phone number and the same name as another student, ignoring case, is rejected with `This student already exists in the list.`
 * If no field is given, for example `edit 1`, the edit is rejected with `At least one field to edit must be provided.`
+* **Caution:** a new name containing ` a/` after a space, such as `Muthu a/l Raju`, is not rejected by `edit`. It changes the student's address instead. Type it in capitals, for example `n/Muthu A/L Raju`. See [Known issues](#known-issues).
 
 Examples:
 * `edit 1 p/91234567` changes the phone number of the 1st student.
@@ -219,7 +220,10 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-3. **Names with `a/` after a space**, such as `Muthu a/l Raju`, are rejected because ` a/` marks the start of the address. The remedy is to type it in capitals, e.g. `n/Muthu A/L Raju`, as prefixes are case-sensitive.
+3. **Names with `a/` after a space**, such as `Muthu a/l Raju` or `Siti a/p Ahmad`, are read as two fields, because ` a/` marks the start of the address:
+   * With `add`, the command is rejected, because the address is then given twice.
+   * With `edit`, the command succeeds but **changes the address**. For example, `edit 1 n/Muthu a/l Raju` sets the name to `Muthu` and replaces the student's address with `l Raju`.
+   * The remedy is to type it in capitals, for example `n/Muthu A/L Raju`, as prefixes are case-sensitive. This keeps the full name and leaves the address unchanged.
 
 --------------------------------------------------------------------------------------------------------------------
 
