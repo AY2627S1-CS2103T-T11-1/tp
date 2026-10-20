@@ -105,6 +105,23 @@ Format: `list`
 * Extra arguments, such as `list 3`, are rejected with
   `The list command does not accept parameters.`. No student data is changed.
 
+### Editing a student: `edit`
+
+Changes the details of an existing student. The student's lesson records are kept.
+
+Format: `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
+
+* Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
+* At least one field must be given. Fields can be given in any order, and each field can be given at most once.
+* Only the fields given are changed. Each field follows the same rules as in [`add`](#adding-a-student-add).
+* Lesson records logged for the student are not changed, and `view` shows them as before.
+* Editing a student so that they have the same phone number and the same name as another student, ignoring case, is rejected with `This student already exists in the list.`
+* If no field is given, for example `edit 1`, the edit is rejected with `At least one field to edit must be provided.`
+
+Examples:
+* `edit 1 p/91234567` changes the phone number of the 1st student.
+* `edit 2 l/Sec 4 sub/A-Math` changes the level and subject of the 2nd student.
+
 ### Deleting a student: `delete`
 
 Deletes the specified student, together with their lesson records.
@@ -212,6 +229,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` <br> e.g., `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT`<br> e.g., `log 3 c/Quadratic inequalities`
