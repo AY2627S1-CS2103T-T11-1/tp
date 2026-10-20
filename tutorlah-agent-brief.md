@@ -6,8 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 18, 2026, for issue #106 (automatic loading and team
-process rules).
+Last updated: Oct 20, 2026, for issue #100 (edit command restored).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -100,6 +99,7 @@ ask the team. Do not guess.
 | Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
+| Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME}: {CONTENT}` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one numbered line per lesson, or `No lessons logged yet for {NAME}.` |
 
@@ -116,7 +116,8 @@ List updates and programmatic selection changes do not execute this shortcut.
 
 Other messages:
 
-- Duplicate student: `This student already exists in the list.`
+- Duplicate student: `This student already exists in the list.` (used by `add` and `edit`)
+- `edit` with no field: `At least one field to edit must be provided.`
 - `list` with extra text: `The list command does not accept parameters.`
 - Invalid index (see section 4): `The student index provided is invalid.`
 
@@ -137,6 +138,7 @@ Other messages:
   with `s/`, `o/` or `d/`. Names containing `a/l` or `a/p` still fail,
   because ` a/` is the address prefix. This is a known MVP limitation and
   must be stated in the User Guide.
+- **`a/` in names with `edit`:** because every `edit` field is optional, `edit 1 n/Muthu a/l Raju` is accepted and changes both the name (`Muthu`) and the address (`l Raju`), instead of being rejected as with `add`. Typing `A/L` in capitals avoids it. The User Guide warns about this in the `edit` section and Known issue 3. A parser fix belongs in its own issue.
 - **Duplicate student:** same phone, and names equal when case is ignored
   (`Person#isSamePerson`).
 
@@ -149,7 +151,7 @@ Other messages:
 | 1 | No lesson date in the MVP. `log` takes content only. | Done |
 | 2 | **Order shown by `view`: most recently logged first.** Lessons have no dates, so this means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. |
 | 3 | Email and tags removed from `Person`. They may return post-MVP as optional fields. | Done (PR #51) |
-| 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72) |
+| 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72). `edit` restored in issue #100 for v1.4; `find` and `clear` remain removed. |
 | 5 | `/` allowed in names | Done (PR #51) |
 | 6 | Case-insensitive duplicate names | Done (PR #51) |
 | 7 | **Invalid index behaviour.** See below. | Applied consistently to `delete`, `log`, and `view` in issue #59. |
@@ -191,6 +193,7 @@ accepted by the parser. Commands apply these errors consistently:
   `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
   executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
+- `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.

@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 16, 2026, for issue #85 (singular list message).
+Last updated: Oct 20, 2026, for issue #100 (edit command restored).
 
 ## What it is
 
@@ -78,10 +78,19 @@ a screenshot of the current GUI using fictional student and lesson details.
 | Log a lesson | `log INDEX c/CONTENT` | `log 3 c/Quadratic inequalities` |
 | View lessons | `view INDEX` | `view 3` |
 
+Added after the MVP (v1.4):
+
+| Command | Format | Example |
+|---|---|---|
+| Edit a student | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
+
+`edit` changes only the fields given and keeps the student's lesson records.
+
 ## Scope
 
 - **In the MVP:** add, delete, list, log a lesson, view lessons.
-- **Planned next:** edit students and lessons, parent or guardian contact,
+- **Added in v1.4:** edit a student's details (lessons are kept).
+- **Planned next:** edit lessons, parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
 - **Out of scope:** arranging lessons, messaging parents, grading, payments,
@@ -97,9 +106,12 @@ a screenshot of the current GUI using fictional student and lesson details.
   fields.
 - **`edit`, `find` and `clear` are removed for the MVP** and can be restored
   from Git history later. Removed from the code in issue #72 (Oct 14).
+  `edit` was restored in issue #100 (Oct 20) for v1.4.
 - **`view` replaces `lessons`** as the command for viewing a student's lessons.
 - **`/` is allowed in names** so that s/o and d/o work. `a/l` and `a/p` still
   fail because ` a/` is the address prefix, a documented MVP limitation.
+  With `edit`, such a name is accepted but changes the address (see the
+  User Guide's Known issue 3); typing `A/L` in capitals avoids it.
 - **Duplicates** are the same phone with the same name ignoring case.
 
 ## Shared index policy
