@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 21, 2026, for issue #101 (find review fixes).
+Last updated: Oct 21, 2026, for issue #98 (lesson dates).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -86,7 +86,8 @@ ask the team. Do not guess.
   `export JAVA_HOME="$HOME/.sdkman/candidates/java/current"`.
 - **Style:** match the surrounding AB3 code. Javadoc on public classes and
   methods. Write `equals` in the same layout as `Address#equals`.
-  Use `ToStringBuilder` for `toString`. No wildcard imports.
+  Use `ToStringBuilder` for `toString`, except `Lesson#toString` (section 5).
+  No wildcard imports.
 - **AI use:** the course expects AI use in the tP. Read and understand
   every line the agent writes before you commit it.
 
@@ -101,8 +102,14 @@ ask the team. Do not guess.
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
-| Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME}: {CONTENT}` |
-| **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one numbered line per lesson, or `No lessons logged yet for {NAME}.` |
+| Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
+| **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
+
+**Lesson dates (#98):** `log` dates each lesson with today's date from the
+system clock. `{DATE}` is `DD/MM/YYYY`, for example `18/10/2026`. Lessons
+saved before v1.4 have no date, and `view` shows `(undated)` in place of
+`{DATE}`. Users cannot type a date yet. If a later command lets them, it
+must accept the same `DD/MM/YYYY` format.
 
 **`view` replaces `lessons`.** The team renamed the command on Oct 8.
 Any older document that says `lessons INDEX`, `LessonsCommand` or
@@ -163,8 +170,8 @@ both when a search hides saved students and when no students are saved.
 
 | # | Decision | Status on `master` |
 |---|---|---|
-| 1 | No lesson date in the MVP. `log` takes content only. | Done |
-| 2 | **Order shown by `view`: most recently logged first.** Lessons have no dates, so this means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. |
+| 1 | No lesson date in the MVP. `log` takes content only. | Done for the MVP. Replaced in v1.4 by issue #98: `log` dates each lesson with today's date. |
+| 2 | **Order shown by `view`: most recently logged first.** This means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. Dated lessons (#98) keep this order. `view` does not sort by date. |
 | 3 | Email and tags removed from `Person`. They may return post-MVP as optional fields. | Done (PR #51) |
 | 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72). `edit` restored in issue #100 and `find` in issue #101 for v1.4; `clear` remains removed. |
 | 5 | `/` allowed in names | Done (PR #51) |
@@ -193,8 +200,27 @@ accepted by the parser. Commands apply these errors consistently:
   creates one with lessons.
 - `Person#getLessons()` returns an unmodifiable list in the order logged.
   `Person#withLessonAdded(Lesson)` returns a new `Person`.
-- `seedu.address.model.lesson.Lesson`: immutable. `Lesson(String content)`,
-  public `content`, `isValidContent`, `MESSAGE_CONSTRAINTS`, `MAX_LENGTH`.
+- `seedu.address.model.lesson.Lesson`: immutable. `Lesson(String content)`
+  is undated and `Lesson(String content, LocalDate date)` is dated. Public
+  `content`, `getDate()` (an `Optional<LocalDate>`), `withDate(LocalDate)`,
+  `isValidContent`, `MESSAGE_CONSTRAINTS`, `MAX_LENGTH`. Two lessons are
+  equal only if both content and date are equal.
+- `Lesson#toString` returns the content only, because command confirmations
+  print lessons through it. Keep it that way and do not switch it to
+  `ToStringBuilder`.
+- `LogCommand(Index, Lesson)` dates the lesson with the system clock.
+  `LogCommand(Index, Lesson, Clock)` lets tests fix today's date.
+- `Messages.formatLessonDate(Lesson)` returns the `DD/MM/YYYY` date, or
+  `(undated)`, using `Messages.LESSON_DATE_FORMATTER`. Use it wherever a
+  lesson date is shown.
+- `JsonAdaptedLesson` stores the date as `"date" : "YYYY-MM-DD"` and leaves
+  the field out for undated lessons. A missing date loads as undated, and an
+  invalid date makes the data file invalid.
+- **Testing with dates:** `log` run through `Logic` uses today's date, so
+  build expected text with `LessonDateUtil.todayText()` and expected lessons
+  with `LessonDateUtil.loggedToday(...)` (in `testutil`). Unit tests of
+  `LogCommand` pass a fixed `Clock` instead. `PersonBuilder#withLessons`
+  creates undated lessons, which `view` shows as `(undated)`.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.
   Deleting a student removes their lessons, because lessons live inside
   `Person`.

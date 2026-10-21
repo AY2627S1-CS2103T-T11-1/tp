@@ -178,13 +178,14 @@ Any text you are typing in the command box is preserved.
 
 * `INDEX` is a positive integer from the currently displayed student list.
 * Records appear with the most recently logged first, numbered from 1. These numbers identify rows in the output, not student indexes.
-* Lessons currently store content only, so ordering is by when records were logged, not by lesson date.
+* Each record shows the date it was logged, as `DD/MM/YYYY`, then what was covered, for example `1. 18/10/2026: Quadratic inequalities`.
+* Lessons logged before v1.4 have no date and show `(undated)` in place of the date, for example `2. (undated): Binomial theorem`.
 * Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
 * A student with no records produces `No lessons logged yet for NAME.`
-* The header is `Lesson records for NAME (COUNT):`, followed by one numbered line per record.
+* The header is `Lesson records for NAME (COUNT):`, followed by one line per record in the form `NUMBER. DATE: CONTENT`.
 * Missing indexes, non-integers, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, leading-zero integers, integers too large to parse, and indexes outside the displayed list produce `The student index provided is invalid.`
 
-Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra.
+Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra, each with today's date.
 
 ### Reading long command results
 
@@ -203,6 +204,8 @@ Format: `log INDEX c/CONTENT`
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot be blank.
+* The lesson is dated with today's date on your computer. You cannot choose a different date yet, so log each lesson on the day you teach it.
+* Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
 * Lessons are kept in the order they are logged. Logging the same content twice records two lessons.
 * There is currently no way to edit or delete a logged lesson, so check the student's name in the confirmation message.
 
@@ -223,6 +226,8 @@ AddressBook automatically saves data after every command. You do not need to sav
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+
+In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. A date in any other format makes the data file invalid.
 
 <box type="warning" seamless>
 
