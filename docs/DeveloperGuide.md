@@ -14,6 +14,8 @@
 ## **Acknowledgements**
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
+* `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -159,6 +161,16 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Finding students by name
+
+`AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
+
+`NameContainsKeywordsPredicate` stores an immutable copy of the keywords as typed. A name matches when it contains every keyword as a substring, regardless of keyword order. Each candidate substring is compared with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use the stored keyword list; matching ignores case without changing the keywords.
+
+`FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
+
+`view`, `log`, `edit`, `delete` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -625,6 +637,17 @@ testers are expected to do more *exploratory* testing.
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Finding students and restoring the full list
+
+Use fictional students in a separate test directory. Add `Tan Wei Ming`, `Tan Wei Jie` and `Alicia Lim` with distinct phone numbers and note their displayed indexes.
+
+1. Enter `find WEI`. Expected: only the two Wei students, numbered 1 and 2, with `Found 2 students.`.
+1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`.
+1. Enter `find ali`. Expected: `Alicia Lim` appears as student 1 even though the previous search hid her. Click the card or enter `view 1`: both must show Alicia's history.
+1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel says `No students to display.` and `Type list to show all students, or add one:`, followed by the add-command format and example. The same panel offers add guidance when there are no saved students.
+1. Enter `find` without keywords after a successful search. Expected: usage feedback, with the previous results unchanged.
+1. Enter `list`. Expected: all three students return in their original order. Exit and restart after another search: the complete list and all lesson records must still be present.
 
 ### Lesson-history command sequences
 

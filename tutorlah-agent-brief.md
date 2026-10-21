@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 20, 2026, for issue #100 (edit command restored).
+Last updated: Oct 21, 2026, for issue #101 (find review fixes).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -100,6 +100,7 @@ ask the team. Do not guess.
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
+| Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME}: {CONTENT}` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one numbered line per lesson, or `No lessons logged yet for {NAME}.` |
 
@@ -119,7 +120,21 @@ Other messages:
 - Duplicate student: `This student already exists in the list.` (used by `add` and `edit`)
 - `edit` with no field: `At least one field to edit must be provided.`
 - `list` with extra text: `The list command does not accept parameters.`
+- `find` without keywords: invalid command format with the find usage; the current filter is kept.
 - Invalid index (see section 4): `The student index provided is invalid.`
+
+**Find policy (#101):** every whitespace-separated keyword must occur somewhere
+in the student's name, ignoring case and keyword order. Partial names are
+supported. Leading, trailing and repeated whitespace is ignored. Keywords
+are literal text, not field prefixes, wildcards or spelling corrections.
+Each find searches the full address book and keeps the original list order.
+Displayed indexes restart at 1 and are used by commands and card clicks.
+`list` restores all students; add and edit also restore the full list. View,
+log and delete retain the filter. Find changes no stored student or lesson
+data, and filters are not persisted. The empty-list panel says
+`No students to display.` and `Type list to show all students, or add one:`,
+followed by the add-command format and example. This offers useful guidance
+both when a search hides saved students and when no students are saved.
 
 ---
 
@@ -151,7 +166,7 @@ Other messages:
 | 1 | No lesson date in the MVP. `log` takes content only. | Done |
 | 2 | **Order shown by `view`: most recently logged first.** Lessons have no dates, so this means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. |
 | 3 | Email and tags removed from `Person`. They may return post-MVP as optional fields. | Done (PR #51) |
-| 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72). `edit` restored in issue #100 for v1.4; `find` and `clear` remain removed. |
+| 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72). `edit` restored in issue #100 and `find` in issue #101 for v1.4; `clear` remains removed. |
 | 5 | `/` allowed in names | Done (PR #51) |
 | 6 | Case-insensitive duplicate names | Done (PR #51) |
 | 7 | **Invalid index behaviour.** See below. | Applied consistently to `delete`, `log`, and `view` in issue #59. |
@@ -194,6 +209,7 @@ accepted by the parser. Commands apply these errors consistently:
   executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
+- `FindCommand(NameContainsKeywordsPredicate)` replaces the displayed filter. The predicate requires a non-empty list of non-blank keywords and keeps an immutable copy as typed. Each keyword matches a literal name substring using locale-independent `String#regionMatches(true, ...)`, without lowercasing the name or keywords. Predicate equality and hashing use the stored keyword list. `FindCommandParser` splits on whitespace without interpreting prefixes.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.
