@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "deleting-an-individual-lesson-record": "Deleting an individual lesson record",
         "finding-students-by-name": "Finding students by name",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
@@ -65,6 +66,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data",
+        "deleting-lesson-records": "Deleting lesson records",
         "finding-students-and-restoring-the-full-list": "Finding students and restoring the full list",
         "lesson-history-command-sequences": "Lesson-history command sequences"
       },
@@ -123,6 +125,7 @@
         "viewing-a-student-s-lesson-records-view": "Viewing a student's lesson records: view",
         "reading-long-command-results": "Reading long command results",
         "logging-a-lesson-log": "Logging a lesson: log",
+        "deleting-a-lesson-record-deletelesson": "Deleting a lesson record: deletelesson",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
         "editing-the-data-file": "Editing the data file",
