@@ -273,6 +273,43 @@ public class PersonListPanelTest {
         });
     }
 
+    /**
+     * Deletes through the command box and verifies that typed views and card clicks show the updated history.
+     */
+    @Test
+    public void commandBox_deleteLesson_updatesHistoryWithoutRemovingStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                enterClickTestCommand(root, "view 1");
+                enterClickTestCommand(root, "deletelesson 1 1");
+                assertEquals("Deleted lesson 1 for Amy: Algebra", result.getText());
+                enterClickTestCommand(root, "view 1");
+                assertEquals("Lesson records for Amy (2):\n1. Geometry\n2. Algebra", result.getText());
+                clickStudent(root, 0);
+                assertEquals("Lesson records for Amy (2):\n1. Geometry\n2. Algebra", result.getText());
+                enterClickTestCommand(root, "deletelesson 1 3");
+                assertEquals(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, result.getText());
+                enterClickTestCommand(root, "deletelesson 1 2");
+                enterClickTestCommand(root, "deletelesson 1 1");
+                assertFeedback(root, "deletelesson 1 1", "No lessons logged yet for Amy.", true);
+                clickStudent(root, 0);
+                assertEquals("No lessons logged yet for Amy.", result.getText());
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                assertEquals(2, list.getItems().size());
+                assertTrue(list.isVisible());
+                assertFalse(root.lookup("#emptyState").isVisible());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
     @Test
     public void studentCard_firstPressAfterView_showsAndHighlightsStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {

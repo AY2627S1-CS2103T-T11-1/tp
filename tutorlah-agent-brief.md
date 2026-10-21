@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 21, 2026, for issue #101 (find review fixes).
+Last updated: Oct 21, 2026, for issue #102 (delete a lesson record).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -98,6 +98,7 @@ ask the team. Do not guess.
 |---|---|---|
 | Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
+| Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
@@ -122,6 +123,13 @@ Other messages:
 - `list` with extra text: `The list command does not accept parameters.`
 - `find` without keywords: invalid command format with the find usage; the current filter is kept.
 - Invalid index (see section 4): `The student index provided is invalid.`
+- Invalid lesson index: `The lesson index provided is invalid.`
+
+**Lesson deletion:** `deletelesson` uses the displayed student index and
+the lesson number from `view` (newest first). Remove only that occurrence,
+even if contents repeat. Keep the student, remaining lessons and current
+filter. Deleting the last lesson leaves an empty history. Show confirmation;
+use `view` or a card click to see the remaining records.
 
 **Find policy (#101):** every whitespace-separated keyword must occur somewhere
 in the student's name, ignoring case and keyword order. Partial names are
@@ -130,8 +138,8 @@ are literal text, not field prefixes, wildcards or spelling corrections.
 Each find searches the full address book and keeps the original list order.
 Displayed indexes restart at 1 and are used by commands and card clicks.
 `list` restores all students; add and edit also restore the full list. View,
-log and delete retain the filter. Find changes no stored student or lesson
-data, and filters are not persisted. The empty-list panel says
+log, delete and deletelesson retain the filter. Find changes no stored
+student or lesson data, and filters are not persisted. The empty-list panel says
 `No students to display.` and `Type list to show all students, or add one:`,
 followed by the add-command format and example. This offers useful guidance
 both when a search hides saved students and when no students are saved.
@@ -180,6 +188,10 @@ accepted by the parser. Commands apply these errors consistently:
   `The student index provided is invalid.`
 - Missing indexes, words, decimals, signs such as `+1`, and extra command
   parts give the invalid command format message with that command's usage.
+- `deletelesson` applies these rules to both indexes. An invalid lesson
+  number gives `The lesson index provided is invalid.`. For a valid positive
+  lesson number but no lessons, show `No lessons logged yet for {NAME}.`.
+  Check indexes and history before changing data.
 
 ---
 
@@ -193,6 +205,8 @@ accepted by the parser. Commands apply these errors consistently:
   creates one with lessons.
 - `Person#getLessons()` returns an unmodifiable list in the order logged.
   `Person#withLessonAdded(Lesson)` returns a new `Person`.
+- `Person#withLessonRemoved(int zeroBasedIndex)` returns a new `Person`
+  without the selected lesson in logging order. Other fields are kept.
 - `seedu.address.model.lesson.Lesson`: immutable. `Lesson(String content)`,
   public `content`, `isValidContent`, `MESSAGE_CONSTRAINTS`, `MAX_LENGTH`.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.
@@ -208,6 +222,9 @@ accepted by the parser. Commands apply these errors consistently:
   `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
   executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
+- `ParserUtil#parseCommandIndex(text, usage, invalidIndexMessage)` shares
+  student and lesson index validation. `parseStudentIndex` delegates to it
+  with the student-index error message.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
 - `FindCommand(NameContainsKeywordsPredicate)` replaces the displayed filter. The predicate requires a non-empty list of non-blank keywords and keeps an immutable copy as typed. Each keyword matches a literal name substring using locale-independent `String#regionMatches(true, ...)`, without lowercasing the name or keywords. Predicate equality and hashing use the stored keyword list. `FindCommandParser` splits on whitespace without interpreting prefixes.
 - **Any code that rebuilds a `Person`** (for example an edit command) must

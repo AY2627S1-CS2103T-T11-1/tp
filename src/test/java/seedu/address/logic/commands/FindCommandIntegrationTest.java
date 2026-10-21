@@ -127,6 +127,24 @@ public class FindCommandIntegrationTest {
         assertEquals(List.of(WEI_MING, WEI_JIE), logic.getFilteredPersonList());
     }
 
+    /**
+     * Checks that lesson deletion uses the searched student's displayed index and saves the full address book.
+     */
+    @Test
+    public void execute_findThenDeleteLesson_keepsStudentFilterAndOtherSavedStudents() throws Exception {
+        logic.execute("find ali");
+        assertEquals("Deleted lesson 1 for Alicia Lim: Calculus",
+                logic.execute("deletelesson 1 1").getFeedbackToUser());
+        Person aliciaWithoutLessons = new PersonBuilder(ALICIA).withLessons().build();
+        assertEquals(List.of(aliciaWithoutLessons), logic.getFilteredPersonList());
+        assertEquals("No lessons logged yet for Alicia Lim.", logic.execute("view 1").getFeedbackToUser());
+
+        Model reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(List.of(WEI_MING, WEI_JIE, aliciaWithoutLessons), reloaded.getFilteredPersonList());
+        assertEquals("Listed 3 students.", logic.execute("list").getFeedbackToUser());
+        assertEquals(reloaded.getFilteredPersonList(), logic.getFilteredPersonList());
+    }
+
     @Test
     public void execute_findThenEdit_editsDisplayedStudentAndPreservesLessons() throws Exception {
         logic.execute("find ali");

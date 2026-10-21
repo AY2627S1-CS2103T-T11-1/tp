@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 21, 2026, for issue #101 (find review fixes).
+Last updated: Oct 21, 2026, for issue #102 (delete a lesson record).
 
 ## What it is
 
@@ -83,17 +83,22 @@ Added after the MVP (v1.4):
 | Command | Format | Example |
 |---|---|---|
 | Edit a student | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
+| Delete a lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `deletelesson 2 1` |
 | Find students | `find KEYWORD [MORE_KEYWORDS]...` | `find tan wei` |
 
 `edit` changes only the fields given and keeps the student's lesson records.
+
+`deletelesson` removes one record using the lesson number shown by `view`
+(newest first). The student and their other lesson records are kept.
+An empty history reports `No lessons logged yet for NAME.`.
 
 `find` shows students whose names contain every search keyword, ignoring case
 and keyword order; partial names are accepted. It searches all students each
 time and uses literal keywords without field prefixes or spelling correction.
 Results keep their original order and are renumbered from 1. Commands and
 card clicks use these displayed indexes. `list` restores the full list.
-Adding or editing also restores it; viewing, logging and deleting retain
-the filter. Student data and lesson records are unchanged by searching,
+Adding or editing also restores it; viewing, logging and deleting students
+or lessons retain the filter. Searching changes no student or lesson data,
 and filters are not kept across restarts.
 
 Case-insensitive search compares substrings directly rather than lowercasing
@@ -104,7 +109,8 @@ covering searches with no matches as well as a genuinely empty address book.
 ## Scope
 
 - **In the MVP:** add, delete, list, log a lesson, view lessons.
-- **Added in v1.4:** edit a student's details (lessons are kept) and find students by partial names.
+- **Added in v1.4:** edit a student's details (lessons are kept), find
+  students by partial name, and delete individual lesson records.
 - **Planned next:** edit lessons, parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.

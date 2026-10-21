@@ -18,7 +18,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -148,6 +150,78 @@ public class LessonPersistenceTest {
         logic.execute("edit 1 n/Alex Tan l/Sec 4");
 
         assertEquals(lessons("Quadratic inequalities"), findByName(restart(), "Alex Tan").getLessons());
+    }
+
+    /**
+     * Deletes the newest duplicate through typed commands and checks the remaining history after a restart.
+     */
+    @Test
+    public void restart_afterDeletingLesson_selectedOccurrenceRemovedOthersKept() throws Exception {
+        startWith(new PersonBuilder(ALEX).withLessons("Algebra", "Geometry", "Algebra").build(),
+                new PersonBuilder(BEA).withLessons("Calculus").build());
+        assertEquals("Deleted lesson 1 for Alex Lim: Algebra",
+                logic.execute("deletelesson 1 1").getFeedbackToUser());
+        ReadOnlyAddressBook reloaded = restart();
+        assertEquals(new PersonBuilder(ALEX).withLessons("Algebra", "Geometry").build(),
+                findByName(reloaded, "Alex Lim"));
+        assertEquals(new PersonBuilder(BEA).withLessons("Calculus").build(), findByName(reloaded, "Bea Tan"));
+
+        model = new ModelManager(reloaded, new UserPrefs());
+        logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataFile),
+                new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+        assertEquals("Lesson records for Alex Lim (2):\n1. Geometry\n2. Algebra",
+                logic.execute("view 1").getFeedbackToUser());
+        logic.execute("deletelesson 1 2");
+        logic.execute("deletelesson 1 1");
+        assertEquals(ALEX, findByName(restart(), "Alex Lim"));
+        assertEquals("No lessons logged yet for Alex Lim.", logic.execute("view 1").getFeedbackToUser());
+    }
+
+    /**
+     * Keeps both saved and in-memory data unchanged after malformed or out-of-range deletion commands.
+     */
+    @Test
+    public void deleteLesson_invalidInput_keepsSavedData() throws Exception {
+        startWith(new PersonBuilder(ALEX).withLessons("Algebra").build(), BEA);
+        logic.execute("list");
+        String saved = Files.readString(dataFile);
+        AddressBook before = new AddressBook(model.getAddressBook());
+        assertThrows(ParseException.class, Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, () ->
+                logic.execute("deletelesson 1 01"));
+        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, () ->
+                logic.execute("deletelesson 1 2"));
+        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, () ->
+                logic.execute("deletelesson 3 1"));
+        assertThrows(CommandException.class, "No lessons logged yet for Bea Tan.", () ->
+                logic.execute("deletelesson 2 1"));
+        assertEquals(before, model.getAddressBook());
+        assertEquals(saved, Files.readString(dataFile));
+    }
+
+    /**
+     * Reports failed deletion saves through the existing storage contract and preserves the last saved file.
+     */
+    @Test
+    public void deleteLesson_saveFails_reportsErrorAndKeepsLastSavedFile() throws Exception {
+        for (IOException exception : List.of(new IOException("disk full"), new AccessDeniedException("read-only"))) {
+            startWith(new PersonBuilder(ALEX).withLessons("Algebra").build());
+            logic.execute("list");
+            String saved = Files.readString(dataFile);
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw exception;
+                }
+            };
+            LogicManager failingLogic = new LogicManager(model, new StorageManager(failingStorage,
+                    new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+            String format = exception instanceof AccessDeniedException
+                    ? LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT : LogicManager.FILE_OPS_ERROR_FORMAT;
+            assertThrows(CommandException.class, String.format(format, exception.getMessage()), () ->
+                    failingLogic.execute("deletelesson 1 1"));
+            assertEquals(saved, Files.readString(dataFile));
+            assertEquals(lessons("Algebra"), findByName(restart(), "Alex Lim").getLessons());
+        }
     }
 
     @Test

@@ -141,6 +141,30 @@ public class PersonTest {
         assertThrows(NullPointerException.class, () -> ALICE.withLessonAdded(null));
     }
 
+    /**
+     * Removes exactly one stored occurrence and preserves all other student data and immutability.
+     */
+    @Test
+    public void withLessonRemoved_validIndex_preservesOtherData() {
+        Person original = new PersonBuilder(ALICE).withLessons("Algebra", "Geometry", "Algebra").build();
+        Person updated = original.withLessonRemoved(2);
+        assertEquals(new PersonBuilder(ALICE).withLessons("Algebra", "Geometry").build(), updated);
+        assertEquals(new PersonBuilder(ALICE).withLessons("Algebra", "Geometry", "Algebra").build(), original);
+        assertThrows(UnsupportedOperationException.class, () -> updated.getLessons().clear());
+        assertEquals(ALICE, new PersonBuilder(ALICE).withLessons("Algebra").build().withLessonRemoved(0));
+    }
+
+    /**
+     * Rejects positions outside the stored lesson list.
+     */
+    @Test
+    public void withLessonRemoved_invalidIndex_throwsIndexOutOfBoundsException() {
+        Person student = new PersonBuilder(ALICE).withLessons("Algebra").build();
+        assertThrows(IndexOutOfBoundsException.class, () -> student.withLessonRemoved(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> student.withLessonRemoved(1));
+        assertThrows(IndexOutOfBoundsException.class, () -> ALICE.withLessonRemoved(0));
+    }
+
     @Test
     public void equals_differentLessons_returnsFalse() {
         Person withLesson = new PersonBuilder(ALICE).withLessons("Quadratic inequalities").build();

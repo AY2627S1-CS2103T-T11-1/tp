@@ -204,11 +204,35 @@ Format: `log INDEX c/CONTENT`
 * The index **must be a positive integer** 1, 2, 3, ...
 * `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot be blank.
 * Lessons are kept in the order they are logged. Logging the same content twice records two lessons.
-* There is currently no way to edit or delete a logged lesson, so check the student's name in the confirmation message.
+* Logged lessons cannot be edited yet. To remove an incorrect record, use `deletelesson` as described below.
 
 Examples:
 * `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
 * `log 1 c/Revision of trigonometric identities, Q1-5 for homework` logs a lesson for the 1st student in the list.
+
+### Deleting a lesson record: `deletelesson`
+
+Deletes one lesson without deleting the student or their other lesson records.
+
+Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
+
+* `STUDENT_INDEX` is the student's number in the currently displayed student list.
+* `LESSON_INDEX` is the lesson's current number shown by `view STUDENT_INDEX`. Lesson 1 is the most recently logged lesson, not the oldest.
+* Both indexes must be positive whole numbers without leading zeros. Exactly two arguments are required, in the order shown.
+* Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson changes them. Running `view` first is recommended, not required.
+* Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
+* Confirmation: `Deleted lesson LESSON_INDEX for NAME: CONTENT`. Run `view STUDENT_INDEX` again or click the student's card to see the remaining records.
+* Student details, other students' records and the current student filter are unchanged. Deleting the final lesson keeps the student with an empty history.
+* Missing arguments, non-integers such as `abc`, `+1` or `1.5`, and extra
+  arguments produce an invalid-command-format message with usage. Zero,
+  negative integers, leading-zero integers, overflowing integers and
+  out-of-range indexes produce `The student index provided is invalid.` or
+  `The lesson index provided is invalid.`, depending on the index.
+* If the student's history is empty, a valid positive lesson number produces
+  `No lessons logged yet for NAME.`. Nothing is deleted.
+* Deletion is saved automatically and cannot be undone in the app. `delete INDEX` still deletes the entire student and all their lessons; it is a different command.
+
+Example: after logging `Algebra`, then `Geometry` for student 2, `view 2` shows `1. Geometry` and `2. Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. Algebra`.
 
 ### Exiting the program: `exit`
 
@@ -261,6 +285,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` <br> e.g., `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete lesson** | `deletelesson STUDENT_INDEX LESSON_INDEX`<br> e.g., `view 2`, then `deletelesson 2 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
 **List**   | `list`
