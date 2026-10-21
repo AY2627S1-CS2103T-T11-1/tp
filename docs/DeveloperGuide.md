@@ -14,6 +14,7 @@
 ## **Acknowledgements**
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
+* OpenAI Codex assisted with the implementation, tests and documentation for deleting individual lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -159,6 +160,16 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Deleting an individual lesson record
+
+`AddressBookParser` routes `deletelesson STUDENT_INDEX LESSON_INDEX` to `DeleteLessonCommandParser`. The parser requires exactly two positional indexes, reuses the student-index validation, and applies the same numeric rules to the lesson index with a lesson-specific error. Missing, non-integer or extra arguments show usage. Numeric-looking invalid indexes name the relevant student or lesson field.
+
+`DeleteLessonCommand` resolves the student from `Model#getFilteredPersonList`, then validates the lesson number before changing anything. `view` numbers records newest first, while `Person#getLessons` stores them in logging order. The command maps the displayed number to a zero-based stored position using `lessons.size() - lessonIndex.getOneBased()`. Removing by position, rather than by content equality, ensures that only the selected occurrence is removed when lesson content is repeated.
+
+`Person#withLessonRemoved` copies the lesson list and returns a new student preserving all student fields and the remaining lesson objects. `Model#setPerson` replaces the original student without resetting the filter. The existing `LogicManager` save path persists the complete address book; no JSON schema change is needed. Save failures retain the existing contract: the model is updated before saving, and a storage error is reported instead of a success confirmation; there is no new rollback mechanism.
+
+The result area shows a confirmation naming the deleted lesson number, student and content. A subsequent `view` or card click shows the updated history. Deleting the last lesson leaves the student in the list and uses the existing empty-history message on the next view. No new UI layout or command-result fields are required.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -625,6 +636,19 @@ testers are expected to do more *exploratory* testing.
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Deleting lesson records
+
+Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.jar`, with fictional students only. Add a student called Amy, note her displayed index, and use that index wherever `INDEX` appears below. Add another student, Ben, with a distinct phone number and a Calculus record.
+
+1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. Algebra`, `2. Geometry`, `3. Algebra`.
+1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. Geometry`, `2. Algebra`, proving the newest duplicate was deleted rather than the oldest.
+1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
+1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
+1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
+1. When name search is available, filter to a student who is not first in the full list and use displayed student index 1. Expected: only that student's selected lesson is deleted, and the filter stays active. Do not assume the stored student position equals the displayed index.
+
+Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. The persistence tests use temporary directories; the filtered-index test applies the model predicate directly so it does not depend on the separate find-command PR.
 
 ### Lesson-history command sequences
 

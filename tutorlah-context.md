@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 20, 2026, for issue #100 (edit command restored).
+Last updated: Oct 21, 2026, for issue #102 (delete a lesson record).
 
 ## What it is
 
@@ -83,13 +83,18 @@ Added after the MVP (v1.4):
 | Command | Format | Example |
 |---|---|---|
 | Edit a student | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
+| Delete a lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `deletelesson 2 1` |
 
 `edit` changes only the fields given and keeps the student's lesson records.
+
+`deletelesson` removes one record using the lesson number shown by `view`
+(newest first). The student and their other lesson records are kept.
 
 ## Scope
 
 - **In the MVP:** add, delete, list, log a lesson, view lessons.
-- **Added in v1.4:** edit a student's details (lessons are kept).
+- **Added in v1.4:** edit a student's details (lessons are kept) and delete
+  individual lesson records.
 - **Planned next:** edit lessons, parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.

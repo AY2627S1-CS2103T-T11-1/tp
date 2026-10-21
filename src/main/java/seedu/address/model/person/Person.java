@@ -88,6 +88,18 @@ public class Person {
     }
 
     /**
+     * Returns a copy of this student without the lesson at {@code zeroBasedIndex} in logging order.
+     * This student and the order of the remaining lessons are unchanged.
+     *
+     * @throws IndexOutOfBoundsException if the index does not identify an existing lesson
+     */
+    public Person withLessonRemoved(int zeroBasedIndex) {
+        List<Lesson> updatedLessons = new ArrayList<>(lessons);
+        updatedLessons.remove(zeroBasedIndex);
+        return new Person(name, phone, address, level, subject, updatedLessons);
+    }
+
+    /**
      * Returns true if both students have the same phone number and the same name, ignoring case.
      * Two students may share a name, so the name alone does not identify a student.
      * This defines a weaker notion of equality between two students.

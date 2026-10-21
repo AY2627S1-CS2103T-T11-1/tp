@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteLessonCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
@@ -56,6 +57,16 @@ public class AddressBookParserTest {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
         assertEquals(new DeleteCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    /**
+     * Routes lesson deletion separately from deletion of an entire student.
+     */
+    @Test
+    public void parseCommand_deleteLesson() throws Exception {
+        assertEquals(new DeleteLessonCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON),
+                parser.parseCommand("deletelesson 1 1"));
+        assertThrows(ParseException.class, () -> parser.parseCommand("deletelesson 1"));
     }
 
     @Test

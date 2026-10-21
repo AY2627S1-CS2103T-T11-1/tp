@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 20, 2026, for issue #100 (edit command restored).
+Last updated: Oct 21, 2026, for issue #102 (delete a lesson record).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -98,6 +98,7 @@ ask the team. Do not guess.
 |---|---|---|
 | Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
+| Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME}: {CONTENT}` |
@@ -120,6 +121,13 @@ Other messages:
 - `edit` with no field: `At least one field to edit must be provided.`
 - `list` with extra text: `The list command does not accept parameters.`
 - Invalid index (see section 4): `The student index provided is invalid.`
+- Invalid lesson index: `The lesson index provided is invalid.`
+
+**Lesson deletion:** `deletelesson` uses the displayed student index and
+the lesson number from `view` (newest first). Remove only that occurrence,
+even if contents repeat. Keep the student, remaining lessons and current
+filter. Deleting the last lesson leaves an empty history. Show confirmation;
+use `view` or a card click to see the remaining records.
 
 ---
 
@@ -165,6 +173,9 @@ accepted by the parser. Commands apply these errors consistently:
   `The student index provided is invalid.`
 - Missing indexes, words, decimals, signs such as `+1`, and extra command
   parts give the invalid command format message with that command's usage.
+- `deletelesson` applies these rules to both indexes. An invalid lesson
+  number gives `The lesson index provided is invalid.`, including when the
+  student has no lessons. Check both indexes before changing data.
 
 ---
 
@@ -178,6 +189,8 @@ accepted by the parser. Commands apply these errors consistently:
   creates one with lessons.
 - `Person#getLessons()` returns an unmodifiable list in the order logged.
   `Person#withLessonAdded(Lesson)` returns a new `Person`.
+- `Person#withLessonRemoved(int zeroBasedIndex)` returns a new `Person`
+  without the selected lesson in logging order. Other fields are kept.
 - `seedu.address.model.lesson.Lesson`: immutable. `Lesson(String content)`,
   public `content`, `isValidContent`, `MESSAGE_CONSTRAINTS`, `MAX_LENGTH`.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.
