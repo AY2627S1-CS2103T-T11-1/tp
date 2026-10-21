@@ -160,6 +160,96 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void commandBox_findThenClickAndList_usesDisplayedStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                enterClickTestCommand(root, "find BE");
+                assertEquals("Found 1 student.", result.getText());
+                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
+                assertEquals("1. ", label(cellAt(list, 0), "id").getText());
+                clickStudent(root, 0);
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                enterClickTestCommand(root, "view 1");
+                assertEquals("No lessons logged yet for Ben.", result.getText());
+                enterClickTestCommand(root, "list");
+                assertEquals("Listed 2 students.", result.getText());
+                assertEquals("Amy", label(cellAt(list, 0), "name").getText());
+                assertEquals("Ben", label(cellAt(list, 1), "name").getText());
+                assertEquals("2. ", label(cellAt(list, 1), "id").getText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_findNoMatches_showsEmptyFilterGuidance(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "find unknown");
+                assertFalse(list.isVisible());
+                VBox emptyState = (VBox) root.lookup("#emptyState");
+                assertTrue(emptyState.isVisible());
+                assertEmptyStateGuidance(emptyState);
+                assertEquals(2, model.getAddressBook().getPersonList().size());
+                enterClickTestCommand(root, "list");
+                assertTrue(list.isVisible());
+                assertFalse(emptyState.isVisible());
+                assertEquals(2, list.getItems().size());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_noSavedStudents_showsAddGuidanceAfterList(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = new ModelManager();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                VBox emptyState = (VBox) root.lookup("#emptyState");
+                assertTrue(emptyState.isVisible());
+                assertEmptyStateGuidance(emptyState);
+                enterClickTestCommand(root, "list");
+                assertTrue(model.getAddressBook().getPersonList().isEmpty());
+                assertTrue(emptyState.isVisible());
+                assertEmptyStateGuidance(emptyState);
+                enterClickTestCommand(root, "add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math");
+                assertEquals(1, model.getAddressBook().getPersonList().size());
+                assertFalse(emptyState.isVisible());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    private static void assertEmptyStateGuidance(VBox emptyState) {
+        List<String> instructions = emptyState.getChildren().stream()
+                .map(node -> ((Label) node).getText()).toList();
+        assertTrue(instructions.contains("No students to display."));
+        assertTrue(instructions.contains("Type list to show all students, or add one:"));
+        assertTrue(instructions.contains("add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT"));
+        assertTrue(instructions.contains("add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math"));
+    }
+
+    @Test
     public void commandBox_viewMovesHighlight_retainsSelectionOnError(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();

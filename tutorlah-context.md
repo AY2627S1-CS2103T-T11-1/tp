@@ -84,17 +84,32 @@ Added after the MVP (v1.4):
 |---|---|---|
 | Edit a student | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
 | Delete a lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `deletelesson 2 1` |
+| Find students | `find KEYWORD [MORE_KEYWORDS]...` | `find tan wei` |
 
 `edit` changes only the fields given and keeps the student's lesson records.
 
 `deletelesson` removes one record using the lesson number shown by `view`
 (newest first). The student and their other lesson records are kept.
 
+`find` shows students whose names contain every search keyword, ignoring case
+and keyword order; partial names are accepted. It searches all students each
+time and uses literal keywords without field prefixes or spelling correction.
+Results keep their original order and are renumbered from 1. Commands and
+card clicks use these displayed indexes. `list` restores the full list.
+Adding or editing also restores it; viewing, logging and deleting students
+or lessons retain the filter. Searching changes no student or lesson data,
+and filters are not kept across restarts.
+
+Case-insensitive search compares substrings directly rather than lowercasing
+names and keywords separately, so Greek sigma variants also match. An empty
+student panel offers both `list` and the add-command format and example,
+covering searches with no matches as well as a genuinely empty address book.
+
 ## Scope
 
 - **In the MVP:** add, delete, list, log a lesson, view lessons.
-- **Added in v1.4:** edit a student's details (lessons are kept) and delete
-  individual lesson records.
+- **Added in v1.4:** edit a student's details (lessons are kept), find
+  students by partial name, and delete individual lesson records.
 - **Planned next:** edit lessons, parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
@@ -112,6 +127,7 @@ Added after the MVP (v1.4):
 - **`edit`, `find` and `clear` are removed for the MVP** and can be restored
   from Git history later. Removed from the code in issue #72 (Oct 14).
   `edit` was restored in issue #100 (Oct 20) for v1.4.
+  `find` was restored in issue #101 (Oct 20), with all-keyword partial matching; `clear` remains removed.
 - **`view` replaces `lessons`** as the command for viewing a student's lessons.
 - **`/` is allowed in names** so that s/o and d/o work. `a/l` and `a/p` still
   fail because ` a/` is the address prefix, a documented MVP limitation.

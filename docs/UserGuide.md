@@ -31,6 +31,8 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 
    * `list` : Lists all students.
 
+   * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
+
    * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
 
    * `log 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
@@ -100,10 +102,36 @@ Shows all students and reports the number displayed.
 
 Format: `list`
 
+* Restores the full student list after a `find` command.
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
 * Without students: `No students found. Use add to create a student.`
 * Extra arguments, such as `list 3`, are rejected with
   `The list command does not accept parameters.`. No student data is changed.
+
+### Finding students by name: `find`
+
+Shows students whose names contain all the search keywords. You can use part of a name instead of typing the full name.
+
+Format: `find KEYWORD [MORE_KEYWORDS]...`
+
+* At least one keyword is required. `find` without keywords shows the invalid command format message and usage; the displayed list is unchanged.
+* Matching ignores uppercase/lowercase. `find WEI` and `find wei` give the same results.
+* Every keyword must occur somewhere in the name, in any order. With `Tan Wei Ming` and `Tan Wei Jie` saved, `find wei` shows both students, while `find ming tan` shows only `Tan Wei Ming`.
+* Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no field prefixes, wildcard matching or spelling correction. Punctuation and accented characters must match as entered in the name, ignoring case.
+* Each search checks all saved students, replacing the previous search. The matches keep their original list order.
+* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.`
+* Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
+* `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
+* Adding or editing a student also restores the full list. Viewing, logging and deleting use the current filter.
+
+Examples:
+* `find ali` matches `Alice Tan` and `Alicia Lim`.
+* `find tan ming` matches `Tan Wei Ming` and `Ming Tan`.
+* `find Muthu a/l Raju` matches a saved name of `Muthu A/L Raju`; unlike `add` and `edit`, `find` does not interpret `a/` as an address prefix.
+
+After `find wei`, only the matching students are displayed:
+
+<img src="images/find-students-after.jpg" alt="Two matching students after finding Wei" width="726">
 
 ### Editing a student: `edit`
 
@@ -253,6 +281,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete lesson** | `deletelesson STUDENT_INDEX LESSON_INDEX`<br> e.g., `view 2`, then `deletelesson 2 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT`<br> e.g., `log 3 c/Quadratic inequalities`

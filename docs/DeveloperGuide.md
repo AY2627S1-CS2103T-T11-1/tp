@@ -14,7 +14,8 @@
 ## **Acknowledgements**
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
-* OpenAI Codex assisted with the implementation, tests and documentation for deleting individual lesson records.
+* `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search and deleting individual lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -170,6 +171,16 @@ This section describes some noteworthy details on how certain features are imple
 `Person#withLessonRemoved` copies the lesson list and returns a new student preserving all student fields and the remaining lesson objects. `Model#setPerson` replaces the original student without resetting the filter. The existing `LogicManager` save path persists the complete address book; no JSON schema change is needed. Save failures retain the existing contract: the model is updated before saving, and a storage error is reported instead of a success confirmation; there is no new rollback mechanism.
 
 The result area shows a confirmation naming the deleted lesson number, student and content. A subsequent `view` or card click shows the updated history. Deleting the last lesson leaves the student in the list and uses the existing empty-history message on the next view. No new UI layout or command-result fields are required.
+
+### Finding students by name
+
+`AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
+
+`NameContainsKeywordsPredicate` stores an immutable copy of the keywords as typed. A name matches when it contains every keyword as a substring, regardless of keyword order. Each candidate substring is compared with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use the stored keyword list; matching ignores case without changing the keywords.
+
+`FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
+
+`view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -646,9 +657,20 @@ Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.ja
 1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
 1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
 1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
-1. When name search is available, filter to a student who is not first in the full list and use displayed student index 1. Expected: only that student's selected lesson is deleted, and the filter stays active. Do not assume the stored student position equals the displayed index.
+1. Enter `find ben`, then `deletelesson 1 1`. Expected: `Deleted lesson 1 for Ben: Calculus`, with only Ben's card still displayed. `view 1` must show `No lessons logged yet for Ben.`. Enter `list` to confirm both students remain and Amy's history is unchanged. Restart to check that both students and their empty histories were saved.
 
-Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. The persistence tests use temporary directories; the filtered-index test applies the model predicate directly so it does not depend on the separate find-command PR.
+Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
+
+### Finding students and restoring the full list
+
+Use fictional students in a separate test directory. Add `Tan Wei Ming`, `Tan Wei Jie` and `Alicia Lim` with distinct phone numbers and note their displayed indexes.
+
+1. Enter `find WEI`. Expected: only the two Wei students, numbered 1 and 2, with `Found 2 students.`.
+1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`.
+1. Enter `find ali`. Expected: `Alicia Lim` appears as student 1 even though the previous search hid her. Click the card or enter `view 1`: both must show Alicia's history.
+1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel says `No students to display.` and `Type list to show all students, or add one:`, followed by the add-command format and example. The same panel offers add guidance when there are no saved students.
+1. Enter `find` without keywords after a successful search. Expected: usage feedback, with the previous results unchanged.
+1. Enter `list`. Expected: all three students return in their original order. Exit and restart after another search: the complete list and all lesson records must still be present.
 
 ### Lesson-history command sequences
 
