@@ -3,7 +3,6 @@ package seedu.address.model.person;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -27,13 +26,25 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
         List<String> copiedKeywords = List.copyOf(keywords);
         checkArgument(!copiedKeywords.isEmpty(), "At least one search keyword is required.");
         checkArgument(copiedKeywords.stream().noneMatch(String::isBlank), "Search keywords must not be blank.");
-        this.keywords = copiedKeywords.stream().map(keyword -> keyword.toLowerCase(Locale.ROOT)).toList();
+        this.keywords = copiedKeywords;
     }
 
     @Override
     public boolean test(Person person) {
-        String name = person.getName().fullName.toLowerCase(Locale.ROOT);
-        return keywords.stream().allMatch(name::contains);
+        String name = person.getName().fullName;
+        return keywords.stream().allMatch(keyword -> containsIgnoreCase(name, keyword));
+    }
+
+    /**
+     * Compares substrings without context-sensitive case conversion, such as Greek final sigma.
+     */
+    private static boolean containsIgnoreCase(String name, String keyword) {
+        for (int start = 0; start <= name.length() - keyword.length(); start++) {
+            if (name.regionMatches(true, start, keyword, 0, keyword.length())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 20, 2026, for issues #100 and #101 (edit and find restored).
+Last updated: Oct 21, 2026, for issue #101 (find review fixes).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -132,8 +132,9 @@ Displayed indexes restart at 1 and are used by commands and card clicks.
 `list` restores all students; add and edit also restore the full list. View,
 log and delete retain the filter. Find changes no stored student or lesson
 data, and filters are not persisted. The empty-list panel says
-`No students to display.` and `Type list to show all students.` so an empty
-search result does not claim the address book is empty.
+`No students to display.` and `Type list to show all students, or add one:`,
+followed by the add-command format and example. This offers useful guidance
+both when a search hides saved students and when no students are saved.
 
 ---
 
@@ -208,7 +209,7 @@ accepted by the parser. Commands apply these errors consistently:
   executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
-- `FindCommand(NameContainsKeywordsPredicate)` replaces the displayed filter. The predicate requires a non-empty list of non-blank keywords, copies and lowercases them with `Locale.ROOT`, and matches every keyword as a literal name substring. `FindCommandParser` splits on whitespace without interpreting prefixes.
+- `FindCommand(NameContainsKeywordsPredicate)` replaces the displayed filter. The predicate requires a non-empty list of non-blank keywords and keeps an immutable copy as typed. Each keyword matches a literal name substring using locale-independent `String#regionMatches(true, ...)`, without lowercasing the name or keywords. Predicate equality and hashing use the stored keyword list. `FindCommandParser` splits on whitespace without interpreting prefixes.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.

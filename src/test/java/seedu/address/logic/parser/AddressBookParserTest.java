@@ -107,7 +107,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_find() throws Exception {
-        assertEquals(new FindCommand(new NameContainsKeywordsPredicate(List.of("tan", "wei"))),
+        assertEquals(new FindCommand(new NameContainsKeywordsPredicate(List.of("Tan", "Wei"))),
                 parser.parseCommand("find Tan Wei"));
         assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE), ()
                 -> parser.parseCommand("find"));

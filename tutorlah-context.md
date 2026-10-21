@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 20, 2026, for issues #100 and #101 (edit and find restored).
+Last updated: Oct 21, 2026, for issue #101 (find review fixes).
 
 ## What it is
 
@@ -95,6 +95,11 @@ card clicks use these displayed indexes. `list` restores the full list.
 Adding or editing also restores it; viewing, logging and deleting retain
 the filter. Student data and lesson records are unchanged by searching,
 and filters are not kept across restarts.
+
+Case-insensitive search compares substrings directly rather than lowercasing
+names and keywords separately, so Greek sigma variants also match. An empty
+student panel offers both `list` and the add-command format and example,
+covering searches with no matches as well as a genuinely empty address book.
 
 ## Scope
 

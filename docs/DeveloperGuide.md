@@ -166,7 +166,7 @@ This section describes some noteworthy details on how certain features are imple
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
 
-`NameContainsKeywordsPredicate` stores an immutable copy of the keywords, normalized to lowercase with `Locale.ROOT`. A name matches when it contains every keyword as a substring, regardless of keyword order. Matching is literal, without regular expressions or spelling correction.
+`NameContainsKeywordsPredicate` stores an immutable copy of the keywords as typed. A name matches when it contains every keyword as a substring, regardless of keyword order. Each candidate substring is compared with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use the stored keyword list; matching ignores case without changing the keywords.
 
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
@@ -645,7 +645,7 @@ Use fictional students in a separate test directory. Add `Tan Wei Ming`, `Tan We
 1. Enter `find WEI`. Expected: only the two Wei students, numbered 1 and 2, with `Found 2 students.`.
 1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`.
 1. Enter `find ali`. Expected: `Alicia Lim` appears as student 1 even though the previous search hid her. Click the card or enter `view 1`: both must show Alicia's history.
-1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel says `No students to display.` and explains `list`.
+1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel says `No students to display.` and `Type list to show all students, or add one:`, followed by the add-command format and example. The same panel offers add guidance when there are no saved students.
 1. Enter `find` without keywords after a successful search. Expected: usage feedback, with the previous results unchanged.
 1. Enter `list`. Expected: all three students return in their original order. Exit and restart after another search: the complete list and all lesson records must still be present.
 

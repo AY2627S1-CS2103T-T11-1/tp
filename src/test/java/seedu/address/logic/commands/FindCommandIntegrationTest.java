@@ -79,6 +79,19 @@ public class FindCommandIntegrationTest {
     }
 
     @Test
+    public void execute_greekNameSearch_matchesUppercaseAndLowercasePrefixes() throws Exception {
+        logic.execute("add n/ΚΟΣΜΑΣ p/81234567 a/10 Short Street l/Sec 2 sub/E-Math");
+        Person student = model.getAddressBook().getPersonList().get(3);
+        String savedData = Files.readString(dataFile);
+        for (String keyword : List.of("ΚΟΣ", "κοσ", "κος")) {
+            assertEquals("Found 1 student.", logic.execute("find " + keyword).getFeedbackToUser());
+            assertEquals(List.of(student), logic.getFilteredPersonList());
+            assertEquals("No lessons logged yet for ΚΟΣΜΑΣ.", logic.execute("view 1").getFeedbackToUser());
+        }
+        assertEquals(savedData, Files.readString(dataFile));
+    }
+
+    @Test
     public void execute_blankFind_keepsPreviousFilterAndSavedData() throws Exception {
         logic.execute("find ali");
         String savedData = Files.readString(dataFile);

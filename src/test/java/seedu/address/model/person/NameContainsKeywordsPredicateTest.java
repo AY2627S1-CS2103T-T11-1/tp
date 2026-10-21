@@ -70,9 +70,32 @@ public class NameContainsKeywordsPredicateTest {
             Locale.setDefault(Locale.forLanguageTag("tr-TR"));
             assertTrue(new NameContainsKeywordsPredicate(List.of("irf"))
                     .test(new PersonBuilder().withName("IRFAN").build()));
+            assertTrue(new NameContainsKeywordsPredicate(List.of("İRF"))
+                    .test(new PersonBuilder().withName("Irfan").build()));
         } finally {
             Locale.setDefault(originalLocale);
         }
+    }
+
+    @Test
+    public void test_greekSigma_matchesUppercaseAndLowercaseSubstrings() {
+        Person student = new PersonBuilder().withName("ΚΟΣΜΑΣ").build();
+        for (String keyword : List.of("ΚΟΣ", "κοσ", "κος", "ΣΜΑΣ", "σμας", "ΚΟΣΜΑΣ")) {
+            assertTrue(new NameContainsKeywordsPredicate(List.of(keyword)).test(student), keyword);
+        }
+        assertFalse(new NameContainsKeywordsPredicate(List.of("ΚΟΣΜΑΣΑ")).test(student));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("ΚΟΣ", "ΝΙΚ")).test(student));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("ΚΟΣ"))
+                .test(new PersonBuilder().withName("κοσμας").build()));
+    }
+
+    @Test
+    public void test_supplementaryUnicodeLetters_matchesIgnoringCase() {
+        // Deseret letters occupy surrogate pairs rather than single UTF-16 code units.
+        assertTrue(new NameContainsKeywordsPredicate(List.of("\uD801\uDC28"))
+                .test(new PersonBuilder().withName("Tan \uD801\uDC00").build()));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("\uD801\uDC29"))
+                .test(new PersonBuilder().withName("Tan \uD801\uDC00").build()));
     }
 
     @Test
@@ -87,12 +110,13 @@ public class NameContainsKeywordsPredicateTest {
     @Test
     public void equalsAndHashCode_equalKeywords_workInHashSet() {
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("tan", "WEI"));
-        NameContainsKeywordsPredicate equivalent = new NameContainsKeywordsPredicate(List.of("TAN", "wei"));
+        NameContainsKeywordsPredicate equivalent = new NameContainsKeywordsPredicate(List.of("tan", "WEI"));
         assertTrue(predicate.equals(predicate));
         assertEquals(predicate, equivalent);
         assertFalse(predicate.equals(null));
         assertFalse(predicate.equals("tan wei"));
         assertFalse(predicate.equals(new NameContainsKeywordsPredicate(List.of("lim"))));
+        assertFalse(predicate.equals(new NameContainsKeywordsPredicate(List.of("TAN", "wei"))));
         assertEquals(predicate.hashCode(), equivalent.hashCode());
         Set<NameContainsKeywordsPredicate> predicates = new HashSet<>(List.of(predicate));
         assertTrue(predicates.contains(equivalent));
@@ -102,7 +126,7 @@ public class NameContainsKeywordsPredicateTest {
     @Test
     public void toStringMethod() {
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("TAN", "wei"));
-        assertEquals(NameContainsKeywordsPredicate.class.getCanonicalName() + "{keywords=[tan, wei]}",
+        assertEquals(NameContainsKeywordsPredicate.class.getCanonicalName() + "{keywords=[TAN, wei]}",
                 predicate.toString());
     }
 }

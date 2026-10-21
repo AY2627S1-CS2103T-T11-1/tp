@@ -101,7 +101,7 @@ public class FindCommandTest {
     @Test
     public void equalsAndHashCode_equalPredicates_workInHashSet() {
         FindCommand find = command("wei");
-        FindCommand equivalent = command("WEI");
+        FindCommand equivalent = command("wei");
         assertTrue(find.equals(find));
         assertEquals(find, equivalent);
         assertFalse(find.equals(null));

@@ -203,10 +203,7 @@ public class PersonListPanelTest {
                 assertFalse(list.isVisible());
                 VBox emptyState = (VBox) root.lookup("#emptyState");
                 assertTrue(emptyState.isVisible());
-                List<String> instructions = emptyState.getChildren().stream()
-                        .map(node -> ((Label) node).getText()).toList();
-                assertTrue(instructions.contains("No students to display."));
-                assertTrue(instructions.contains("Type list to show all students."));
+                assertEmptyStateGuidance(emptyState);
                 assertEquals(2, model.getAddressBook().getPersonList().size());
                 enterClickTestCommand(root, "list");
                 assertTrue(list.isVisible());
@@ -216,6 +213,40 @@ public class PersonListPanelTest {
                 window.getPrimaryStage().close();
             }
         });
+    }
+
+    @Test
+    public void commandBox_noSavedStudents_showsAddGuidanceAfterList(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = new ModelManager();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                VBox emptyState = (VBox) root.lookup("#emptyState");
+                assertTrue(emptyState.isVisible());
+                assertEmptyStateGuidance(emptyState);
+                enterClickTestCommand(root, "list");
+                assertTrue(model.getAddressBook().getPersonList().isEmpty());
+                assertTrue(emptyState.isVisible());
+                assertEmptyStateGuidance(emptyState);
+                enterClickTestCommand(root, "add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math");
+                assertEquals(1, model.getAddressBook().getPersonList().size());
+                assertFalse(emptyState.isVisible());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    private static void assertEmptyStateGuidance(VBox emptyState) {
+        List<String> instructions = emptyState.getChildren().stream()
+                .map(node -> ((Label) node).getText()).toList();
+        assertTrue(instructions.contains("No students to display."));
+        assertTrue(instructions.contains("Type list to show all students, or add one:"));
+        assertTrue(instructions.contains("add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT"));
+        assertTrue(instructions.contains("add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math"));
     }
 
     @Test
