@@ -10,6 +10,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.testutil.LessonDateUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -77,6 +79,13 @@ public class LessonPersistenceTest {
         return Arrays.stream(contents).map(Lesson::new).toList();
     }
 
+    /**
+     * Returns lessons with {@code contents}, as logged today through the app.
+     */
+    private static List<Lesson> lessonsLoggedToday(String... contents) {
+        return Arrays.stream(contents).map(LessonDateUtil::loggedToday).toList();
+    }
+
     private static Person findByName(ReadOnlyAddressBook addressBook, String name) {
         return addressBook.getPersonList().stream()
                 .filter(person -> person.getName().fullName.equals(name))
@@ -95,9 +104,9 @@ public class LessonPersistenceTest {
         ReadOnlyAddressBook reloaded = restart();
 
         assertEquals(model.getAddressBook(), new AddressBook(reloaded));
-        assertEquals(lessons("Quadratic inequalities", "Surds and indices"),
+        assertEquals(lessonsLoggedToday("Quadratic inequalities", "Surds and indices"),
                 findByName(reloaded, "Alex Lim").getLessons());
-        assertEquals(lessons("Binomial theorem"), findByName(reloaded, "Bea Tan").getLessons());
+        assertEquals(lessonsLoggedToday("Binomial theorem"), findByName(reloaded, "Bea Tan").getLessons());
         assertEquals(List.of(), findByName(reloaded, "Chen Wei").getLessons());
     }
 
@@ -109,8 +118,9 @@ public class LessonPersistenceTest {
         logic.execute("log 1 c/Quadratic inequalities");
         logic.execute("log 1 c/Surds   and   indices");
 
-        assertEquals(lessons("Quadratic inequalities", "Binomial theorem", "Quadratic inequalities",
-                "Surds   and   indices"), findByName(restart(), "Alex Lim").getLessons());
+        List<Lesson> expected = lessonsLoggedToday("Quadratic inequalities", "Binomial theorem",
+                "Quadratic inequalities", "Surds   and   indices");
+        assertEquals(expected, findByName(restart(), "Alex Lim").getLessons());
     }
 
     @Test
@@ -136,7 +146,7 @@ public class LessonPersistenceTest {
         ReadOnlyAddressBook reloaded = restart();
 
         assertEquals(1, reloaded.getPersonList().size());
-        assertEquals(lessons("Binomial theorem"), findByName(reloaded, "Bea Tan").getLessons());
+        assertEquals(lessonsLoggedToday("Binomial theorem"), findByName(reloaded, "Bea Tan").getLessons());
         assertFalse(Files.readString(dataFile).contains("Quadratic inequalities"));
     }
 
@@ -147,7 +157,8 @@ public class LessonPersistenceTest {
 
         logic.execute("edit 1 n/Alex Tan l/Sec 4");
 
-        assertEquals(lessons("Quadratic inequalities"), findByName(restart(), "Alex Tan").getLessons());
+        assertEquals(lessonsLoggedToday("Quadratic inequalities"),
+                findByName(restart(), "Alex Tan").getLessons());
     }
 
     @Test
@@ -160,11 +171,33 @@ public class LessonPersistenceTest {
     }
 
     @Test
+    public void restart_loggedLesson_savesDateInIsoFormat() throws Exception {
+        startWith(ALEX);
+        logic.execute("log 1 c/Quadratic inequalities");
+
+        assertTrue(Files.readString(dataFile).contains("\"date\" : \"" + LocalDate.now() + "\""));
+    }
+
+    @Test
+    public void read_dataFileWithUndatedLessons_loadsAndSavesThemUndated() throws Exception {
+        // data files saved by v1.3 have lessons without a date field
+        Path undatedFile = TEST_DATA_FOLDER.resolve("undatedLessons.json");
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(undatedFile).readAddressBook().orElseThrow();
+        assertEquals(lessons("Quadratic inequalities", "Binomial theorem"),
+                findByName(loaded, "Alex Lim").getLessons());
+
+        dataFile = testFolder.resolve("addressbook.json");
+        new JsonAddressBookStorage(dataFile).saveAddressBook(loaded);
+        assertFalse(Files.readString(dataFile).contains("date"));
+        assertEquals(new AddressBook(loaded), new AddressBook(restart()));
+    }
+
+    @Test
     public void read_malformedLessonData_throwsDataLoadingException() {
         // the existing contract: invalid data is rejected as a whole, and the app then starts empty
         for (String file : List.of("blankLessonContent.json", "missingLessonContent.json",
                 "lineBreakInLessonContent.json", "tooLongLessonContent.json", "lessonsNotAList.json",
-                "nullLessonEntry.json", "validAndInvalidLesson.json")) {
+                "nullLessonEntry.json", "validAndInvalidLesson.json", "invalidLessonDate.json")) {
             JsonAddressBookStorage storage = new JsonAddressBookStorage(TEST_DATA_FOLDER.resolve(file));
             assertThrows(DataLoadingException.class, storage::readAddressBook);
         }
@@ -183,7 +216,8 @@ public class LessonPersistenceTest {
 
         // the file on disk is untouched by the failed saves
         assertEquals(lastSaved, Files.readString(dataFile));
-        assertEquals(lessons("Quadratic inequalities"), findByName(restart(), "Alex Lim").getLessons());
+        assertEquals(lessonsLoggedToday("Quadratic inequalities"),
+                findByName(restart(), "Alex Lim").getLessons());
     }
 
     /**

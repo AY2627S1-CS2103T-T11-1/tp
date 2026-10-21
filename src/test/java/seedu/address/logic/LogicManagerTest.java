@@ -9,6 +9,7 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.SUBJECT_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.LessonDateUtil.todayText;
 import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
@@ -63,26 +64,26 @@ public class LogicManagerTest {
         assertEquals("No lessons logged yet for " + AMY.getName() + ".",
                 logic.execute("view 1").getFeedbackToUser());
 
+        String today = todayText();
         logic.execute("log 1 c/Algebra");
-        assertEquals("Lesson records for " + AMY.getName() + " (1):\n1. Algebra",
+        assertEquals("Lesson records for " + AMY.getName() + " (1):\n1. " + today + ": Algebra",
                 logic.execute("view 1").getFeedbackToUser());
         logic.execute("log 1 c/Geometry");
         logic.execute("log 1 c/Algebra");
-        String amyHistory = "Lesson records for " + AMY.getName()
-                + " (3):\n1. Algebra\n2. Geometry\n3. Algebra";
+        String amyHistory = "Lesson records for " + AMY.getName() + " (3):\n1. " + today + ": Algebra\n2. "
+                + today + ": Geometry\n3. " + today + ": Algebra";
         assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
         assertEquals("No lessons logged yet for Ben Tan.", logic.execute("view 2").getFeedbackToUser());
         logic.execute("log 2 c/Calculus");
-        assertEquals("Lesson records for Ben Tan (1):\n1. Calculus",
-                logic.execute("view 2").getFeedbackToUser());
+        String benHistory = "Lesson records for Ben Tan (1):\n1. " + today + ": Calculus";
+        assertEquals(benHistory, logic.execute("view 2").getFeedbackToUser());
         assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
 
         assertCommandException("view 3", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
         assertParseException("view 1 extra", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
                 ViewCommand.MESSAGE_USAGE));
         assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
-        assertEquals("Lesson records for Ben Tan (1):\n1. Calculus",
-                logic.execute("view 2").getFeedbackToUser());
+        assertEquals(benHistory, logic.execute("view 2").getFeedbackToUser());
     }
 
     @Test
@@ -93,7 +94,7 @@ public class LogicManagerTest {
         logic.execute("log 2 c/Calculus");
         logic.execute("view 1");
         logic.execute("delete 1");
-        assertEquals("Lesson records for Ben Tan (1):\n1. Calculus",
+        assertEquals("Lesson records for Ben Tan (1):\n1. " + todayText() + ": Calculus",
                 logic.execute("view 1").getFeedbackToUser());
         assertCommandException("view 2", MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
@@ -112,7 +113,7 @@ public class LogicManagerTest {
         Logic reloadedLogic = new LogicManager(reloadedModel, storage);
 
         assertEquals("Lesson records for " + AMY.getName()
-                + " (2):\n1. Geometry\n2. Algebra",
+                + " (2):\n1. " + todayText() + ": Geometry\n2. " + todayText() + ": Algebra",
                 reloadedLogic.execute("view 1").getFeedbackToUser());
         assertEquals(model.getAddressBook(), reloadedModel.getAddressBook());
         assertEquals(savedData, Files.readString(dataFile));

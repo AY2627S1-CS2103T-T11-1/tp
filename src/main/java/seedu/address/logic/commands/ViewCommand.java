@@ -24,6 +24,7 @@ public class ViewCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1";
     public static final String MESSAGE_NO_LESSONS = "No lessons logged yet for %1$s.";
     public static final String MESSAGE_LESSONS_HEADER = "Lesson records for %1$s (%2$d):";
+    public static final String MESSAGE_LESSON_LINE = "%1$d. %2$s: %3$s";
 
     private final Index targetIndex;
 
@@ -52,7 +53,9 @@ public class ViewCommand extends Command {
         StringBuilder result = new StringBuilder(String.format(MESSAGE_LESSONS_HEADER,
                 student.getName(), lessons.size()));
         for (int i = lessons.size() - 1; i >= 0; i--) {
-            result.append("\n").append(lessons.size() - i).append(". ").append(lessons.get(i).content);
+            Lesson lesson = lessons.get(i);
+            result.append("\n").append(String.format(MESSAGE_LESSON_LINE,
+                    lessons.size() - i, Messages.formatLessonDate(lesson), lesson.content));
         }
         return new CommandResult(result.toString(), targetIndex);
     }

@@ -32,7 +32,8 @@ public class JsonAdaptedPersonTest {
     private static final String VALID_LEVEL = BENSON.getLevel().toString();
     private static final String VALID_SUBJECT = BENSON.getSubject().toString();
     private static final List<JsonAdaptedLesson> VALID_LESSONS =
-            List.of(new JsonAdaptedLesson("Quadratic inequalities"), new JsonAdaptedLesson("Binomial theorem"));
+            List.of(new JsonAdaptedLesson("Quadratic inequalities", null),
+                    new JsonAdaptedLesson("Binomial theorem", null));
 
     @Test
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
@@ -69,7 +70,7 @@ public class JsonAdaptedPersonTest {
 
     @Test
     public void toModelType_invalidLesson_throwsIllegalValueException() {
-        List<JsonAdaptedLesson> invalidLessons = List.of(new JsonAdaptedLesson(" "));
+        List<JsonAdaptedLesson> invalidLessons = List.of(new JsonAdaptedLesson(" ", null));
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
                         VALID_LEVEL, VALID_SUBJECT, invalidLessons);

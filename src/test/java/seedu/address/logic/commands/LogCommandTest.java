@@ -11,6 +11,10 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -32,22 +36,29 @@ public class LogCommandTest {
     private static final Lesson LESSON_QUADRATICS = new Lesson("Quadratic inequalities");
     private static final Lesson LESSON_BINOMIAL = new Lesson("Binomial theorem");
 
+    private static final ZoneId SINGAPORE = ZoneId.of("Asia/Singapore");
+    /** 10am on 18 Oct 2026 in Singapore. */
+    private static final Clock OCT_18_CLOCK = Clock.fixed(Instant.parse("2026-10-18T02:00:00Z"), SINGAPORE);
+    private static final LocalDate OCT_18 = LocalDate.of(2026, 10, 18);
+
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new LogCommand(null, LESSON_QUADRATICS));
         assertThrows(NullPointerException.class, () -> new LogCommand(INDEX_FIRST_PERSON, null));
+        assertThrows(NullPointerException.class, () ->
+                new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, null));
     }
 
     @Test
     public void execute_validIndexUnfilteredList_success() {
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person studentWithLesson = student.withLessonAdded(LESSON_QUADRATICS);
-        LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS);
+        Person studentWithLesson = student.withLessonAdded(LESSON_QUADRATICS.withDate(OCT_18));
+        LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK);
 
-        String expectedMessage = String.format(LogCommand.MESSAGE_LOG_LESSON_SUCCESS,
-                student.getName(), LESSON_QUADRATICS);
+        String expectedMessage = "Logged lesson for " + student.getName()
+                + " on 18/10/2026: Quadratic inequalities";
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(student, studentWithLesson);
@@ -60,11 +71,11 @@ public class LogCommandTest {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person studentWithLesson = student.withLessonAdded(LESSON_QUADRATICS);
-        LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS);
+        Person studentWithLesson = student.withLessonAdded(LESSON_QUADRATICS.withDate(OCT_18));
+        LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK);
 
-        String expectedMessage = String.format(LogCommand.MESSAGE_LOG_LESSON_SUCCESS,
-                student.getName(), LESSON_QUADRATICS);
+        String expectedMessage = "Logged lesson for " + student.getName()
+                + " on 18/10/2026: Quadratic inequalities";
 
         // logging a lesson keeps the currently displayed (filtered) list
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
@@ -75,21 +86,45 @@ public class LogCommandTest {
     }
 
     @Test
-    public void execute_studentWithLessons_appendsLessonAtEnd() throws Exception {
-        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS).execute(model);
-        new LogCommand(INDEX_FIRST_PERSON, LESSON_BINOMIAL).execute(model);
+    public void execute_justAfterMidnightInSingapore_usesLocalDate() throws Exception {
+        // 16:30 UTC on 18 Oct is 00:30 on 19 Oct in Singapore
+        Clock justAfterMidnight = Clock.fixed(Instant.parse("2026-10-18T16:30:00Z"), SINGAPORE);
+        CommandResult result = new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, justAfterMidnight)
+                .execute(model);
 
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        assertEquals(List.of(LESSON_QUADRATICS, LESSON_BINOMIAL), student.getLessons());
+        assertEquals("Logged lesson for " + student.getName() + " on 19/10/2026: Quadratic inequalities",
+                result.getFeedbackToUser());
+        assertEquals(List.of(LESSON_QUADRATICS.withDate(LocalDate.of(2026, 10, 19))), student.getLessons());
+    }
+
+    @Test
+    public void execute_lessonWithDate_replacesDateWithToday() throws Exception {
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS.withDate(LocalDate.of(2020, 1, 1)), OCT_18_CLOCK)
+                .execute(model);
+
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(List.of(LESSON_QUADRATICS.withDate(OCT_18)), student.getLessons());
+    }
+
+    @Test
+    public void execute_studentWithLessons_appendsLessonAtEnd() throws Exception {
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK).execute(model);
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_BINOMIAL, OCT_18_CLOCK).execute(model);
+
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(List.of(LESSON_QUADRATICS.withDate(OCT_18), LESSON_BINOMIAL.withDate(OCT_18)),
+                student.getLessons());
     }
 
     @Test
     public void execute_sameLessonTwice_bothKept() throws Exception {
-        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS).execute(model);
-        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS).execute(model);
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK).execute(model);
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK).execute(model);
 
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        assertEquals(List.of(LESSON_QUADRATICS, LESSON_QUADRATICS), student.getLessons());
+        assertEquals(List.of(LESSON_QUADRATICS.withDate(OCT_18), LESSON_QUADRATICS.withDate(OCT_18)),
+                student.getLessons());
     }
 
     @Test
@@ -134,6 +169,14 @@ public class LogCommandTest {
 
         // different lesson -> returns false
         assertFalse(logFirstCommand.equals(new LogCommand(INDEX_FIRST_PERSON, LESSON_BINOMIAL)));
+
+        // default clock is the system clock -> returns true
+        assertTrue(logFirstCommand.equals(
+                new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, Clock.systemDefaultZone())));
+
+        // different clock -> returns false
+        assertFalse(logFirstCommand.equals(
+                new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK)));
     }
 
     @Test

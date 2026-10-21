@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.LessonDateUtil.todayText;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.io.IOException;
@@ -66,6 +67,9 @@ public class PersonListPanelTest {
     // Allow for first-window initialization and scheduling delays on CI runners.
     private static final long FX_THREAD_TIMEOUT_SECONDS = 15;
     private static final double LAYOUT_TOLERANCE = 1;
+    /** Amy's history in {@link #clickTestModel()}, whose lessons have no dates. */
+    private static final String AMY_FIXTURE_HISTORY = "Lesson records for Amy (3):\n1. (undated): Algebra"
+            + "\n2. (undated): Geometry\n3. (undated): Algebra";
     private static final Person SHORT_PERSON = new PersonBuilder().withName("Alicia Tan")
             .withAddress("10 Short Street").withLevel("Sec 2").withSubject("E-Math").build();
     private static final Person CHARLOTTE = new PersonBuilder().withName("Charlotte O'Brien")
@@ -290,7 +294,7 @@ public class PersonListPanelTest {
                 label(cellAt(list, 0), "name").fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, MouseButton.PRIMARY));
                 root.applyCss();
                 root.layout();
-                assertEquals("Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra", result.getText());
+                assertEquals(AMY_FIXTURE_HISTORY, result.getText());
                 assertEquals(0, list.getSelectionModel().getSelectedIndex());
                 enterClickTestCommand(root, "view 1");
                 label(cellAt(list, 1), "name").fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, MouseButton.PRIMARY));
@@ -314,7 +318,7 @@ public class PersonListPanelTest {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 TextField input = (TextField) root.lookup("#commandTextField");
-                String amyHistory = "Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra";
+                String amyHistory = AMY_FIXTURE_HISTORY;
                 List<Person> beforeClick = List.copyOf(logic.getFilteredPersonList());
                 clickStudent(root, 0);
                 assertEquals(amyHistory, result.getText());
@@ -324,10 +328,11 @@ public class PersonListPanelTest {
                 clickStudent(root, 1);
                 assertEquals("No lessons logged yet for Ben.", result.getText());
                 enterClickTestCommand(root, "log 2 c/Calculus");
-                assertEquals("Logged lesson for Ben: Calculus", result.getText());
+                assertEquals("Logged lesson for Ben on " + todayText() + ": Calculus", result.getText());
                 input.setText("log 2 c/");
                 clickStudent(root, 1);
-                assertEquals("Lesson records for Ben (1):\n1. Calculus", result.getText());
+                assertEquals("Lesson records for Ben (1):\n1. " + todayText() + ": Calculus",
+                        result.getText());
                 assertEquals("log 2 c/", input.getText());
                 clickStudent(root, 0);
                 assertEquals(amyHistory, result.getText());
@@ -653,15 +658,21 @@ public class PersonListPanelTest {
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 assertFeedback(root, "view 1", "No lessons logged yet for Amy.", false);
-                assertFeedback(root, "log 1 c/Algebra", "Logged lesson for Amy: Algebra", false);
-                assertFeedback(root, "view 1", "Lesson records for Amy (1):\n1. Algebra", false);
-                assertFeedback(root, "log 1 c/Geometry", "Logged lesson for Amy: Geometry", false);
-                assertFeedback(root, "log 1 c/Algebra", "Logged lesson for Amy: Algebra", false);
-                String amyHistory = "Lesson records for Amy (3):\n1. Algebra\n2. Geometry\n3. Algebra";
+                String today = todayText();
+                String loggedForAmy = "Logged lesson for Amy on " + today + ": ";
+                assertFeedback(root, "log 1 c/Algebra", loggedForAmy + "Algebra", false);
+                assertFeedback(root, "view 1", "Lesson records for Amy (1):\n1. " + today + ": Algebra",
+                        false);
+                assertFeedback(root, "log 1 c/Geometry", loggedForAmy + "Geometry", false);
+                assertFeedback(root, "log 1 c/Algebra", loggedForAmy + "Algebra", false);
+                String amyHistory = "Lesson records for Amy (3):\n1. " + today + ": Algebra\n2. " + today
+                        + ": Geometry\n3. " + today + ": Algebra";
                 assertFeedback(root, "view 1", amyHistory, false);
                 assertFeedback(root, "view 2", "No lessons logged yet for Ben.", false);
-                assertFeedback(root, "log 2 c/Calculus", "Logged lesson for Ben: Calculus", false);
-                assertFeedback(root, "view 2", "Lesson records for Ben (1):\n1. Calculus", false);
+                assertFeedback(root, "log 2 c/Calculus", "Logged lesson for Ben on " + today + ": Calculus",
+                        false);
+                String benHistory = "Lesson records for Ben (1):\n1. " + today + ": Calculus";
+                assertFeedback(root, "view 2", benHistory, false);
                 assertFeedback(root, "view 1", amyHistory, false);
                 assertFeedback(root, "view 3", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
                 assertFeedback(root, "view abc", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
@@ -669,7 +680,7 @@ public class PersonListPanelTest {
                 assertFeedback(root, "log 1 c/", Lesson.MESSAGE_CONSTRAINTS, true);
                 assertFeedback(root, "view 1", amyHistory, false);
                 submitCommand(root, "delete 1");
-                assertFeedback(root, "view 1", "Lesson records for Ben (1):\n1. Calculus", false);
+                assertFeedback(root, "view 1", benHistory, false);
                 assertFeedback(root, "view 2", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
             } finally {
                 window.getPrimaryStage().close();
@@ -688,11 +699,13 @@ public class PersonListPanelTest {
                 for (int index = 2; index <= 40; index++) {
                     submitCommand(root, "log 1 c/Topic " + index);
                 }
+                String today = todayText();
                 StringBuilder expected = new StringBuilder("Lesson records for Amy (40):");
                 for (int index = 40; index >= 2; index--) {
-                    expected.append("\n").append(41 - index).append(". Topic ").append(index);
+                    expected.append("\n").append(41 - index).append(". ").append(today)
+                            .append(": Topic ").append(index);
                 }
-                expected.append("\n40. ").append(boundaryContent);
+                expected.append("\n40. ").append(today).append(": ").append(boundaryContent);
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 SplitPane split = (SplitPane) root.lookup(".split-pane");
                 for (double width : new double[] {450, 900}) {
