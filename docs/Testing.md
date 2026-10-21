@@ -22,6 +22,9 @@ You can run tests in two ways.
 * **Method 2: Using Gradle**
   * Open a console and run the command `gradlew clean test` (Mac/Linux: `./gradlew clean test`)
 
+Java assertions are enabled for `./gradlew run`. For direct IntelliJ runs, add
+`-ea` to the VM options; for a JAR, use `java -ea -jar TutorLah.jar`.
+
 <box type="info" seamless>
 
 **Link**: Read [this Gradle Tutorial from the se-edu/guides](https://se-education.org/guides/tutorials/gradle.html) to learn more about using Gradle.

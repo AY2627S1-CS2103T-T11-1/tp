@@ -164,13 +164,20 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Deleting an individual lesson record
 
-`AddressBookParser` routes `deletelesson STUDENT_INDEX LESSON_INDEX` to `DeleteLessonCommandParser`. The parser requires exactly two positional indexes, reuses the student-index validation, and applies the same numeric rules to the lesson index with a lesson-specific error. Missing, non-integer or extra arguments show usage. Numeric-looking invalid indexes name the relevant student or lesson field.
+`DeleteLessonCommandParser` parses the student and lesson indexes.
+`DeleteLessonCommand` selects the student from `Model#getFilteredPersonList`
+and validates the lesson index before changing data.
 
-`DeleteLessonCommand` resolves the student from `Model#getFilteredPersonList`, then validates the lesson number before changing anything. `view` numbers records newest first, while `Person#getLessons` stores them in logging order. The command maps the displayed number to a zero-based stored position using `lessons.size() - lessonIndex.getOneBased()`. Removing by position, rather than by content equality, ensures that only the selected occurrence is removed when lesson content is repeated.
+`view` numbers lessons newest first, but `Person#getLessons` stores them in
+logging order. The command converts the displayed number using
+`lessons.size() - lessonIndex.getOneBased()`, with an assertion checking the
+resulting index. Removing by position ensures that only the selected occurrence
+is deleted when lesson content repeats.
 
-`Person#withLessonRemoved` copies the lesson list and returns a new student preserving all student fields and the remaining lesson objects. `Model#setPerson` replaces the original student without resetting the filter. The existing `LogicManager` save path persists the complete address book; no JSON schema change is needed. Save failures retain the existing contract: the model is updated before saving, and a storage error is reported instead of a success confirmation; there is no new rollback mechanism.
-
-The result area shows a confirmation naming the deleted lesson number, student and content. A subsequent `view` or card click shows the updated history. Deleting the last lesson leaves the student in the list and uses the existing empty-history message on the next view. No new UI layout or command-result fields are required.
+`Person#withLessonRemoved` returns a copy with the remaining lessons and all
+student details preserved. `Model#setPerson` updates the student without
+resetting the filter; the existing `LogicManager` save path persists the change.
+Deleting the last lesson keeps the student with an empty history.
 
 ### Finding students by name
 

@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -24,6 +26,8 @@ public class DeleteLessonCommand extends Command {
             + "Use view STUDENT_INDEX to check the current lesson numbers (newest first).\n"
             + "Example: " + COMMAND_WORD + " 2 1";
     public static final String MESSAGE_DELETE_LESSON_SUCCESS = "Deleted lesson %1$d for %2$s: %3$s";
+
+    private static final Logger logger = LogsCenter.getLogger(DeleteLessonCommand.class);
 
     private final Index studentIndex;
     private final Index lessonIndex;
@@ -57,8 +61,12 @@ public class DeleteLessonCommand extends Command {
 
         // View numbers lessons newest first, while the model stores them oldest first.
         int storedIndex = lessons.size() - lessonIndex.getOneBased();
+        assert storedIndex >= 0 && storedIndex < lessons.size()
+                : "Converted lesson index must identify an existing lesson";
         Lesson deletedLesson = lessons.get(storedIndex);
         model.setPerson(student, student.withLessonRemoved(storedIndex));
+        logger.fine("Removed lesson " + lessonIndex.getOneBased()
+                + " from displayed student " + studentIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_DELETE_LESSON_SUCCESS,
                 lessonIndex.getOneBased(), student.getName(), deletedLesson));
     }
