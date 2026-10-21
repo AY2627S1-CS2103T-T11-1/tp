@@ -165,6 +165,7 @@ This section describes some noteworthy details on how certain features are imple
 ### Deleting an individual lesson record
 
 `DeleteLessonCommandParser` parses the student and lesson indexes.
+Both use `ParserUtil#parseCommandIndex`, with index-specific error messages.
 `DeleteLessonCommand` selects the student from `Model#getFilteredPersonList`
 and validates the lesson index before changing data.
 

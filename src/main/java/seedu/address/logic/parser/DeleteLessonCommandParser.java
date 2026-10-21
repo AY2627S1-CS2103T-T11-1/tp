@@ -26,22 +26,8 @@ public class DeleteLessonCommandParser implements Parser<DeleteLessonCommand> {
         }
 
         Index studentIndex = ParserUtil.parseStudentIndex(indexes[0], DeleteLessonCommand.MESSAGE_USAGE);
-        Index lessonIndex = parseLessonIndex(indexes[1]);
+        Index lessonIndex = ParserUtil.parseCommandIndex(indexes[1], DeleteLessonCommand.MESSAGE_USAGE,
+                MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
         return new DeleteLessonCommand(studentIndex, lessonIndex);
-    }
-
-    /**
-     * Parses a lesson number using the shared index rules but a lesson-specific error message.
-     */
-    private Index parseLessonIndex(String text) throws ParseException {
-        if (!text.matches("-?\\d+")) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteLessonCommand.MESSAGE_USAGE));
-        }
-
-        try {
-            return ParserUtil.parseIndex(text);
-        } catch (ParseException pe) {
-            throw new ParseException(MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, pe);
-        }
     }
 }

@@ -222,6 +222,9 @@ accepted by the parser. Commands apply these errors consistently:
   `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
   executing another command or taking focus from the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
+- `ParserUtil#parseCommandIndex(text, usage, invalidIndexMessage)` shares
+  student and lesson index validation. `parseStudentIndex` delegates to it
+  with the student-index error message.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
 - `FindCommand(NameContainsKeywordsPredicate)` replaces the displayed filter. The predicate requires a non-empty list of non-blank keywords and keeps an immutable copy as typed. Each keyword matches a literal name substring using locale-independent `String#regionMatches(true, ...)`, without lowercasing the name or keywords. Predicate equality and hashing use the stored keyword list. `FindCommandParser` splits on whitespace without interpreting prefixes.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
