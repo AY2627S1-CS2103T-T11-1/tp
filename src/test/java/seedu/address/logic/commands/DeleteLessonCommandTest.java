@@ -89,6 +89,8 @@ public class DeleteLessonCommandTest {
         Person updated = new PersonBuilder(OTHER_STUDENT).withLessons().build();
         assertEquals(List.of(updated), model.getFilteredPersonList());
         assertEquals(List.of(STUDENT, updated), model.getAddressBook().getPersonList());
+        assertCommandFailure(new DeleteLessonCommand(FIRST, FIRST), model,
+                "No lessons logged yet for " + OTHER_STUDENT.getName() + ".");
         assertCommandFailure(new DeleteLessonCommand(SECOND, FIRST), model,
                 Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
@@ -105,15 +107,22 @@ public class DeleteLessonCommandTest {
     }
 
     /**
-     * Rejects lessons outside the history, including a student with no lessons.
+     * Rejects lessons outside a non-empty history.
      */
     @Test
     public void execute_invalidLessonIndex_keepsData() {
         assertCommandFailure(new DeleteLessonCommand(FIRST, Index.fromOneBased(4)), model,
                 Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+    }
+
+    /**
+     * Reports an empty history without changing either student.
+     */
+    @Test
+    public void execute_noLessons_reportsEmptyHistoryAndKeepsData() {
         model.setPerson(STUDENT, new PersonBuilder(STUDENT).withLessons().build());
         assertCommandFailure(new DeleteLessonCommand(FIRST, FIRST), model,
-                Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+                "No lessons logged yet for " + STUDENT.getName() + ".");
     }
 
     /**

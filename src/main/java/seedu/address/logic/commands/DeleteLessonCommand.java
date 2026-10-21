@@ -55,6 +55,9 @@ public class DeleteLessonCommand extends Command {
 
         Person student = students.get(studentIndex.getZeroBased());
         List<Lesson> lessons = student.getLessons();
+        if (lessons.isEmpty()) {
+            throw new CommandException(String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()));
+        }
         if (lessonIndex.getZeroBased() >= lessons.size()) {
             throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
         }

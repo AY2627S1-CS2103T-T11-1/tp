@@ -182,7 +182,7 @@ public class LessonPersistenceTest {
      */
     @Test
     public void deleteLesson_invalidInput_keepsSavedData() throws Exception {
-        startWith(new PersonBuilder(ALEX).withLessons("Algebra").build());
+        startWith(new PersonBuilder(ALEX).withLessons("Algebra").build(), BEA);
         logic.execute("list");
         String saved = Files.readString(dataFile);
         AddressBook before = new AddressBook(model.getAddressBook());
@@ -191,6 +191,8 @@ public class LessonPersistenceTest {
         assertThrows(CommandException.class, Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, () ->
                 logic.execute("deletelesson 1 2"));
         assertThrows(CommandException.class, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, () ->
+                logic.execute("deletelesson 3 1"));
+        assertThrows(CommandException.class, "No lessons logged yet for Bea Tan.", () ->
                 logic.execute("deletelesson 2 1"));
         assertEquals(before, model.getAddressBook());
         assertEquals(saved, Files.readString(dataFile));

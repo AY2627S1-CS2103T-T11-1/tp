@@ -178,6 +178,7 @@ is deleted when lesson content repeats.
 student details preserved. `Model#setPerson` updates the student without
 resetting the filter; the existing `LogicManager` save path persists the change.
 Deleting the last lesson keeps the student with an empty history.
+Attempting another deletion reports `No lessons logged yet for NAME.`.
 
 ### Finding students by name
 
@@ -664,6 +665,8 @@ Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.ja
 1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
 1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
 1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
+1. Try `deletelesson INDEX 1` again while Amy's history is empty. Expected:
+   `No lessons logged yet for Amy.`, with both students and saved data unchanged.
 1. Enter `find ben`, then `deletelesson 1 1`. Expected: `Deleted lesson 1 for Ben: Calculus`, with only Ben's card still displayed. `view 1` must show `No lessons logged yet for Ben.`. Enter `list` to confirm both students remain and Amy's history is unchanged. Restart to check that both students and their empty histories were saved.
 
 Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.

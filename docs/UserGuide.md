@@ -223,7 +223,13 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 * Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
 * Confirmation: `Deleted lesson LESSON_INDEX for NAME: CONTENT`. Run `view STUDENT_INDEX` again or click the student's card to see the remaining records.
 * Student details, other students' records and the current student filter are unchanged. Deleting the final lesson keeps the student with an empty history.
-* Missing arguments, non-integers such as `abc`, `+1` or `1.5`, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, leading-zero integers, overflowing integers and out-of-range indexes produce `The student index provided is invalid.` or `The lesson index provided is invalid.`, depending on the index. A student with no lessons has no valid lesson index.
+* Missing arguments, non-integers such as `abc`, `+1` or `1.5`, and extra
+  arguments produce an invalid-command-format message with usage. Zero,
+  negative integers, leading-zero integers, overflowing integers and
+  out-of-range indexes produce `The student index provided is invalid.` or
+  `The lesson index provided is invalid.`, depending on the index.
+* If the student's history is empty, a valid positive lesson number produces
+  `No lessons logged yet for NAME.`. Nothing is deleted.
 * Deletion is saved automatically and cannot be undone in the app. `delete INDEX` still deletes the entire student and all their lessons; it is a different command.
 
 Example: after logging `Algebra`, then `Geometry` for student 2, `view 2` shows `1. Geometry` and `2. Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. Algebra`.

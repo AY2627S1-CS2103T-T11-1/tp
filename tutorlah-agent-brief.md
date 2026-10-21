@@ -189,8 +189,9 @@ accepted by the parser. Commands apply these errors consistently:
 - Missing indexes, words, decimals, signs such as `+1`, and extra command
   parts give the invalid command format message with that command's usage.
 - `deletelesson` applies these rules to both indexes. An invalid lesson
-  number gives `The lesson index provided is invalid.`, including when the
-  student has no lessons. Check both indexes before changing data.
+  number gives `The lesson index provided is invalid.`. For a valid positive
+  lesson number but no lessons, show `No lessons logged yet for {NAME}.`.
+  Check indexes and history before changing data.
 
 ---
 

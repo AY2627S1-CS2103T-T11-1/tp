@@ -90,6 +90,7 @@ Added after the MVP (v1.4):
 
 `deletelesson` removes one record using the lesson number shown by `view`
 (newest first). The student and their other lesson records are kept.
+An empty history reports `No lessons logged yet for NAME.`.
 
 `find` shows students whose names contain every search keyword, ignoring case
 and keyword order; partial names are accepted. It searches all students each

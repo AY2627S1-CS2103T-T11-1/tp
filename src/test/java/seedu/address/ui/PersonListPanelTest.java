@@ -297,6 +297,7 @@ public class PersonListPanelTest {
                 assertEquals(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, result.getText());
                 enterClickTestCommand(root, "deletelesson 1 2");
                 enterClickTestCommand(root, "deletelesson 1 1");
+                assertFeedback(root, "deletelesson 1 1", "No lessons logged yet for Amy.", true);
                 clickStudent(root, 0);
                 assertEquals("No lessons logged yet for Amy.", result.getText());
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
