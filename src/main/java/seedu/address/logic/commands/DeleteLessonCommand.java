@@ -59,16 +59,24 @@ public class DeleteLessonCommand extends Command {
             throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
         }
 
-        // View numbers lessons newest first, while the model stores them oldest first.
-        int storedIndex = lessons.size() - lessonIndex.getOneBased();
-        assert storedIndex >= 0 && storedIndex < lessons.size()
-                : "Converted lesson index must identify an existing lesson";
+        int storedIndex = toStoredLessonIndex(lessons.size(), lessonIndex.getOneBased());
         Lesson deletedLesson = lessons.get(storedIndex);
         model.setPerson(student, student.withLessonRemoved(storedIndex));
         logger.fine("Removed lesson " + lessonIndex.getOneBased()
                 + " from displayed student " + studentIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_DELETE_LESSON_SUCCESS,
                 lessonIndex.getOneBased(), student.getName(), deletedLesson));
+    }
+
+    /**
+     * Converts a validated newest-first lesson number to its zero-based position in logging order.
+     * Asserts that the converted position is within the history.
+     */
+    static int toStoredLessonIndex(int lessonCount, int displayedIndex) {
+        int storedIndex = lessonCount - displayedIndex;
+        assert storedIndex >= 0 && storedIndex < lessonCount
+                : "Converted lesson index must identify an existing lesson";
+        return storedIndex;
     }
 
     /**
