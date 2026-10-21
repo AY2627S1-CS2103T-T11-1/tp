@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "finding-students-by-name": "Finding students by name",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -64,6 +65,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "deleting-a-person": "Deleting a person",
         "saving-data": "Saving data",
+        "finding-students-and-restoring-the-full-list": "Finding students and restoring the full list",
         "lesson-history-command-sequences": "Lesson-history command sequences"
       },
       "headingKeywords": {}
@@ -115,6 +117,7 @@
         "viewing-help-help": "Viewing help: help",
         "adding-a-student-add": "Adding a student: add",
         "listing-all-students-list": "Listing all students: list",
+        "finding-students-by-name-find": "Finding students by name: find",
         "editing-a-student-edit": "Editing a student: edit",
         "deleting-a-student-delete": "Deleting a student: delete",
         "viewing-a-student-s-lesson-records-view": "Viewing a student's lesson records: view",
