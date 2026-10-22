@@ -293,10 +293,12 @@ public class PersonListPanelTest {
                 enterClickTestCommand(root, "view 1");
                 enterClickTestCommand(root, "deletelesson 1 1");
                 assertEquals("Deleted lesson 1 for Amy: Algebra", result.getText());
+                String historyAfterDelete = "Lesson records for Amy (2):\n1. (undated): Geometry"
+                        + "\n2. (undated): Algebra";
                 enterClickTestCommand(root, "view 1");
-                assertEquals("Lesson records for Amy (2):\n1. Geometry\n2. Algebra", result.getText());
+                assertEquals(historyAfterDelete, result.getText());
                 clickStudent(root, 0);
-                assertEquals("Lesson records for Amy (2):\n1. Geometry\n2. Algebra", result.getText());
+                assertEquals(historyAfterDelete, result.getText());
                 enterClickTestCommand(root, "deletelesson 1 3");
                 assertEquals(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX, result.getText());
                 enterClickTestCommand(root, "deletelesson 1 2");

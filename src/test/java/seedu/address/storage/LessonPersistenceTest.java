@@ -180,7 +180,7 @@ public class LessonPersistenceTest {
         model = new ModelManager(reloaded, new UserPrefs());
         logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataFile),
                 new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
-        assertEquals("Lesson records for Alex Lim (2):\n1. Geometry\n2. Algebra",
+        assertEquals("Lesson records for Alex Lim (2):\n1. (undated): Geometry\n2. (undated): Algebra",
                 logic.execute("view 1").getFeedbackToUser());
         logic.execute("deletelesson 1 2");
         logic.execute("deletelesson 1 1");

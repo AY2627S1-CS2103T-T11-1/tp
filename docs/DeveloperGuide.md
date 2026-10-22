@@ -662,9 +662,9 @@ testers are expected to do more *exploratory* testing.
 
 Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.jar`, with fictional students only. Add a student called Amy, note her displayed index, and use that index wherever `INDEX` appears below. Add another student, Ben, with a distinct phone number and a Calculus record.
 
-1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. Algebra`, `2. Geometry`, `3. Algebra`.
-1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. Geometry`, `2. Algebra`, proving the newest duplicate was deleted rather than the oldest.
-1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
+1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. DD/MM/YYYY: Algebra`, `2. DD/MM/YYYY: Geometry`, `3. DD/MM/YYYY: Algebra`, each with today's date.
+1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. DD/MM/YYYY: Geometry`, `2. DD/MM/YYYY: Algebra`, proving the newest duplicate was deleted rather than the oldest.
+1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. DD/MM/YYYY: Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
 1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
 1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
 1. Try `deletelesson INDEX 1` again while Amy's history is empty. Expected:

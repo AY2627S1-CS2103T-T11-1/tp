@@ -235,7 +235,7 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
   `No lessons logged yet for NAME.`. Nothing is deleted.
 * Deletion is saved automatically and cannot be undone in the app. `delete INDEX` still deletes the entire student and all their lessons; it is a different command.
 
-Example: after logging `Algebra`, then `Geometry` for student 2, `view 2` shows `1. Geometry` and `2. Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. Algebra`.
+Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026, `view 2` shows `1. 18/10/2026: Geometry` and `2. 18/10/2026: Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. 18/10/2026: Algebra`.
 
 ### Exiting the program: `exit`
 

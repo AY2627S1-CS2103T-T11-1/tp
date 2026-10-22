@@ -114,7 +114,8 @@ no date and show `(undated)`. The data file stores the date as `YYYY-MM-DD`.
 
 - **In the MVP:** add, delete, list, log a lesson, view lessons.
 - **Added in v1.4:** edit a student's details (lessons are kept), find
-  students by partial name, and delete individual lesson records.
+  students by partial name, delete individual lesson records, and date
+  each logged lesson.
 - **Planned next:** edit lessons, parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
