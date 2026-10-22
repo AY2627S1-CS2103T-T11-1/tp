@@ -16,7 +16,7 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records.
+* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records and logging lessons with a past date.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -174,8 +174,10 @@ Both use `ParserUtil#parseCommandIndex`, with index-specific error messages.
 `DeleteLessonCommand` selects the student from `Model#getFilteredPersonList`
 and validates the lesson index before changing data.
 
-`view` numbers lessons newest first, but `Person#getLessons` stores them in
-logging order. The command converts the displayed number using
+`view` numbers lessons newest first, but `Person#getLessons` stores them
+oldest first. `Person#withLessonAdded` inserts each lesson in date order, so
+the stored order and the displayed numbers stay in step even when a lesson is
+logged with a past date. The command converts the displayed number using
 `lessons.size() - lessonIndex.getOneBased()`, with an assertion checking the
 resulting index. Removing by position ensures that only the selected occurrence
 is deleted when lesson content repeats.
@@ -721,6 +723,11 @@ Add two test students, Amy and Ben, and use their current displayed indexes in t
    remain usable, and all records must remain reachable by scrolling.
 
 ### Lesson dates and data saved by v1.3
+
+1. Log `Vectors` for a test student, then `log INDEX c/Surds date/DD/MM/YYYY` with yesterday's date, and view the student.
+   Expected: `Vectors` is listed first with today's date, then `Surds` with yesterday's date. Enter `deletelesson INDEX 2`: `Surds` is deleted.
+1. Try `date/` with tomorrow's date, `31/02/2026`, `2026-10-20` and an empty value.
+   Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates in the format DD/MM/YYYY, ...`. No lesson is added.
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.

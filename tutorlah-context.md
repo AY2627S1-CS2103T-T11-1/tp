@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 21, 2026, for issues #98 (lesson dates) and #118 (Unicode blank-field validation).
+Last updated: Oct 22, 2026, for issue #120 (logging a lesson with a past date).
 
 ## What it is
 
@@ -37,7 +37,7 @@ recorded about them, not building a new kind of app.
 | **Duplicate** | same name (`isSamePerson`) | same phone **and** same name ignoring case, since two students can both be "Tan Wei Ming" |
 | **`list`** | ignores any extra text | rejects parameters; reports `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | **New entity** | none | **Lesson**: a record of what was covered and the date it was logged, owned by a student |
-| **New commands** | none | `log INDEX c/CONTENT` and `view INDEX` |
+| **New commands** | none | `log INDEX c/CONTENT [date/DATE]` and `view INDEX` |
 
 ## What stays from AB3
 
@@ -81,7 +81,7 @@ and emoji sequences.
 | Add a student | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22 #05-13 l/JC1 sub/H2 Math` |
 | Delete a student | `delete INDEX` | `delete 3` |
 | List students | `list` | `list` |
-| Log a lesson | `log INDEX c/CONTENT` | `log 3 c/Quadratic inequalities` |
+| Log a lesson | `log INDEX c/CONTENT [date/DATE]` | `log 3 c/Quadratic inequalities date/21/10/2026` |
 | View lessons | `view INDEX` | `view 3` |
 
 Added after the MVP (v1.4):
@@ -112,9 +112,11 @@ names and keywords separately, so Greek sigma variants also match. An empty
 student panel offers both `list` and the add-command format and example,
 covering searches with no matches as well as a genuinely empty address book.
 
-`log` dates each lesson with today's date (v1.4, issue #98), and `view` shows
-each record as `NUMBER. DD/MM/YYYY: CONTENT`. Lessons saved before v1.4 have
-no date and show `(undated)`. The data file stores the date as `YYYY-MM-DD`.
+`log` dates each lesson with today's date (v1.4, issue #98), or with
+`date/DD/MM/YYYY` for a lesson taught earlier (issue #120). Future dates are
+rejected. `view` shows each record as `NUMBER. DD/MM/YYYY: CONTENT`, most
+recent date first. Lessons saved before v1.4 have no date and show
+`(undated)`. The data file stores the date as `YYYY-MM-DD`.
 
 ## Scope
 
@@ -134,7 +136,8 @@ no date and show `(undated)`. The data file stores the date as `YYYY-MM-DD`.
   by issue #98: `log` dates each lesson with today's date.
 - **View order:** most recently logged first (reverse logging order), as
   agreed by the team on Oct 8. Implemented in PR #63. This replaces the
-  earlier order-logged proposal.
+  earlier order-logged proposal. Since issue #120, lessons are kept in date
+  order, so `view` shows the most recent date first.
 - **Email and tags are removed.** They may return post-MVP as optional
   fields.
 - **`edit`, `find` and `clear` are removed for the MVP** and can be restored

@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 21, 2026, for issues #98 (lesson dates) and #118 (Unicode blank-field validation).
+Last updated: Oct 22, 2026, for issue #120 (logging a lesson with a past date).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -103,14 +103,21 @@ ask the team. Do not guess.
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
-| Log | `log INDEX c/CONTENT` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
+| Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
 
-**Lesson dates (#98):** `log` dates each lesson with today's date from the
-system clock. `{DATE}` is `DD/MM/YYYY`, for example `18/10/2026`. Lessons
+**Lesson dates (#98, #120):** `log` dates each lesson with `date/DATE` if
+given, otherwise today's date from the system clock. `{DATE}` is
+`DD/MM/YYYY`, for example `18/10/2026`, and typed dates use the same format
+(`1/2/2026` is also accepted). A future date gives `Lesson dates cannot be
+in the future. Log a lesson on or after the day it is taught.` Lessons
 saved before v1.4 have no date, and `view` shows `(undated)` in place of
-`{DATE}`. Users cannot type a date yet. If a later command lets them, it
-must accept the same `DD/MM/YYYY` format.
+`{DATE}`.
+
+**Lesson order (#120):** each student's lessons are stored in date order.
+A lesson logged for an earlier date is inserted by date, after lessons on
+the same date. Undated lessons stay at the oldest end. `view` shows the
+stored order reversed, and `deletelesson` uses the same numbers.
 
 **`view` replaces `lessons`.** The team renamed the command on Oct 8.
 Any older document that says `lessons INDEX`, `LessonsCommand` or
@@ -163,6 +170,7 @@ both when a search hides saved students and when no students are saved.
 | Level | `l/` | 1 to 20 characters: letters, digits, spaces | `Levels should contain only letters, digits and spaces, and must not be blank.` |
 | Subject | `sub/` | 1 to 50 characters: letters, digits, spaces, hyphens | `Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.` |
 | Lesson content | `c/` | 1 to 300 printable characters, internal spaces kept | `Lesson content must not be blank and must be at most 300 characters.` |
+| Lesson date | `date/` | Optional. A real date as `DD/MM/YYYY` (single-digit day and month allowed), four-digit year, not in the future | `Lesson dates should be real dates in the format DD/MM/YYYY, for example 21/10/2026.` |
 
 - Addresses and lesson content cannot consist entirely of Unicode whitespace
   or format characters, including non-breaking spaces, ZERO WIDTH SPACE
@@ -171,7 +179,8 @@ both when a search hides saved students and when no students are saved.
   Real text keeps internal spaces and formatting, including joiners used by
   written languages and emoji sequences.
 - `/` is allowed in names so that `s/o` and `d/o` work. No prefix starts
-  with `s/`, `o/` or `d/`. Names containing `a/l` or `a/p` still fail,
+  with `s/`, `o/` or `d/`. `date/` is used only by `log`, so lesson content
+  such as `d/dx` and names such as `d/o` are unaffected. Names containing `a/l` or `a/p` still fail,
   because ` a/` is the address prefix. This is a known MVP limitation and
   must be stated in the User Guide.
 - **`a/` in names with `edit`:** because every `edit` field is optional, `edit 1 n/Muthu a/l Raju` is accepted and changes both the name (`Muthu`) and the address (`l Raju`), instead of being rejected as with `add`. Typing `A/L` in capitals avoids it. The User Guide warns about this in the `edit` section and Known issue 3. A parser fix belongs in its own issue.
@@ -185,7 +194,7 @@ both when a search hides saved students and when no students are saved.
 | # | Decision | Status on `master` |
 |---|---|---|
 | 1 | No lesson date in the MVP. `log` takes content only. | Done for the MVP. Replaced in v1.4 by issue #98: `log` dates each lesson with today's date. |
-| 2 | **Order shown by `view`: most recently logged first.** This means reverse logging order. | Agreed by the team on Oct 8. Done (PR #63). This replaces the earlier order-logged proposal. Dated lessons (#98) keep this order. `view` does not sort by date. |
+| 2 | **Order shown by `view`: most recent first.** Most recent date first, then most recently logged among lessons on the same date. | Agreed by the team on Oct 8 as reverse logging order (PR #63). Updated by issue #120: lessons are stored in date order when logged, so `view` and `deletelesson` need no sorting. |
 | 3 | Email and tags removed from `Person`. They may return post-MVP as optional fields. | Done (PR #51) |
 | 4 | `edit`, `find` and `clear` removed for the MVP. Delete the commands, parsers, tests, `AddressBookParser` cases, help and UG entries. Restore from Git history post-MVP. | Done (issue #72). `edit` restored in issue #100 and `find` in issue #101 for v1.4; `clear` remains removed. |
 | 5 | `/` allowed in names | Done (PR #51) |
@@ -216,8 +225,9 @@ accepted by the parser. Commands apply these errors consistently:
 - `Person(Name, Phone, Address, Level, Subject)` creates a student with no
   lessons. `Person(Name, Phone, Address, Level, Subject, List<Lesson>)`
   creates one with lessons.
-- `Person#getLessons()` returns an unmodifiable list in the order logged.
-  `Person#withLessonAdded(Lesson)` returns a new `Person`.
+- `Person#getLessons()` returns an unmodifiable list, oldest first.
+  `Person#withLessonAdded(Lesson)` returns a new `Person` with the lesson
+  inserted in date order (see "Lesson order" in section 2).
 - `seedu.address.model.lesson.Lesson`: immutable. `Lesson(String content)`
   is undated and `Lesson(String content, LocalDate date)` is dated. Public
   `content`, `getDate()` (an `Optional<LocalDate>`), `withDate(LocalDate)`,
@@ -226,8 +236,11 @@ accepted by the parser. Commands apply these errors consistently:
 - `Lesson#toString` returns the content only, because command confirmations
   print lessons through it. Keep it that way and do not switch it to
   `ToStringBuilder`.
-- `LogCommand(Index, Lesson)` dates the lesson with the system clock.
-  `LogCommand(Index, Lesson, Clock)` lets tests fix today's date.
+- `LogCommand(Index, Lesson)` keeps a dated lesson's date and dates an
+  undated lesson with the system clock. `LogCommand(Index, Lesson, Clock)`
+  lets tests fix today's date. It rejects dates after today.
+- `ParserUtil.parseLessonDate(String)` parses `DD/MM/YYYY` strictly and
+  throws `ParseException` with `Lesson.MESSAGE_DATE_CONSTRAINTS`.
 - `Messages.formatLessonDate(Lesson)` returns the `DD/MM/YYYY` date, or
   `(undated)`, using `Messages.LESSON_DATE_FORMATTER`. Use it wherever a
   lesson date is shown.
@@ -240,7 +253,7 @@ accepted by the parser. Commands apply these errors consistently:
   `LogCommand` pass a fixed `Clock` instead. `PersonBuilder#withLessons`
   creates undated lessons, which `view` shows as `(undated)`.
 - `Person#withLessonRemoved(int zeroBasedIndex)` returns a new `Person`
-  without the selected lesson in logging order. Other fields are kept.
+  without the selected lesson in stored order. Other fields are kept.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.
   Deleting a student removes their lessons, because lessons live inside
   `Person`.
@@ -253,7 +266,7 @@ accepted by the parser. Commands apply these errors consistently:
   Other commands leave it empty. `MainWindow` passes successful view indexes to
   `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
   executing another command or taking focus from the command box.
-- Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`.
+- Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`, `date/`.
 - `ParserUtil#parseCommandIndex(text, usage, invalidIndexMessage)` shares
   student and lesson index validation. `parseStudentIndex` delegates to it
   with the student-index error message.
