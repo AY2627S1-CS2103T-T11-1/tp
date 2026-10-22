@@ -715,6 +715,36 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void commandBox_unicodeBlankFields_showsErrorsWithoutChangingStudents(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            List<Person> before = List.copyOf(model.getAddressBook().getPersonList());
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                clickStudent(root, 0);
+                String historyBefore = result.getText();
+                for (String blank : List.of("\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
+                        " \u2003\u200b\u2060 ")) {
+                    assertFeedback(root, "add n/Bea Tan p/81234569 a/" + blank + " l/Sec 2 sub/E-Math",
+                            Address.MESSAGE_CONSTRAINTS, true);
+                    assertFeedback(root, "edit 1 a/" + blank, Address.MESSAGE_CONSTRAINTS, true);
+                    assertFeedback(root, "log 1 c/" + blank, Lesson.MESSAGE_CONSTRAINTS, true);
+                    assertEquals(before, model.getAddressBook().getPersonList());
+                }
+                clickStudent(root, 0);
+                assertEquals(historyBefore, result.getText());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void commandBox_longHistoryAndStudentSwitch_resetsScrollWithoutLosingRecords() throws Exception {
         runOnJavaFxThread(() -> {
             MainWindow window = createLessonWindow();

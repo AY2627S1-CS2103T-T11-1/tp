@@ -154,6 +154,14 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseAddress_blankUnicodeValue_reportsAddressConstraints() {
+        for (String address : new String[]{"\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
+            " \t\u2003\u00a0\u200b\u2060 "}) {
+            assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress(address));
+        }
+    }
+
+    @Test
     public void parseAddress_validValueWithoutWhitespace_returnsAddress() throws Exception {
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(VALID_ADDRESS));
@@ -233,6 +241,15 @@ public class ParserUtilTest {
     public void parseLessonContent_invalidValue_throwsParseException() {
         assertThrows(ParseException.class, () -> ParserUtil.parseLessonContent(WHITESPACE));
         assertThrows(ParseException.class, () -> ParserUtil.parseLessonContent("a".repeat(Lesson.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseLessonContent_blankUnicodeValue_reportsLessonConstraints() {
+        for (String content : new String[]{"\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
+            " \t\u2003\u00a0\u200b\u2060 "}) {
+            assertThrows(ParseException.class, Lesson.MESSAGE_CONSTRAINTS, ()
+                    -> ParserUtil.parseLessonContent(content));
+        }
     }
 
     @Test

@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 21, 2026, for issue #102 (delete a lesson record).
+Last updated: Oct 22, 2026, for issue #118 (Unicode blank-field validation).
 
 ## What it is
 
@@ -67,6 +67,12 @@ recorded about them, not building a new kind of app.
 
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.
+
+Addresses and lesson content cannot consist only of Unicode whitespace or
+formatting characters, such as non-breaking spaces and zero-width spaces.
+Commands and JSON loading use the same validation. Real text keeps its
+internal spaces and formatting, including joiners used in written languages
+and emoji sequences.
 
 ## MVP commands
 

@@ -1,12 +1,18 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class AddressTest {
+    private static final List<String> BLANK_VALUES = List.of("\u2003", "\u3000", "\u00a0", "\u2007", "\u202f",
+            " \t\u2003\u00a0\u3000 ", "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
+            "\u200b\u200c\u200d\u2060\ufeff", " \u2003\u00a0\u200b\u2060 ");
 
     @Test
     public void constructor_null_throwsNullPointerException() {
@@ -20,6 +26,27 @@ public class AddressTest {
     }
 
     @Test
+    public void isValidAddress_whitespaceAndFormatOnly_returnsFalse() {
+        for (String address : BLANK_VALUES) {
+            assertFalse(Address.isValidAddress(address));
+        }
+    }
+
+    @Test
+    public void constructor_whitespaceAndFormatOnly_throwsIllegalArgumentException() {
+        for (String address : BLANK_VALUES) {
+            assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, () -> new Address(address));
+        }
+    }
+
+    @Test
+    public void constructor_visibleUnicodeAddress_preservesTextAndFormatting() {
+        for (String address : List.of("碧山街\u3000十号\u00a0#01-23", "خیابان\u200cشمالی 10")) {
+            assertEquals(address, new Address(address).value);
+        }
+    }
+
+    @Test
     public void isValidAddress() {
         // null address
         assertThrows(NullPointerException.class, () -> Address.isValidAddress(null));
@@ -27,6 +54,7 @@ public class AddressTest {
         // invalid addresses
         assertFalse(Address.isValidAddress("")); // empty string
         assertFalse(Address.isValidAddress(" ")); // spaces only
+        assertFalse(Address.isValidAddress(" Leading space")); // leading space before non-blank text
         assertFalse(Address.isValidAddress("a".repeat(201))); // longer than 200 characters
 
         // valid addresses
