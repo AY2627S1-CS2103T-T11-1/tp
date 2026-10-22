@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "rejecting-blank-unicode-fields": "Rejecting blank Unicode fields",
         "deleting-an-individual-lesson-record": "Deleting an individual lesson record",
         "finding-students-by-name": "Finding students by name",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
