@@ -3,6 +3,8 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.List;
 
 import seedu.address.commons.core.index.Index;
@@ -14,31 +16,42 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
 /**
- * Records a lesson for a student identified using its displayed index in the student list.
+ * Records a lesson, dated today, for a student identified using its displayed index in the student list.
  */
 public class LogCommand extends Command {
 
     public static final String COMMAND_WORD = "log";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Logs a lesson for the student identified by the index number used in the displayed student list.\n"
+            + ": Logs a lesson for the student identified by the index number used in the displayed"
+            + " student list. The lesson is dated today.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + PREFIX_CONTENT + "CONTENT\n"
             + "Example: " + COMMAND_WORD + " 3 " + PREFIX_CONTENT + "Quadratic inequalities";
 
-    public static final String MESSAGE_LOG_LESSON_SUCCESS = "Logged lesson for %1$s: %2$s";
+    public static final String MESSAGE_LOG_LESSON_SUCCESS = "Logged lesson for %1$s on %2$s: %3$s";
 
     private final Index targetIndex;
     private final Lesson lesson;
+    private final Clock clock;
 
     /**
-     * Creates a LogCommand to add {@code lesson} to the student at {@code targetIndex}.
+     * Creates a LogCommand to add {@code lesson} to the student at {@code targetIndex}, dated today.
      */
     public LogCommand(Index targetIndex, Lesson lesson) {
+        this(targetIndex, lesson, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Creates a LogCommand that dates the lesson using {@code clock}, so that tests can fix today's date.
+     */
+    public LogCommand(Index targetIndex, Lesson lesson, Clock clock) {
         requireNonNull(targetIndex);
         requireNonNull(lesson);
+        requireNonNull(clock);
         this.targetIndex = targetIndex;
         this.lesson = lesson;
+        this.clock = clock;
     }
 
     @Override
@@ -51,11 +64,12 @@ public class LogCommand extends Command {
         }
 
         Person studentToLog = lastShownList.get(targetIndex.getZeroBased());
-        Person studentWithLesson = studentToLog.withLessonAdded(lesson);
+        Lesson datedLesson = lesson.withDate(LocalDate.now(clock));
+        Person studentWithLesson = studentToLog.withLessonAdded(datedLesson);
         model.setPerson(studentToLog, studentWithLesson);
 
-        return new CommandResult(String.format(MESSAGE_LOG_LESSON_SUCCESS,
-                studentWithLesson.getName(), lesson));
+        return new CommandResult(String.format(MESSAGE_LOG_LESSON_SUCCESS, studentWithLesson.getName(),
+                Messages.formatLessonDate(datedLesson), datedLesson.content));
     }
 
     @Override
@@ -70,7 +84,8 @@ public class LogCommand extends Command {
         }
 
         return targetIndex.equals(otherLogCommand.targetIndex)
-                && lesson.equals(otherLogCommand.lesson);
+                && lesson.equals(otherLogCommand.lesson)
+                && clock.equals(otherLogCommand.clock);
     }
 
     @Override

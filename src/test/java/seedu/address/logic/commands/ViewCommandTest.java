@@ -11,6 +11,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -28,12 +30,27 @@ public class ViewCommandTest {
     @Test
     public void execute_multipleLessons_showsNewestFirstWithoutChangingModel() {
         Person student = model.getFilteredPersonList().get(0);
+        model.setPerson(student, student.withLessonAdded(new Lesson("Algebra", LocalDate.of(2026, 10, 1)))
+                .withLessonAdded(new Lesson("Geometry", LocalDate.of(2026, 10, 8)))
+                .withLessonAdded(new Lesson("Algebra", LocalDate.of(2026, 10, 15)))
+                .withLessonAdded(new Lesson("Calculus", LocalDate.of(2026, 10, 15))));
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        String expected = "Lesson records for " + student.getName() + " (4):\n1. 15/10/2026: Calculus"
+                + "\n2. 15/10/2026: Algebra\n3. 08/10/2026: Geometry\n4. 01/10/2026: Algebra";
+
+        assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
+                new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
+    }
+
+    @Test
+    public void execute_undatedAndDatedLessons_marksUndatedLessons() {
+        // lessons logged before v1.4 have no date and stay in logging order
+        Person student = model.getFilteredPersonList().get(0);
         model.setPerson(student, student.withLessonAdded(new Lesson("Algebra"))
-                .withLessonAdded(new Lesson("Geometry")).withLessonAdded(new Lesson("Algebra"))
-                .withLessonAdded(new Lesson("Calculus")));
+                .withLessonAdded(new Lesson("Geometry", LocalDate.of(2026, 10, 18))));
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         String expected = "Lesson records for " + student.getName()
-                + " (4):\n1. Calculus\n2. Algebra\n3. Geometry\n4. Algebra";
+                + " (2):\n1. 18/10/2026: Geometry\n2. (undated): Algebra";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
                 new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
@@ -65,7 +82,7 @@ public class ViewCommandTest {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
         String expected = "Lesson records for " + student.getName()
-                + " (1):\n1. Only this student's lesson";
+                + " (1):\n1. (undated): Only this student's lesson";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
                 new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);

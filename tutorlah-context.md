@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 22, 2026, for issue #118 (Unicode blank-field validation).
+Last updated: Oct 21, 2026, for issues #98 (lesson dates) and #118 (Unicode blank-field validation).
 
 ## What it is
 
@@ -36,7 +36,7 @@ recorded about them, not building a new kind of app.
 | **Phone rule** | digits only, at least 3 | exactly 8 digits, since every Singapore number is 8 digits and a fixed length catches typos |
 | **Duplicate** | same name (`isSamePerson`) | same phone **and** same name ignoring case, since two students can both be "Tan Wei Ming" |
 | **`list`** | ignores any extra text | rejects parameters; reports `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
-| **New entity** | none | **Lesson**: a record of what was covered, owned by a student |
+| **New entity** | none | **Lesson**: a record of what was covered and the date it was logged, owned by a student |
 | **New commands** | none | `log INDEX c/CONTENT` and `view INDEX` |
 
 ## What stays from AB3
@@ -112,11 +112,16 @@ names and keywords separately, so Greek sigma variants also match. An empty
 student panel offers both `list` and the add-command format and example,
 covering searches with no matches as well as a genuinely empty address book.
 
+`log` dates each lesson with today's date (v1.4, issue #98), and `view` shows
+each record as `NUMBER. DD/MM/YYYY: CONTENT`. Lessons saved before v1.4 have
+no date and show `(undated)`. The data file stores the date as `YYYY-MM-DD`.
+
 ## Scope
 
 - **In the MVP:** add, delete, list, log a lesson, view lessons.
 - **Added in v1.4:** edit a student's details (lessons are kept), find
-  students by partial name, and delete individual lesson records.
+  students by partial name, delete individual lesson records, and date
+  each logged lesson.
 - **Planned next:** edit lessons, parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
@@ -125,7 +130,8 @@ covering searches with no matches as well as a genuinely empty address book.
 
 ## Decisions (Oct 8, 2026)
 
-- **No lesson date** in the MVP. `log` takes content only.
+- **No lesson date** in the MVP. `log` takes content only. Replaced in v1.4
+  by issue #98: `log` dates each lesson with today's date.
 - **View order:** most recently logged first (reverse logging order), as
   agreed by the team on Oct 8. Implemented in PR #63. This replaces the
   earlier order-logged proposal.

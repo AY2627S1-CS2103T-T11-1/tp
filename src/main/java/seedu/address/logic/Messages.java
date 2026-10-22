@@ -1,10 +1,12 @@
 package seedu.address.logic;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.address.logic.parser.Prefix;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
 /**
@@ -21,6 +23,10 @@ public class Messages {
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+
+    /** Day, month and four-digit year, as Singapore users write dates, e.g. 18/10/2026. */
+    public static final DateTimeFormatter LESSON_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+    public static final String UNDATED_LESSON = "(undated)";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -49,6 +55,15 @@ public class Messages {
                 .append("; Subject: ")
                 .append(person.getSubject());
         return builder.toString();
+    }
+
+    /**
+     * Formats the date of {@code lesson} for display to the user, or marks the lesson as undated.
+     */
+    public static String formatLessonDate(Lesson lesson) {
+        return lesson.getDate()
+                .map(date -> date.format(LESSON_DATE_FORMATTER))
+                .orElse(UNDATED_LESSON);
     }
 
 }

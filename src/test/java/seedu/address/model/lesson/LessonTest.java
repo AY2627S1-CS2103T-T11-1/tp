@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,36 @@ public class LessonTest {
             " \t\u2003\u00a0\u3000 ", "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
             "\u200b\u200c\u200d\u2060\ufeff", " \u2003\u00a0\u200b\u2060 ");
 
+    private static final LocalDate OCT_18 = LocalDate.of(2026, 10, 18);
+    private static final LocalDate OCT_19 = LocalDate.of(2026, 10, 19);
+
     @Test
     public void constructor_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Lesson(null));
+        assertThrows(NullPointerException.class, () -> new Lesson(null, OCT_18));
+        assertThrows(NullPointerException.class, () -> new Lesson("Quadratic inequalities", null));
+    }
+
+    @Test
+    public void constructor_datedInvalidContent_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> new Lesson("", OCT_18));
+    }
+
+    @Test
+    public void getDate_undatedLesson_returnsEmpty() {
+        assertEquals(Optional.empty(), new Lesson("Quadratic inequalities").getDate());
+    }
+
+    @Test
+    public void getDate_datedLesson_returnsDate() {
+        assertEquals(Optional.of(OCT_18), new Lesson("Quadratic inequalities", OCT_18).getDate());
+    }
+
+    @Test
+    public void withDate_undatedLesson_returnsDatedCopyAndKeepsOriginal() {
+        Lesson undated = new Lesson("Quadratic inequalities");
+        assertEquals(new Lesson("Quadratic inequalities", OCT_18), undated.withDate(OCT_18));
+        assertEquals(Optional.empty(), undated.getDate());
     }
 
     @Test
@@ -89,16 +118,30 @@ public class LessonTest {
 
         // different values -> returns false
         assertFalse(lesson.equals(new Lesson("Binomial theorem")));
+
+        // same content, one dated and one undated -> returns false
+        assertFalse(lesson.equals(new Lesson("Quadratic inequalities", OCT_18)));
+
+        // same content and date -> returns true
+        Lesson datedLesson = new Lesson("Quadratic inequalities", OCT_18);
+        assertTrue(datedLesson.equals(new Lesson("Quadratic inequalities", OCT_18)));
+
+        // same content, different dates -> returns false
+        assertFalse(datedLesson.equals(new Lesson("Quadratic inequalities", OCT_19)));
     }
 
     @Test
     public void hashCodeMethod() {
         assertEquals(new Lesson("Quadratic inequalities").hashCode(),
                 new Lesson("Quadratic inequalities").hashCode());
+        assertEquals(new Lesson("Quadratic inequalities", OCT_18).hashCode(),
+                new Lesson("Quadratic inequalities", OCT_18).hashCode());
     }
 
     @Test
     public void toStringMethod() {
         assertEquals("Quadratic inequalities", new Lesson("Quadratic inequalities").toString());
+        // the date is left out, because command confirmations print lessons through toString
+        assertEquals("Quadratic inequalities", new Lesson("Quadratic inequalities", OCT_18).toString());
     }
 }

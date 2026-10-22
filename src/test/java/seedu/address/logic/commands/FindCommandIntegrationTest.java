@@ -2,6 +2,8 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.LessonDateUtil.loggedToday;
+import static seedu.address.testutil.LessonDateUtil.todayText;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -104,16 +106,17 @@ public class FindCommandIntegrationTest {
     @Test
     public void execute_findThenViewAndLog_targetsDisplayedStudentAndKeepsFilter() throws Exception {
         logic.execute("find ali");
-        assertEquals("Lesson records for Alicia Lim (1):\n1. Calculus",
+        assertEquals("Lesson records for Alicia Lim (1):\n1. (undated): Calculus",
                 logic.execute("view 1").getFeedbackToUser());
-        assertEquals("Logged lesson for Alicia Lim: Statistics",
+        assertEquals("Logged lesson for Alicia Lim on " + todayText() + ": Statistics",
                 logic.execute("log 1 c/Statistics").getFeedbackToUser());
         assertEquals(1, logic.getFilteredPersonList().size());
-        assertEquals("Lesson records for Alicia Lim (2):\n1. Statistics\n2. Calculus",
+        assertEquals("Lesson records for Alicia Lim (2):\n1. " + todayText()
+                + ": Statistics\n2. (undated): Calculus",
                 logic.execute("view 1").getFeedbackToUser());
         assertEquals(WEI_MING, model.getAddressBook().getPersonList().get(0));
         assertEquals(WEI_JIE, model.getAddressBook().getPersonList().get(1));
-        assertEquals(List.of(new Lesson("Calculus"), new Lesson("Statistics")),
+        assertEquals(List.of(new Lesson("Calculus"), loggedToday("Statistics")),
                 storage.readAddressBook().orElseThrow().getPersonList().get(2).getLessons());
     }
 
@@ -155,6 +158,7 @@ public class FindCommandIntegrationTest {
         assertEquals(List.of(WEI_MING, WEI_JIE, edited), logic.getFilteredPersonList());
         assertEquals(edited, storage.readAddressBook().orElseThrow().getPersonList().get(2));
         logic.execute("find nad");
-        assertEquals("Lesson records for Nadia Tan (1):\n1. Calculus", logic.execute("view 1").getFeedbackToUser());
+        assertEquals("Lesson records for Nadia Tan (1):\n1. (undated): Calculus",
+                logic.execute("view 1").getFeedbackToUser());
     }
 }

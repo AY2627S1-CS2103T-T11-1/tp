@@ -16,6 +16,7 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation.
+* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -665,9 +666,9 @@ testers are expected to do more *exploratory* testing.
 
 Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.jar`, with fictional students only. Add a student called Amy, note her displayed index, and use that index wherever `INDEX` appears below. Add another student, Ben, with a distinct phone number and a Calculus record.
 
-1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. Algebra`, `2. Geometry`, `3. Algebra`.
-1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. Geometry`, `2. Algebra`, proving the newest duplicate was deleted rather than the oldest.
-1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
+1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. DD/MM/YYYY: Algebra`, `2. DD/MM/YYYY: Geometry`, `3. DD/MM/YYYY: Algebra`, each with today's date.
+1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. DD/MM/YYYY: Geometry`, `2. DD/MM/YYYY: Algebra`, proving the newest duplicate was deleted rather than the oldest.
+1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. DD/MM/YYYY: Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
 1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
 1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
 1. Try `deletelesson INDEX 1` again while Amy's history is empty. Expected:
@@ -696,12 +697,12 @@ Add two test students, Amy and Ben, and use their current displayed indexes in t
 1. Enter `view INDEX` for Amy before logging a lesson.
    Expected: `No lessons logged yet for Amy.`.
 1. Enter `log INDEX c/Algebra` for Amy, then view Amy.
-   Expected: `Lesson records for Amy (1):` followed by `1. Algebra`.
+   Expected: `Logged lesson for Amy on DD/MM/YYYY: Algebra` with today's date, then `Lesson records for Amy (1):` followed by `1. DD/MM/YYYY: Algebra`.
 1. Log `Geometry`, then `Algebra` again for Amy, and view Amy.
    Expected: count 3, with `Algebra`, `Geometry`, `Algebra` in that order.
    Both Algebra records remain because repeated content is allowed.
 1. View Ben before logging a lesson, then log `Calculus` for Ben and view him.
-   Expected: Ben's empty-history message first, then count 1 and `1. Calculus`.
+   Expected: Ben's empty-history message first, then count 1 and `1. DD/MM/YYYY: Calculus`.
    View Amy again: only Amy's three records are shown, with her name in the header.
 1. After a successful view, try an index past the end of the student list,
    `view abc`, and `log INDEX c/`.
@@ -718,3 +719,12 @@ Add two test students, Amy and Ben, and use their current displayed indexes in t
 1. Repeat with the minimum window size (450 by 600) and a larger window. Drag the
    horizontal result divider both ways. The command box and student list must
    remain usable, and all records must remain reachable by scrolling.
+
+### Lesson dates and data saved by v1.3
+
+1. Log a lesson for a test student, exit and restart.
+   Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
+1. Exit, keep a copy of the data file, and remove the `date` field from one lesson, as in a file saved by v1.3. Start the app and view the student.
+   Expected: that lesson shows `(undated)` in place of the date, in its original position.
+1. Exit, and change a lesson's date to `18/10/2026` in the data file. Start the app.
+   Expected: the data file is treated as invalid and the app starts with no students, as for other invalid fields. Restore your copy afterwards.
