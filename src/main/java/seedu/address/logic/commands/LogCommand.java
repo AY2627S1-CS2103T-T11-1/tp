@@ -7,7 +7,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -36,6 +38,8 @@ public class LogCommand extends Command {
     public static final String MESSAGE_LOG_LESSON_SUCCESS = "Logged lesson for %1$s on %2$s: %3$s";
     public static final String MESSAGE_FUTURE_DATE =
             "Lesson dates cannot be in the future. Log a lesson on or after the day it is taught.";
+
+    private static final Logger logger = LogsCenter.getLogger(LogCommand.class);
 
     private final Index targetIndex;
     private final Lesson lesson;
@@ -79,10 +83,20 @@ public class LogCommand extends Command {
         Lesson datedLesson = lesson.withDate(lessonDate);
         Person studentToLog = lastShownList.get(targetIndex.getZeroBased());
         Person studentWithLesson = studentToLog.withLessonAdded(datedLesson);
+        assertOneLessonAdded(studentToLog, studentWithLesson);
         model.setPerson(studentToLog, studentWithLesson);
+        logger.fine("Logged lesson dated " + lessonDate + " for displayed student " + targetIndex.getOneBased());
 
         return new CommandResult(String.format(MESSAGE_LOG_LESSON_SUCCESS, studentWithLesson.getName(),
                 Messages.formatLessonDate(datedLesson), datedLesson.content));
+    }
+
+    /**
+     * Asserts that {@code after} is the same student as {@code before} with exactly one more lesson.
+     */
+    static void assertOneLessonAdded(Person before, Person after) {
+        assert after.getLessons().size() == before.getLessons().size() + 1 : "Logging must add exactly one lesson";
+        assert after.isSamePerson(before) : "Logging must not change the student's identity";
     }
 
     @Override

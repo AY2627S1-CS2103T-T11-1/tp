@@ -11,7 +11,9 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.ToStringBuilder;
@@ -50,6 +52,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the list.";
 
+    private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
+
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
 
@@ -78,6 +82,7 @@ public class EditCommand extends Command {
 
         Person studentToEdit = lastShownList.get(index.getZeroBased());
         Person editedStudent = createEditedPerson(studentToEdit, editPersonDescriptor);
+        assertLessonsKept(studentToEdit, editedStudent);
 
         if (!studentToEdit.isSamePerson(editedStudent) && model.hasPerson(editedStudent)) {
             throw new CommandException(MESSAGE_DUPLICATE_STUDENT);
@@ -85,6 +90,7 @@ public class EditCommand extends Command {
 
         model.setPerson(studentToEdit, editedStudent);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        logger.fine("Edited displayed student " + index.getOneBased());
         return new CommandResult(String.format(MESSAGE_EDIT_STUDENT_SUCCESS, Messages.format(editedStudent)));
     }
 
@@ -103,6 +109,13 @@ public class EditCommand extends Command {
 
         return new Person(updatedName, updatedPhone, updatedAddress, updatedLevel, updatedSubject,
                 personToEdit.getLessons());
+    }
+
+    /**
+     * Asserts that {@code after} has the same lesson records as {@code before}.
+     */
+    static void assertLessonsKept(Person before, Person after) {
+        assert after.getLessons().equals(before.getLessons()) : "Editing must keep lesson records";
     }
 
     @Override
