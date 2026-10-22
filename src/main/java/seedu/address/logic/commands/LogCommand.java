@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -16,7 +17,8 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
 /**
- * Records a lesson, dated today, for a student identified using its displayed index in the student list.
+ * Records a lesson for a student identified using its displayed index in the student list.
+ * The lesson is dated today unless the user gives an earlier date.
  */
 public class LogCommand extends Command {
 
@@ -24,19 +26,24 @@ public class LogCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Logs a lesson for the student identified by the index number used in the displayed"
-            + " student list. The lesson is dated today.\n"
+            + " student list. The lesson is dated today unless DATE is given.\n"
             + "Parameters: INDEX (must be a positive integer) "
-            + PREFIX_CONTENT + "CONTENT\n"
-            + "Example: " + COMMAND_WORD + " 3 " + PREFIX_CONTENT + "Quadratic inequalities";
+            + PREFIX_CONTENT + "CONTENT "
+            + "[" + PREFIX_DATE + "DATE (DD/MM/YYYY, not in the future)]\n"
+            + "Example: " + COMMAND_WORD + " 3 " + PREFIX_CONTENT + "Quadratic inequalities "
+            + PREFIX_DATE + "21/10/2026";
 
     public static final String MESSAGE_LOG_LESSON_SUCCESS = "Logged lesson for %1$s on %2$s: %3$s";
+    public static final String MESSAGE_FUTURE_DATE =
+            "Lesson dates cannot be in the future. Log a lesson on or after the day it is taught.";
 
     private final Index targetIndex;
     private final Lesson lesson;
     private final Clock clock;
 
     /**
-     * Creates a LogCommand to add {@code lesson} to the student at {@code targetIndex}, dated today.
+     * Creates a LogCommand to add {@code lesson} to the student at {@code targetIndex}.
+     * An undated {@code lesson} is dated today.
      */
     public LogCommand(Index targetIndex, Lesson lesson) {
         this(targetIndex, lesson, Clock.systemDefaultZone());
@@ -63,8 +70,14 @@ public class LogCommand extends Command {
             throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
         }
 
+        LocalDate today = LocalDate.now(clock);
+        LocalDate lessonDate = lesson.getDate().orElse(today);
+        if (lessonDate.isAfter(today)) {
+            throw new CommandException(MESSAGE_FUTURE_DATE);
+        }
+
+        Lesson datedLesson = lesson.withDate(lessonDate);
         Person studentToLog = lastShownList.get(targetIndex.getZeroBased());
-        Lesson datedLesson = lesson.withDate(LocalDate.now(clock));
         Person studentWithLesson = studentToLog.withLessonAdded(datedLesson);
         model.setPerson(studentToLog, studentWithLesson);
 

@@ -99,12 +99,40 @@ public class LogCommandTest {
     }
 
     @Test
-    public void execute_lessonWithDate_replacesDateWithToday() throws Exception {
-        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS.withDate(LocalDate.of(2020, 1, 1)), OCT_18_CLOCK)
-                .execute(model);
+    public void execute_pastDate_keepsDateAndShowsItInMessage() throws Exception {
+        Lesson pastLesson = LESSON_QUADRATICS.withDate(LocalDate.of(2026, 10, 17));
+        CommandResult result = new LogCommand(INDEX_FIRST_PERSON, pastLesson, OCT_18_CLOCK).execute(model);
+
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals("Logged lesson for " + student.getName() + " on 17/10/2026: Quadratic inequalities",
+                result.getFeedbackToUser());
+        assertEquals(List.of(pastLesson), student.getLessons());
+    }
+
+    @Test
+    public void execute_todayGivenExplicitly_success() throws Exception {
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS.withDate(OCT_18), OCT_18_CLOCK).execute(model);
 
         Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         assertEquals(List.of(LESSON_QUADRATICS.withDate(OCT_18)), student.getLessons());
+    }
+
+    @Test
+    public void execute_futureDate_throwsCommandException() {
+        LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON,
+                LESSON_QUADRATICS.withDate(LocalDate.of(2026, 10, 19)), OCT_18_CLOCK);
+
+        assertCommandFailure(logCommand, model, LogCommand.MESSAGE_FUTURE_DATE);
+    }
+
+    @Test
+    public void execute_backdatedLesson_insertedInDateOrder() throws Exception {
+        new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK).execute(model);
+        Lesson earlierLesson = LESSON_BINOMIAL.withDate(LocalDate.of(2026, 10, 16));
+        new LogCommand(INDEX_FIRST_PERSON, earlierLesson, OCT_18_CLOCK).execute(model);
+
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(List.of(earlierLesson, LESSON_QUADRATICS.withDate(OCT_18)), student.getLessons());
     }
 
     @Test

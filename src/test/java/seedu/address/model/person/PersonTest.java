@@ -12,6 +12,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -139,6 +140,47 @@ public class PersonTest {
     @Test
     public void withLessonAdded_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ALICE.withLessonAdded(null));
+    }
+
+    @Test
+    public void withLessonAdded_earlierDate_insertedBeforeLaterLessons() {
+        Lesson monday = new Lesson("Algebra", LocalDate.of(2026, 10, 19));
+        Lesson wednesday = new Lesson("Vectors", LocalDate.of(2026, 10, 21));
+        Lesson tuesday = new Lesson("Surds", LocalDate.of(2026, 10, 20));
+        Person updated = new PersonBuilder().build().withLessonAdded(monday).withLessonAdded(wednesday)
+                .withLessonAdded(tuesday);
+        assertEquals(List.of(monday, tuesday, wednesday), updated.getLessons());
+    }
+
+    @Test
+    public void withLessonAdded_sameDate_keepsLoggingOrder() {
+        LocalDate date = LocalDate.of(2026, 10, 21);
+        Lesson first = new Lesson("Algebra", date);
+        Lesson later = new Lesson("Surds", LocalDate.of(2026, 10, 22));
+        Lesson second = new Lesson("Vectors", date);
+        Person updated = new PersonBuilder().build().withLessonAdded(first).withLessonAdded(later)
+                .withLessonAdded(second);
+        assertEquals(List.of(first, second, later), updated.getLessons());
+    }
+
+    @Test
+    public void withLessonAdded_oldestDatedLesson_staysAfterUndatedLessons() {
+        Lesson undated = new Lesson("Quadratic inequalities");
+        Lesson recent = new Lesson("Vectors", LocalDate.of(2026, 10, 21));
+        Lesson oldest = new Lesson("Surds", LocalDate.of(2020, 1, 1));
+        Person updated = new PersonBuilder().build().withLessonAdded(undated).withLessonAdded(recent)
+                .withLessonAdded(oldest);
+        assertEquals(List.of(undated, oldest, recent), updated.getLessons());
+    }
+
+    @Test
+    public void withLessonAdded_undatedLesson_insertedBeforeDatedLessons() {
+        Lesson undated = new Lesson("Quadratic inequalities");
+        Lesson dated = new Lesson("Vectors", LocalDate.of(2026, 10, 21));
+        Lesson anotherUndated = new Lesson("Binomial theorem");
+        Person updated = new PersonBuilder().build().withLessonAdded(undated).withLessonAdded(dated)
+                .withLessonAdded(anotherUndated);
+        assertEquals(List.of(undated, anotherUndated, dated), updated.getLessons());
     }
 
     /**

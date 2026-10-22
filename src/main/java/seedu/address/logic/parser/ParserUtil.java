@@ -4,6 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -20,6 +25,12 @@ import seedu.address.model.person.Subject;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    /** One or two digits for the day and month, and exactly four for the year, with no signs. */
+    private static final String LESSON_DATE_INPUT_REGEX = "\\d{1,2}/\\d{1,2}/\\d{4}";
+    /** Day, month and year. Impossible dates such as 31/02/2026 are rejected. */
+    private static final DateTimeFormatter LESSON_DATE_INPUT_FORMATTER =
+            DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -161,5 +172,30 @@ public class ParserUtil {
             throw new ParseException(Lesson.MESSAGE_CONSTRAINTS);
         }
         return new Lesson(trimmedContent);
+    }
+
+    /**
+     * Parses a {@code String date} in the format DD/MM/YYYY into a {@code LocalDate}.
+     * Leading and trailing whitespaces will be trimmed. Single-digit days and months are accepted.
+     * Dates before {@link Lesson#EARLIEST_DATE} are rejected as likely typos.
+     *
+     * @throws ParseException if the given {@code date} is not a real date in that format.
+     */
+    public static LocalDate parseLessonDate(String date) throws ParseException {
+        requireNonNull(date);
+        String trimmedDate = date.trim();
+        if (!trimmedDate.matches(LESSON_DATE_INPUT_REGEX)) {
+            throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS);
+        }
+        LocalDate parsedDate;
+        try {
+            parsedDate = LocalDate.parse(trimmedDate, LESSON_DATE_INPUT_FORMATTER);
+        } catch (DateTimeParseException e) {
+            throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS, e);
+        }
+        if (parsedDate.isBefore(Lesson.EARLIEST_DATE)) {
+            throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS);
+        }
+        return parsedDate;
     }
 }

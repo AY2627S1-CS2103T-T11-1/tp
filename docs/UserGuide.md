@@ -177,7 +177,7 @@ into view. A single left-click switches histories directly from the command box.
 Any text you are typing in the command box is preserved.
 
 * `INDEX` is a positive integer from the currently displayed student list.
-* Records appear with the most recently logged first, numbered from 1. These numbers identify rows in the output, not student indexes.
+* Records appear with the most recent date first, numbered from 1. Records on the same date appear with the most recently logged first. These numbers identify rows in the output, not student indexes.
 * Each record shows the date it was logged, as `DD/MM/YYYY`, then what was covered, for example `1. 18/10/2026: Quadratic inequalities`.
 * Lessons logged before v1.4 have no date and show `(undated)` in place of the date, for example `2. (undated): Binomial theorem`.
 * Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
@@ -198,20 +198,22 @@ remains above the result area, and the student list remains below it.
 
 Records what you covered in a lesson for the specified student.
 
-Format: `log INDEX c/CONTENT`
+Format: `log INDEX c/CONTENT [date/DATE]`
 
 * Logs a lesson for the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces. Internal spaces and formatting characters used in real text are kept.
-* The lesson is dated with today's date on your computer. You cannot choose a different date yet, so log each lesson on the day you teach it.
+* `DATE` is the day the lesson was taught, as `DD/MM/YYYY`, for example `21/10/2026`. Single-digit days and months such as `1/2/2026` are also accepted. Without `date/`, the lesson is dated with today's date on your computer.
+* `DATE` must be a real date from 01/01/2000 up to today: future dates and dates such as `31/02/2026` are rejected. The day and month have one or two digits, and the year has exactly four.
 * Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
-* Lessons are kept in the order they are logged. Logging the same content twice records two lessons.
+* Lessons are kept in date order, so a lesson logged later for an earlier date takes its place by date. Lessons on the same date keep the order they were logged in. Logging the same content twice records two lessons.
 * Logged lessons cannot be edited yet. To remove an incorrect record, use `deletelesson` as described below.
 
 Examples:
 * `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
 * `log 1 c/Revision of trigonometric identities, Q1-5 for homework` logs a lesson for the 1st student in the list.
+* `log 2 c/Surds and indices date/20/10/2026` logs a lesson taught on 20 October 2026 for the 2nd student, placed among their records by that date.
 
 ### Deleting a lesson record: `deletelesson`
 
@@ -220,7 +222,7 @@ Deletes one lesson without deleting the student or their other lesson records.
 Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 
 * `STUDENT_INDEX` is the student's number in the currently displayed student list.
-* `LESSON_INDEX` is the lesson's current number shown by `view STUDENT_INDEX`. Lesson 1 is the most recently logged lesson, not the oldest.
+* `LESSON_INDEX` is the lesson's current number shown by `view STUDENT_INDEX`. Lesson 1 is the most recent lesson, not the oldest.
 * Both indexes must be positive whole numbers without leading zeros. Exactly two arguments are required, in the order shown.
 * Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson changes them. Running `view` first is recommended, not required.
 * Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
@@ -297,6 +299,6 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
-**Log**    | `log INDEX c/CONTENT`<br> e.g., `log 3 c/Quadratic inequalities`
+**Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
 **Help**   | `help`
 **Exit**   | `exit`
