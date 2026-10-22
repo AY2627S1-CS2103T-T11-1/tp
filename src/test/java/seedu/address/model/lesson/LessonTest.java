@@ -6,11 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 public class LessonTest {
+    private static final List<String> BLANK_VALUES = List.of("\u2003", "\u3000", "\u00a0", "\u2007", "\u202f",
+            " \t\u2003\u00a0\u3000 ", "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
+            "\u200b\u200c\u200d\u2060\ufeff", " \u2003\u00a0\u200b\u2060 ");
 
     private static final LocalDate OCT_18 = LocalDate.of(2026, 10, 18);
     private static final LocalDate OCT_19 = LocalDate.of(2026, 10, 19);
@@ -47,6 +51,27 @@ public class LessonTest {
     @Test
     public void constructor_invalidContent_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> new Lesson(""));
+    }
+
+    @Test
+    public void isValidContent_whitespaceAndFormatOnly_returnsFalse() {
+        for (String content : BLANK_VALUES) {
+            assertFalse(Lesson.isValidContent(content));
+        }
+    }
+
+    @Test
+    public void constructor_whitespaceAndFormatOnly_throwsIllegalArgumentException() {
+        for (String content : BLANK_VALUES) {
+            assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_CONSTRAINTS, () -> new Lesson(content));
+        }
+    }
+
+    @Test
+    public void constructor_visibleUnicodeContent_preservesTextAndFormatting() {
+        for (String content : List.of("代数\u2003复习\u00a0Q1-5   完成", "می\u200cروم", "Teacher 👩\u200d🏫")) {
+            assertEquals(content, new Lesson(content).content);
+        }
     }
 
     @Test

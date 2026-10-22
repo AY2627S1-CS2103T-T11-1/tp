@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 21, 2026, for issues #98 (lesson dates) and #102 (delete a lesson record).
+Last updated: Oct 21, 2026, for issues #98 (lesson dates) and #118 (Unicode blank-field validation).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -164,6 +164,12 @@ both when a search hides saved students and when no students are saved.
 | Subject | `sub/` | 1 to 50 characters: letters, digits, spaces, hyphens | `Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.` |
 | Lesson content | `c/` | 1 to 300 printable characters, internal spaces kept | `Lesson content must not be blank and must be at most 300 characters.` |
 
+- Addresses and lesson content cannot consist entirely of Unicode whitespace
+  or format characters, including non-breaking spaces, ZERO WIDTH SPACE
+  (U+200B), WORD JOINER (U+2060) and BOM (U+FEFF). The model validators enforce
+  this for typed commands and JSON loading, with the same messages above.
+  Real text keeps internal spaces and formatting, including joiners used by
+  written languages and emoji sequences.
 - `/` is allowed in names so that `s/o` and `d/o` work. No prefix starts
   with `s/`, `o/` or `d/`. Names containing `a/l` or `a/p` still fail,
   because ` a/` is the address prefix. This is a known MVP limitation and
