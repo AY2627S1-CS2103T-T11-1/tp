@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -20,6 +21,21 @@ public class AddressTest {
     }
 
     @Test
+    public void unicodeWhitespaceOnly_rejectsBlankAddress() {
+        for (String address : new String[]{"\u2003", "\u3000", "\u00a0", "\u2007", "\u202f",
+            " \t\u2003\u00a0\u3000 "}) {
+            assertFalse(Address.isValidAddress(address));
+            assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, () -> new Address(address));
+        }
+    }
+
+    @Test
+    public void constructor_unicodeAddress_preservesTextAndInternalSpaces() {
+        String address = "碧山街\u3000十号\u00a0#01-23";
+        assertEquals(address, new Address(address).value);
+    }
+
+    @Test
     public void isValidAddress() {
         // null address
         assertThrows(NullPointerException.class, () -> Address.isValidAddress(null));
@@ -27,6 +43,7 @@ public class AddressTest {
         // invalid addresses
         assertFalse(Address.isValidAddress("")); // empty string
         assertFalse(Address.isValidAddress(" ")); // spaces only
+        assertFalse(Address.isValidAddress(" Leading space")); // leading space before non-blank text
         assertFalse(Address.isValidAddress("a".repeat(201))); // longer than 200 characters
 
         // valid addresses

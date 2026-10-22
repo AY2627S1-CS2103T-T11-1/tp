@@ -20,6 +20,21 @@ public class LessonTest {
     }
 
     @Test
+    public void unicodeWhitespaceOnly_rejectsBlankContent() {
+        for (String content : new String[]{"\u2003", "\u3000", "\u00a0", "\u2007", "\u202f",
+            " \t\u2003\u00a0\u3000 "}) {
+            assertFalse(Lesson.isValidContent(content));
+            assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_CONSTRAINTS, () -> new Lesson(content));
+        }
+    }
+
+    @Test
+    public void constructor_unicodeContent_preservesTextAndInternalSpaces() {
+        String content = "代数\u2003复习\u00a0Q1-5   完成";
+        assertEquals(content, new Lesson(content).content);
+    }
+
+    @Test
     public void isValidContent() {
         // null content
         assertThrows(NullPointerException.class, () -> Lesson.isValidContent(null));

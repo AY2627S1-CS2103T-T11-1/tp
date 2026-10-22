@@ -34,10 +34,11 @@ public class Address {
     }
 
     /**
-     * Returns true if a given string is a valid address.
+     * Returns true if a given string is a valid address, not composed entirely of Unicode whitespace.
      */
     public static boolean isValidAddress(String test) {
-        return test.length() <= MAX_LENGTH && test.matches(VALIDATION_REGEX);
+        return test.length() <= MAX_LENGTH && !test.matches("\\p{IsWhite_Space}*")
+                && test.matches(VALIDATION_REGEX);
     }
 
     @Override
