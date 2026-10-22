@@ -31,7 +31,8 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class UnicodeBlankInputIntegrationTest {
     private static final List<String> BLANK_VALUES = List.of("", " ", "\t", "\u2003", "\u3000", "\u00a0",
-            "\u2007", "\u202f", " \t\u2003\u00a0\u3000 ");
+            "\u2007", "\u202f", " \t\u2003\u00a0\u3000 ", "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
+            "\u200b\u200c\u200d\u2060\ufeff", " \u2003\u00a0\u200b\u2060 ");
     private static final Person AMY = new PersonBuilder().withName("Amy Tan").withPhone("81234567")
             .withAddress("10 Short Street").withLessons("Algebra").build();
     private static final Person BEN = new PersonBuilder().withName("Ben Lim").withPhone("81234568").build();
@@ -79,12 +80,12 @@ public class UnicodeBlankInputIntegrationTest {
     }
 
     @Test
-    public void execute_validUnicodeFields_preservesTextAndInternalSpacesAfterReload() throws Exception {
+    public void execute_visibleUnicodeFields_preservesTextAndFormattingAfterReload() throws Exception {
         String address = "碧山街\u3000十号\u00a0#01-23";
-        String content = "代数\u2003复习\u00a0Q1-5   完成";
+        String content = "代数\u2003复习\u00a0Q1-5   完成 👩\u200d🏫";
         logic.execute("add n/小明 Tan p/81234569 a/" + address + " l/Sec 2 sub/E-Math");
         logic.execute("log 3 c/" + content);
-        String editedAddress = "宏茂桥\u3000十二号\u00a0#02-34";
+        String editedAddress = "خیابان\u200cشمالی\u300012\u00a0#02-34";
         logic.execute("edit 3 a/" + editedAddress);
         List<Person> savedStudents = storage.readAddressBook().orElseThrow().getPersonList();
         assertEquals(model.getAddressBook().getPersonList(), savedStudents);

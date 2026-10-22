@@ -68,10 +68,11 @@ recorded about them, not building a new kind of app.
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.
 
-Addresses and lesson content must contain a non-whitespace character. Unicode
-spaces, including non-breaking spaces, are blank when entered on their own.
-Commands and JSON loading use the same validation; valid Unicode text and
-internal spacing are kept.
+Addresses and lesson content cannot consist only of Unicode whitespace or
+formatting characters, such as non-breaking spaces and zero-width spaces.
+Commands and JSON loading use the same validation. Real text keeps its
+internal spaces and formatting, including joiners used in written languages
+and emoji sequences.
 
 ## MVP commands
 

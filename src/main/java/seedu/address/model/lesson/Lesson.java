@@ -35,10 +35,11 @@ public class Lesson {
     }
 
     /**
-     * Returns true if a given string is valid lesson content, not composed entirely of Unicode whitespace.
+     * Returns true if a given string is valid lesson content.
+     * Values composed entirely of Unicode whitespace or format characters are invalid.
      */
     public static boolean isValidContent(String test) {
-        return test.length() <= MAX_LENGTH && !test.matches("\\p{IsWhite_Space}*")
+        return test.length() <= MAX_LENGTH && !test.matches("[\\p{IsWhite_Space}\\p{Cf}]*")
                 && test.matches(VALIDATION_REGEX);
     }
 

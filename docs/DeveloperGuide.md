@@ -164,7 +164,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Rejecting blank Unicode fields
 
-`Address#isValidAddress` and `Lesson#isValidContent` reject values composed entirely of characters in Unicode's `White_Space` property (`\p{IsWhite_Space}`), including EM SPACE, IDEOGRAPHIC SPACE and non-breaking spaces. This check is separate from the existing length and character rules, preserving non-blank Unicode text and internal spacing. Both command parsing and the JSON adapters use these model validators, so add, edit, log and data loading share the same non-blank rule and existing field-specific messages.
+`Address#isValidAddress` and `Lesson#isValidContent` reject values composed entirely of Unicode whitespace (`\p{IsWhite_Space}`), format characters (`\p{Cf}`), or a mixture of the two. This includes non-breaking spaces, ZERO WIDTH SPACE (U+200B), WORD JOINER (U+2060) and a standalone BOM (U+FEFF). The check does not remove formatting characters inside real text: joiners in written languages and emoji sequences are preserved, along with internal spaces and the existing length and character rules. Both command parsing and the JSON adapters use these model validators, so add, edit, log and data loading share the same non-blank rule and existing field-specific messages.
 
 ### Deleting an individual lesson record
 

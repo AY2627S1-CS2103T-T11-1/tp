@@ -154,8 +154,9 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseAddress_unicodeWhitespaceOnly_reportsAddressConstraints() {
-        for (String address : new String[]{"\u2003", "\u3000", "\u00a0", " \t\u2003\u00a0 "}) {
+    public void parseAddress_blankUnicodeValue_reportsAddressConstraints() {
+        for (String address : new String[]{"\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
+            " \t\u2003\u00a0\u200b\u2060 "}) {
             assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress(address));
         }
     }
@@ -243,8 +244,9 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseLessonContent_unicodeWhitespaceOnly_reportsLessonConstraints() {
-        for (String content : new String[]{"\u2003", "\u3000", "\u00a0", " \t\u2003\u00a0 "}) {
+    public void parseLessonContent_blankUnicodeValue_reportsLessonConstraints() {
+        for (String content : new String[]{"\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
+            " \t\u2003\u00a0\u200b\u2060 "}) {
             assertThrows(ParseException.class, Lesson.MESSAGE_CONSTRAINTS, ()
                     -> ParserUtil.parseLessonContent(content));
         }

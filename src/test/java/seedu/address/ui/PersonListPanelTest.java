@@ -728,7 +728,8 @@ public class PersonListPanelTest {
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 clickStudent(root, 0);
                 String historyBefore = result.getText();
-                for (String blank : List.of("\u2003", "\u3000", "\u00a0")) {
+                for (String blank : List.of("\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
+                        " \u2003\u200b\u2060 ")) {
                     assertFeedback(root, "add n/Bea Tan p/81234569 a/" + blank + " l/Sec 2 sub/E-Math",
                             Address.MESSAGE_CONSTRAINTS, true);
                     assertFeedback(root, "edit 1 a/" + blank, Address.MESSAGE_CONSTRAINTS, true);

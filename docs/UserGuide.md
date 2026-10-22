@@ -87,7 +87,7 @@ Format: `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT`
 * All five fields are required.
 * `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar` work, but see [Known issues](#known-issues) for names containing `a/l` or `a/p`.
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
-* `ADDRESS` is 1 to 200 characters and must contain a non-whitespace character. Unicode spaces, including non-breaking spaces, do not count as an address by themselves.
+* `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 20 characters of letters, digits and spaces, such as `Sec 3` or `JC1`.
 * `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math` or `H2 Math`.
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
@@ -202,7 +202,7 @@ Format: `log INDEX c/CONTENT`
 * Logs a lesson for the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot contain only whitespace, including Unicode spaces such as non-breaking spaces. Internal spaces in real lesson content are kept.
+* `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces. Internal spaces and formatting characters used in real text are kept.
 * Lessons are kept in the order they are logged. Logging the same content twice records two lessons.
 * Logged lessons cannot be edited yet. To remove an incorrect record, use `deletelesson` as described below.
 
@@ -248,7 +248,7 @@ AddressBook automatically saves data after every command. You do not need to sav
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
-Addresses and lesson content containing only whitespace, including Unicode spaces, are invalid in data files too. If an older file contains these values, back up the file and correct them before opening it.
+Addresses and lesson content containing only whitespace or invisible formatting characters are invalid in data files too. If an older file contains these values, back up the file and correct them before opening it.
 
 <box type="warning" seamless>
 
