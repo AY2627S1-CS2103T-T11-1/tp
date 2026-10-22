@@ -8,7 +8,6 @@
 
 TutorLah is a **desktop application for freelance tutors to keep track of their students and the lessons they have taught them, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). Store each student's contact details, level and subject, record what you covered after every lesson, and look back at a student's lesson history before the next one, without relying on scattered notes or memory. If you type quickly, TutorLah lets you do this faster than a typical mouse-driven application.
 
-<!-- * Table of Contents -->
 <page-nav-print />
 
 --------------------------------------------------------------------------------------------------------------------
@@ -23,8 +22,10 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 1. Copy the file to the folder you want to use as the _home folder_ for TutorLah. Your data will be saved in this folder.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar TutorLah.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample students.<br>
-   ![Ui](images/Ui.png)
+   A GUI similar to the one below should appear in a few seconds. On first launch, the app contains sample students. The screenshot uses fictional student and lesson data after running `view 1`; your initial data may differ.<br>
+   <a href="images/Ui.png"><img src="images/Ui.png" alt="Alex Tan highlighted with three dated lesson records after view 1" width="726"></a>
+
+   **Command used:** `view 1`. Alex Tan's three lessons appear with the newest date first.
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
@@ -52,6 +53,8 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 <box type="info" seamless>
 
 **Notes about the command format:**<br>
+
+* The command box clears after a successful command. Screenshot captions state which commands produced the displayed results. Screenshots use fictional data; your student names and indexes may differ. Click a screenshot to open its full-size image.
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `Tan Wei Ming`.
@@ -96,6 +99,10 @@ Examples:
 * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
 * `add n/Ramesh s/o Kumar p/9123 4567 a/12 Clementi Rd l/Sec 3 sub/A-Math`
 
+**Screenshot example:** `add n/Jamie Lee p/81230007 a/60 Example Street l/JC1 sub/H2 Math` adds a JC1 student taking H2 Math. The confirmation and Jamie's card show the saved details. The student list has been scrolled down to show the new card:
+
+<a href="images/add-student.png"><img src="images/add-student.png" alt="Add confirmation and Jamie Lee's new student card after add n/Jamie Lee p/81230007 a/60 Example Street l/JC1 sub/H2 Math" width="726"></a>
+
 ### Listing all students: `list`
 
 Shows all students and reports the number displayed.
@@ -104,9 +111,14 @@ Format: `list`
 
 * Restores the full student list after a `find` command.
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
+* With one student: `Listed 1 student.`
 * Without students: `No students found. Use add to create a student.`
 * Extra arguments, such as `list 3`, are rejected with
   `The list command does not accept parameters.`. No student data is changed.
+
+**Screenshot example:** after `find TAN`, run `list`. The confirmation `Listed 6 students.` shows that the full list has been restored. Priya Ramesh is again student 2:
+
+<a href="images/list-students.png"><img src="images/list-students.png" alt="Listed 6 students after list restores the full list following find TAN" width="726"></a>
 
 ### Finding students by name: `find`
 
@@ -115,8 +127,8 @@ Shows students whose names contain all the search keywords. You can use part of 
 Format: `find KEYWORD [MORE_KEYWORDS]...`
 
 * At least one keyword is required. `find` without keywords shows the invalid command format message and usage; the displayed list is unchanged.
-* Matching ignores uppercase/lowercase. `find WEI` and `find wei` give the same results.
-* Every keyword must occur somewhere in the name, in any order. With `Tan Wei Ming` and `Tan Wei Jie` saved, `find wei` shows both students, while `find ming tan` shows only `Tan Wei Ming`.
+* Matching ignores uppercase/lowercase. `find TAN` and `find tan` give the same results.
+* Every keyword must occur somewhere in the name, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`.
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no field prefixes, wildcard matching or spelling correction. Punctuation and accented characters must match as entered in the name, ignoring case.
 * Each search checks all saved students, replacing the previous search. The matches keep their original list order.
 * With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.`
@@ -129,9 +141,9 @@ Examples:
 * `find tan ming` matches `Tan Wei Ming` and `Ming Tan`.
 * `find Muthu a/l Raju` matches a saved name of `Muthu A/L Raju`; unlike `add` and `edit`, `find` does not interpret `a/` as an address prefix.
 
-After `find wei`, only the matching students are displayed:
+**Screenshot example:** after `find TAN`, only Alex Tan and Ethan Tan are displayed, numbered 1 and 2:
 
-<img src="images/find-students-after.jpg" alt="Two matching students after finding Wei" width="726">
+<a href="images/find-students.png"><img src="images/find-students.png" alt="Found 2 students after find TAN, showing Alex Tan and Ethan Tan" width="726"></a>
 
 ### Editing a student: `edit`
 
@@ -151,6 +163,10 @@ Examples:
 * `edit 1 p/91234567` changes the phone number of the 1st student.
 * `edit 2 l/Sec 4 sub/A-Math` changes the level and subject of the 2nd student.
 
+**Screenshot example:** `edit 1 l/Sec 4 sub/A-Math` updates Alex Tan's level and subject. The confirmation and student card show the new values:
+
+<a href="images/edit-student.png"><img src="images/edit-student.png" alt="Edit confirmation and Alex Tan's card showing Sec 4 and A-Math" width="726"></a>
+
 ### Deleting a student: `delete`
 
 Deletes the specified student, together with their lesson records.
@@ -163,6 +179,10 @@ Format: `delete INDEX`
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student in the list.
+
+**Screenshot example:** starting from the six-student list shown in the `list` example, `delete 2` removes Priya Ramesh. The confirmation identifies the deleted student, and Marcus Lim becomes student 2:
+
+<a href="images/delete-student.png"><img src="images/delete-student.png" alt="Deletion confirmation for Priya Ramesh after delete 2, with Marcus Lim now student 2" width="726"></a>
 
 ### Viewing a student's lesson records: `view`
 
@@ -178,7 +198,7 @@ Any text you are typing in the command box is preserved.
 
 * `INDEX` is a positive integer from the currently displayed student list.
 * Records appear with the most recent date first, numbered from 1. Records on the same date appear with the most recently logged first. These numbers identify rows in the output, not student indexes.
-* Each record shows the date it was logged, as `DD/MM/YYYY`, then what was covered, for example `1. 18/10/2026: Quadratic inequalities`.
+* Each record shows the lesson date, as `DD/MM/YYYY`, then what was covered, for example `1. 18/10/2026: Quadratic inequalities`.
 * Lessons logged before v1.4 have no date and show `(undated)` in place of the date, for example `2. (undated): Binomial theorem`.
 * Repeated lesson content is displayed as separate records. Viewing does not change records or the current student filter.
 * A student with no records produces `No lessons logged yet for NAME.`
@@ -186,6 +206,10 @@ Any text you are typing in the command box is preserved.
 * Missing indexes, non-integers, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, leading-zero integers, integers too large to parse, and indexes outside the displayed list produce `The student index provided is invalid.`
 
 Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra, each with today's date.
+
+**Screenshot example:** `view 1` displays Alex Tan's three dated lessons, newest date first, and highlights his student card:
+
+<a href="images/Ui.png"><img src="images/Ui.png" alt="Three dated lesson records for Alex Tan after view 1, with his student card highlighted" width="726"></a>
 
 ### Reading long command results
 
@@ -215,6 +239,10 @@ Examples:
 * `log 1 c/Revision of trigonometric identities, Q1-5 for homework` logs a lesson for the 1st student in the list.
 * `log 2 c/Surds and indices date/20/10/2026` logs a lesson taught on 20 October 2026 for the 2nd student, placed among their records by that date.
 
+**Screenshot example:** after `list`, the command `log 1 c/Trigonometry: solved right-angled triangle problems. date/18/10/2026` records an earlier lesson for Alex Tan. The confirmation includes the lesson date and content:
+
+<a href="images/log-lesson-past-date.png"><img src="images/log-lesson-past-date.png" alt="Confirmation of a Trigonometry lesson logged for Alex Tan on 18/10/2026" width="726"></a>
+
 ### Deleting a lesson record: `deletelesson`
 
 Deletes one lesson without deleting the student or their other lesson records.
@@ -239,6 +267,14 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 
 Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026, `view 2` shows `1. 18/10/2026: Geometry` and `2. 18/10/2026: Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. 18/10/2026: Algebra`.
 
+**Screenshot example:** after the past-date logging example above, `view 1` shows Alex Tan's four lessons in date order. The Trigonometry lesson dated 18/10/2026 is lesson 2:
+
+<a href="images/lesson-history-before-delete.png"><img src="images/lesson-history-before-delete.png" alt="Four lessons for Alex Tan before deletion, with the 18/10/2026 Trigonometry lesson numbered 2" width="726"></a>
+
+Run `deletelesson 1 2`, then `view 1`. Three lessons remain, numbered 1 to 3. Alex's student details are kept:
+
+<a href="images/lesson-history-after-delete.png"><img src="images/lesson-history-after-delete.png" alt="Three remaining lessons after deletelesson 1 2 followed by view 1; Alex Tan's details are unchanged" width="726"></a>
+
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -247,11 +283,11 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+TutorLah automatically saves data after each successful command. You do not need to save manually.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
 
 In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. A date in any other format makes the data file invalid.
 
@@ -260,8 +296,8 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid, TutorLah starts with an empty student list at the next run. A successful command can overwrite the invalid file. Back up the file before editing it. If your saved students unexpectedly disappear, close the window without entering commands, preserve the file, and repair or restore it before restarting.<br>
+Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -273,7 +309,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorLah home folder.
 
 --------------------------------------------------------------------------------------------------------------------
 
