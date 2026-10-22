@@ -19,8 +19,11 @@ public class Lesson {
     public static final String MESSAGE_CONSTRAINTS =
             "Lesson content must not be blank and must be at most 300 characters.";
 
-    public static final String MESSAGE_DATE_CONSTRAINTS =
-            "Lesson dates should be real dates in the format DD/MM/YYYY, for example 21/10/2026.";
+    /** The earliest date a lesson can be logged with. Earlier dates are almost certainly typos. */
+    public static final LocalDate EARLIEST_DATE = LocalDate.of(2000, 1, 1);
+
+    public static final String MESSAGE_DATE_CONSTRAINTS = "Lesson dates should be real dates from 01/01/2000"
+            + " onwards, in the format DD/MM/YYYY, for example 21/10/2026.";
 
     /*
      * The first character of the content must not be a whitespace,

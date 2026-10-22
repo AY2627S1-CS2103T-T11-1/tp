@@ -257,6 +257,8 @@ public class ParserUtilTest {
         assertEquals(LocalDate.of(2026, 2, 1), ParserUtil.parseLessonDate("1/2/2026"));
         // leap day
         assertEquals(LocalDate.of(2024, 2, 29), ParserUtil.parseLessonDate("29/02/2024"));
+        // earliest accepted date
+        assertEquals(LocalDate.of(2000, 1, 1), ParserUtil.parseLessonDate("1/1/2000"));
         // surrounding whitespace
         assertEquals(LocalDate.of(2026, 10, 21), ParserUtil.parseLessonDate("  21/10/2026  "));
     }
@@ -264,7 +266,8 @@ public class ParserUtilTest {
     @Test
     public void parseLessonDate_invalidValue_throwsParseException() {
         for (String date : new String[]{"31/02/2026", "29/02/2025", "32/01/2026", "21/13/2026", "0/10/2026",
-            "21/10/26", "2026-10-21", "21-10-2026", "21/10", "", "today", "+21/10/2026", "21 /10/2026"}) {
+            "21/10/26", "2026-10-21", "21-10-2026", "21/10", "", "today", "+21/10/2026", "21 /10/2026",
+            "1/1/-2026", "001/1/2026", "1/001/2026", "1/1/12026", "1/1/0026", "31/12/1999"}) {
             assertThrows(ParseException.class, Lesson.MESSAGE_DATE_CONSTRAINTS, ()
                     -> ParserUtil.parseLessonDate(date));
         }
