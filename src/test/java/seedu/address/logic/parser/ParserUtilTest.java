@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -75,6 +76,25 @@ public class ParserUtilTest {
             assertThrows(ParseException.class, expectedMessage, ()
                     -> ParserUtil.parseStudentIndex(input, "usage"));
         }
+    }
+
+    /**
+     * Accepts a valid command index with surrounding whitespace and a caller-specific error message.
+     */
+    @Test
+    public void parseCommandIndex_validInput_returnsIndex() throws Exception {
+        assertEquals(Index.fromOneBased(2), ParserUtil.parseCommandIndex(" \t2 \t", "usage",
+                MESSAGE_INVALID_LESSON_DISPLAYED_INDEX));
+    }
+
+    /**
+     * Rejects missing index text, usage or error messages as programming errors.
+     */
+    @Test
+    public void parseCommandIndex_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseCommandIndex(null, "usage", "invalid"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseCommandIndex("1", null, "invalid"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseCommandIndex("1", "usage", null));
     }
 
     @Test

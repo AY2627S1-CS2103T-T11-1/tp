@@ -45,8 +45,20 @@ public class ParserUtil {
      * @throws ParseException if the specified index is invalid or malformed
      */
     public static Index parseStudentIndex(String oneBasedIndex, String commandUsage) throws ParseException {
+        return parseCommandIndex(oneBasedIndex, commandUsage, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    /**
+     * Parses a command index, using {@code invalidIndexMessage} for invalid numeric input.
+     * Malformed input uses {@code commandUsage} instead.
+     *
+     * @throws ParseException if the specified index is invalid or malformed
+     */
+    public static Index parseCommandIndex(String oneBasedIndex, String commandUsage, String invalidIndexMessage)
+            throws ParseException {
         requireNonNull(oneBasedIndex);
         requireNonNull(commandUsage);
+        requireNonNull(invalidIndexMessage);
 
         String trimmedIndex = oneBasedIndex.trim();
         if (!trimmedIndex.matches("-?\\d+")) {
@@ -56,7 +68,7 @@ public class ParserUtil {
         try {
             return parseIndex(trimmedIndex);
         } catch (ParseException pe) {
-            throw new ParseException(MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, pe);
+            throw new ParseException(invalidIndexMessage, pe);
         }
     }
 

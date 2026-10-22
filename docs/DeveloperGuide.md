@@ -15,7 +15,7 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search and deleting individual lesson records.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
@@ -163,6 +163,25 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Deleting an individual lesson record
+
+`DeleteLessonCommandParser` parses the student and lesson indexes.
+Both use `ParserUtil#parseCommandIndex`, with index-specific error messages.
+`DeleteLessonCommand` selects the student from `Model#getFilteredPersonList`
+and validates the lesson index before changing data.
+
+`view` numbers lessons newest first, but `Person#getLessons` stores them in
+logging order. The command converts the displayed number using
+`lessons.size() - lessonIndex.getOneBased()`, with an assertion checking the
+resulting index. Removing by position ensures that only the selected occurrence
+is deleted when lesson content repeats.
+
+`Person#withLessonRemoved` returns a copy with the remaining lessons and all
+student details preserved. `Model#setPerson` updates the student without
+resetting the filter; the existing `LogicManager` save path persists the change.
+Deleting the last lesson keeps the student with an empty history.
+Attempting another deletion reports `No lessons logged yet for NAME.`.
+
 ### Finding students by name
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
@@ -171,7 +190,7 @@ This section describes some noteworthy details on how certain features are imple
 
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
-`view`, `log`, `edit`, `delete` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
+`view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -638,6 +657,21 @@ testers are expected to do more *exploratory* testing.
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Deleting lesson records
+
+Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.jar`, with fictional students only. Add a student called Amy, note her displayed index, and use that index wherever `INDEX` appears below. Add another student, Ben, with a distinct phone number and a Calculus record.
+
+1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. Algebra`, `2. Geometry`, `3. Algebra`.
+1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. Geometry`, `2. Algebra`, proving the newest duplicate was deleted rather than the oldest.
+1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
+1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
+1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
+1. Try `deletelesson INDEX 1` again while Amy's history is empty. Expected:
+   `No lessons logged yet for Amy.`, with both students and saved data unchanged.
+1. Enter `find ben`, then `deletelesson 1 1`. Expected: `Deleted lesson 1 for Ben: Calculus`, with only Ben's card still displayed. `view 1` must show `No lessons logged yet for Ben.`. Enter `list` to confirm both students remain and Amy's history is unchanged. Restart to check that both students and their empty histories were saved.
+
+Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
 
 ### Finding students and restoring the full list
 
