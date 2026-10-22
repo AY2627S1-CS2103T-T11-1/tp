@@ -19,6 +19,9 @@ public class Lesson {
     public static final String MESSAGE_CONSTRAINTS =
             "Lesson content must not be blank and must be at most 300 characters.";
 
+    public static final String MESSAGE_DATE_CONSTRAINTS =
+            "Lesson dates should be real dates in the format DD/MM/YYYY, for example 21/10/2026.";
+
     /*
      * The first character of the content must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.

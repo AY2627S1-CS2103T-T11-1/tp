@@ -4,6 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -20,6 +25,10 @@ import seedu.address.model.person.Subject;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    /** Day, month and four-digit year. Leading zeros are optional, and impossible dates are rejected. */
+    private static final DateTimeFormatter LESSON_DATE_INPUT_FORMATTER =
+            DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -161,5 +170,20 @@ public class ParserUtil {
             throw new ParseException(Lesson.MESSAGE_CONSTRAINTS);
         }
         return new Lesson(trimmedContent);
+    }
+
+    /**
+     * Parses a {@code String date} in the format DD/MM/YYYY into a {@code LocalDate}.
+     * Leading and trailing whitespaces will be trimmed. Single-digit days and months are accepted.
+     *
+     * @throws ParseException if the given {@code date} is not a real date in that format.
+     */
+    public static LocalDate parseLessonDate(String date) throws ParseException {
+        requireNonNull(date);
+        try {
+            return LocalDate.parse(date.trim(), LESSON_DATE_INPUT_FORMATTER);
+        } catch (DateTimeParseException e) {
+            throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS, e);
+        }
     }
 }

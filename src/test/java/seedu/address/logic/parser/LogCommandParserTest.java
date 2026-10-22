@@ -3,9 +3,12 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
@@ -41,6 +44,47 @@ public class LogCommandParserTest {
         String content = "Q1-5 (p. 42), revise   surds & indices!";
         assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + content,
                 new LogCommand(INDEX_FIRST_PERSON, new Lesson(content)));
+    }
+
+    @Test
+    public void parse_withDate_returnsDatedLogCommand() {
+        LogCommand expectedCommand = new LogCommand(INDEX_FIRST_PERSON,
+                new Lesson(VALID_CONTENT, LocalDate.of(2026, 10, 21)));
+
+        assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_DATE + "21/10/2026",
+                expectedCommand);
+
+        // date before content
+        assertParseSuccess(parser, " 1 " + PREFIX_DATE + "21/10/2026 " + PREFIX_CONTENT + VALID_CONTENT,
+                expectedCommand);
+    }
+
+    @Test
+    public void parse_contentContainingShortDateText_keepsContent() {
+        // d/ is not a prefix, so text such as d/dx stays in the content
+        String content = "Revised d/dx notation";
+        assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + content,
+                new LogCommand(INDEX_FIRST_PERSON, new Lesson(content)));
+    }
+
+    @Test
+    public void parse_invalidDate_failure() {
+        String withContent = " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_DATE;
+
+        // impossible date
+        assertParseFailure(parser, withContent + "31/02/2026", Lesson.MESSAGE_DATE_CONSTRAINTS);
+
+        // year first
+        assertParseFailure(parser, withContent + "2026-10-21", Lesson.MESSAGE_DATE_CONSTRAINTS);
+
+        // empty date
+        assertParseFailure(parser, withContent, Lesson.MESSAGE_DATE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_duplicateDatePrefix_failure() {
+        assertParseFailure(parser, " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_DATE + "21/10/2026 "
+                + PREFIX_DATE + "20/10/2026", Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
     }
 
     @Test

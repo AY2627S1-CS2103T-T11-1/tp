@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -84,6 +86,21 @@ public class LogicManagerTest {
                 ViewCommand.MESSAGE_USAGE));
         assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
         assertEquals(benHistory, logic.execute("view 2").getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_logPastDate_viewShowsLessonsInDateOrder() throws Exception {
+        model.addPerson(AMY);
+        String yesterday = LocalDate.now().minusDays(1).format(Messages.LESSON_DATE_FORMATTER);
+        String tomorrow = LocalDate.now().plusDays(1).format(Messages.LESSON_DATE_FORMATTER);
+
+        logic.execute("log 1 c/Vectors");
+        assertEquals("Logged lesson for " + AMY.getName() + " on " + yesterday + ": Surds",
+                logic.execute("log 1 c/Surds date/" + yesterday).getFeedbackToUser());
+        assertCommandException("log 1 c/Matrices date/" + tomorrow, LogCommand.MESSAGE_FUTURE_DATE);
+
+        assertEquals("Lesson records for " + AMY.getName() + " (2):\n1. " + todayText() + ": Vectors\n2. "
+                + yesterday + ": Surds", logic.execute("view 1").getFeedbackToUser());
     }
 
     @Test

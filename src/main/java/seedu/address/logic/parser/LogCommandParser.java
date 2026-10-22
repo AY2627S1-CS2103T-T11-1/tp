@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.LogCommand;
@@ -21,7 +22,7 @@ public class LogCommandParser implements Parser<LogCommand> {
      */
     public LogCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_CONTENT);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_CONTENT, PREFIX_DATE);
 
         if (argMultimap.getValue(PREFIX_CONTENT).isEmpty() || argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE));
@@ -30,8 +31,11 @@ public class LogCommandParser implements Parser<LogCommand> {
         Index index;
         index = ParserUtil.parseStudentIndex(argMultimap.getPreamble(), LogCommand.MESSAGE_USAGE);
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_CONTENT);
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_CONTENT, PREFIX_DATE);
         Lesson lesson = ParserUtil.parseLessonContent(argMultimap.getValue(PREFIX_CONTENT).get());
+        if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
+            lesson = lesson.withDate(ParserUtil.parseLessonDate(argMultimap.getValue(PREFIX_DATE).get()));
+        }
 
         return new LogCommand(index, lesson);
     }

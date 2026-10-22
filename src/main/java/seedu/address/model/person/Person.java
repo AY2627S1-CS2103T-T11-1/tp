@@ -77,14 +77,32 @@ public class Person {
     }
 
     /**
-     * Returns a copy of this student with {@code lesson} added after the existing lesson records.
+     * Returns a copy of this student with {@code lesson} added in date order.
+     * The lesson goes after every lesson that is undated or dated on or before its date,
+     * so lessons on the same date keep the order they were logged in,
+     * and undated lessons stay at the oldest end.
      * This student is not modified.
      */
     public Person withLessonAdded(Lesson lesson) {
         requireNonNull(lesson);
         List<Lesson> updatedLessons = new ArrayList<>(lessons);
-        updatedLessons.add(lesson);
+        int insertAt = updatedLessons.size();
+        while (insertAt > 0 && isDatedAfter(updatedLessons.get(insertAt - 1), lesson)) {
+            insertAt--;
+        }
+        updatedLessons.add(insertAt, lesson);
         return new Person(name, phone, address, level, subject, updatedLessons);
+    }
+
+    /**
+     * Returns true if {@code existing} belongs after {@code added} in date order.
+     * Undated lessons count as older than every dated lesson.
+     */
+    private static boolean isDatedAfter(Lesson existing, Lesson added) {
+        if (existing.getDate().isEmpty()) {
+            return false;
+        }
+        return added.getDate().map(addedDate -> existing.getDate().get().isAfter(addedDate)).orElse(true);
     }
 
     /**
