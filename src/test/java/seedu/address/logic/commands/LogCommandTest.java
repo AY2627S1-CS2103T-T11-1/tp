@@ -9,6 +9,8 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BOB;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.Clock;
@@ -205,6 +207,16 @@ public class LogCommandTest {
         // different clock -> returns false
         assertFalse(logFirstCommand.equals(
                 new LogCommand(INDEX_FIRST_PERSON, LESSON_QUADRATICS, OCT_18_CLOCK)));
+    }
+
+    /**
+     * Checks both assertion failures: no lesson added, and a different student returned.
+     */
+    @Test
+    public void assertOneLessonAdded_invalidResult_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> LogCommand.assertOneLessonAdded(ALICE, ALICE));
+        assertThrows(AssertionError.class, () -> LogCommand.assertOneLessonAdded(ALICE,
+                BOB.withLessonAdded(LESSON_QUADRATICS)));
     }
 
     @Test

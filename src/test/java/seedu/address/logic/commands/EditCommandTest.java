@@ -13,6 +13,7 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.List;
@@ -42,6 +43,12 @@ public class EditCommandTest {
     public void constructor_nullArguments_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new EditCommand(null, new EditPersonDescriptor()));
         assertThrows(NullPointerException.class, () -> new EditCommand(INDEX_FIRST_PERSON, null));
+    }
+
+    @Test
+    public void assertLessonsKept_lessonsChanged_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> EditCommand.assertLessonsKept(ALICE,
+                ALICE.withLessonAdded(new Lesson("Algebra"))));
     }
 
     @Test
