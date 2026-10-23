@@ -3,24 +3,38 @@
 skinparam arrowThickness 1.1
 skinparam arrowColor STORAGE_COLOR
 skinparam classBackgroundColor STORAGE_COLOR
+skinparam classAttributeFontColor #FFFFFF
+skinparam linetype ortho
 
 package Storage as StoragePackage {
 
 Class "<<interface>>\nStorage" as Storage
 Class StorageManager
 
-package "UserPrefs Storage" #F4F6F6{
+package "UserPrefs\nStorage" #F4F6F6{
 Class JsonUserPrefsStorage
 }
 
-package "AddressBook Storage" #F4F6F6{
+package "AddressBook\nStorage" #F4F6F6{
 Class JsonAddressBookStorage
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson
-Class JsonAdaptedTag
+Class JsonAdaptedLesson {
+  content : String
+  date : String
+}
 }
 
 }
+
+show JsonAdaptedLesson fields
+
+note bottom of JsonAdaptedLesson
+  In the data file, date is stored as
+  YYYY-MM-DD (users type and see
+  DD/MM/YYYY). It is left out for lessons
+  saved by v1.3, which load as undated.
+end note
 
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> Storage
@@ -31,6 +45,6 @@ StorageManager -down-> "1" JsonAddressBookStorage
 
 JsonAddressBookStorage ..> JsonSerializableAddressBook
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
-JsonAdaptedPerson --> "*" JsonAdaptedTag
+JsonAdaptedPerson --> "*" JsonAdaptedLesson
 
 @enduml
