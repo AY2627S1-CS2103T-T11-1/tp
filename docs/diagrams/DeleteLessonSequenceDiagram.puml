@@ -11,9 +11,8 @@ box Logic #F2F2FC
     participant "command:\nDeleteLessonCommand" as command LOGIC_COLOR
 end box
 
-box Model #F3F8F1
+box Model #FBF1F2
     participant "model:Model" as model MODEL_COLOR
-    participant "student:Person" as student MODEL_COLOR
 end box
 
 [-> logicManager : execute("deletelesson 1 2")
@@ -31,26 +30,18 @@ activate model
 model --> command : displayedStudents
 deactivate model
 
-command -> command : validate studentIndex
-command -> command : student = displayedStudents.get(studentIndex.getZeroBased())
-command -> student : getLessons()
-activate student
-student --> command : lessons
-deactivate student
-command -> command : validate lessonIndex
-
 note right of command
-  All validation happens before mutation.
   Displayed student 1 maps to filtered index 0.
+  Select that student and get their lessons.
+  Validate both indexes before changing the Model.
   Displayed lesson 2 maps to stored index
   lessons.size() - 2.
-end note
+  Create updatedStudent using
+  student.withLessonRemoved(storedIndex).
 
-command -> command : toStoredLessonIndex(lessons.size(), 2)
-command -> student : withLessonRemoved(storedIndex)
-activate student
-student --> command : updatedStudent
-deactivate student
+  Data-object calls are summarized here so this
+  diagram exposes only Logic internals.
+end note
 
 command -> model : setPerson(student, updatedStudent)
 activate model

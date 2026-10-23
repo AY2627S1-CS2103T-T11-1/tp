@@ -95,7 +95,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
-The sequence diagram below follows the successful execution of `deletelesson 1 2`. It shows how the command validates displayed indexes, converts the newest-first lesson number to the stored position, and replaces the student with an updated immutable value. Parser internals and persistence are omitted here; they are covered by the parser class diagram and architecture sequence diagram respectively.
+The sequence diagram below follows the successful execution of `deletelesson 1 2`. It shows how the command validates displayed indexes, converts the newest-first lesson number to the stored position, and replaces the student with an updated immutable value. Calls on the returned `Person` value are summarized in a note so that the diagram exposes only Logic internals and treats Model as a black box. Parser internals and persistence are omitted here; they are covered by the parser class diagram and architecture sequence diagram respectively.
 
 <puml src="diagrams/DeleteLessonSequenceDiagram.puml" alt="Successful lesson-deletion sequence from command parsing through replacing the student in Model" width="950" />
 
