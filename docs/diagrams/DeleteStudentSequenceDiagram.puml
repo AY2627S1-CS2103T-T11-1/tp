@@ -1,0 +1,61 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam DefaultFontSize 16
+skinparam ParticipantFontColor #FFFFFF
+skinparam SequenceBoxFontColor #222222
+
+box Logic #F2F2FC
+    participant ":LogicManager" as logicManager LOGIC_COLOR
+    participant ":AddressBookParser" as addressBookParser LOGIC_COLOR
+    participant "command:\nDeleteCommand" as command LOGIC_COLOR
+end box
+
+box Model #F3F8F1
+    participant "model:Model" as model MODEL_COLOR
+end box
+
+[-> logicManager : execute("delete 1")
+activate logicManager
+
+logicManager -> addressBookParser : parseCommand("delete 1")
+activate addressBookParser
+addressBookParser --> logicManager : command
+deactivate addressBookParser
+
+logicManager -> command : execute(model)
+activate command
+command -> model : getFilteredPersonList()
+activate model
+model --> command : displayedStudents
+deactivate model
+
+command -> command : validate targetIndex
+command -> command : personToDelete =\ndisplayedStudents.get(targetIndex.getZeroBased())
+
+note right of command
+  The index refers to the currently displayed list.
+  It is validated before the Model is changed.
+end note
+
+command -> model : deletePerson(personToDelete)
+activate model
+model --> command : return
+deactivate model
+
+note right of model
+  Removing the Person also removes their owned
+  lesson history from the address book data.
+end note
+
+command --> logicManager : commandResult
+deactivate command
+
+note right of logicManager
+  The subsequent save is shown in the
+  architecture sequence diagram.
+end note
+
+[<-- logicManager : commandResult
+deactivate logicManager
+@enduml
