@@ -95,21 +95,16 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below follows the successful execution of `deletelesson 1 2`. It shows how the command validates displayed indexes, converts the newest-first lesson number to the stored position, and replaces the student with an updated immutable value. Parser internals and persistence are omitted here; they are covered by the parser class diagram and architecture sequence diagram respectively.
 
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
-</box>
+<puml src="diagrams/DeleteLessonSequenceDiagram.puml" alt="Successful lesson-deletion sequence from command parsing through replacing the student in Model" width="950" />
 
 
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
+1. The command can communicate with the `Model` when it is executed (e.g. to replace a student after deleting one lesson).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
@@ -122,25 +117,18 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+The **API** of this component is specified in [`Model.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/model/Model.java).
 
+<puml src="diagrams/ModelClassDiagram.puml" alt="Partial Model class diagram showing students, their value fields and owned lesson records" width="950" />
 
-The `Model` component,
+This partial class diagram focuses on student and lesson data. `ModelManager` implements the `Model` API and owns one `AddressBook`; user-preference classes are omitted. The address book delegates uniqueness and list operations to `UniquePersonList`, while `ModelManager` exposes a filtered view of the same students for searches and displayed indexes.
 
-* stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
-* stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
-* does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
+`Person` is the Java class representing a student. It is an immutable value containing `Name`, `Phone`, `Address`, `Level`, `Subject` and an immutable list of zero or more `Lesson` values. A `Lesson` contains content and an optional date: records saved by v1.3 have no date, while newer records have a `LocalDate`. Lessons belong to their student, so deleting a student also deletes their lesson history.
 
+Two students have the same identity only when their phone numbers match and their names match ignoring case. Other fields, including lessons, contribute to full equality but not duplicate detection. `Person#withLessonAdded` and `Person#withLessonRemoved` return new `Person` objects rather than mutating the existing value. Any other operation that rebuilds a student, such as editing details, carries the existing lesson list across.
 
-<box type="info" seamless>
-
-**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
-
-<puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
-</box>
+Lesson records are stored oldest first by date. Undated legacy records remain at the oldest end, and records on the same date retain logging order. `view` reverses this stored order for display. The Model component has no dependency on UI, Logic or Storage, so its domain objects and rules remain meaningful independently of those components.
 
 
 ### Storage component
@@ -184,24 +172,13 @@ If parsing or execution fails, `MainWindow` displays the error instead of the hi
 
 ### Deleting an individual lesson record
 
-`DeleteLessonCommandParser` parses the student and lesson indexes.
-Both use `ParserUtil#parseCommandIndex`, with index-specific error messages.
-`DeleteLessonCommand` selects the student from `Model#getFilteredPersonList`
-and validates the lesson index before changing data.
+`DeleteLessonCommandParser` requires exactly two indexes. Both go through `ParserUtil#parseCommandIndex`, but student and lesson errors use their respective messages. `DeleteLessonCommand` obtains the student from `Model#getFilteredPersonList`, so the student index always refers to the list currently displayed after any search. It validates the student, the presence of lesson records and the lesson index before changing the Model.
 
-`view` numbers lessons newest first, but `Person#getLessons` stores them
-oldest first. `Person#withLessonAdded` inserts each lesson in date order, so
-the stored order and the displayed numbers stay in step even when a lesson is
-logged with a past date. The command converts the displayed number using
-`lessons.size() - lessonIndex.getOneBased()`, with an assertion checking the
-resulting index. Removing by position ensures that only the selected occurrence
-is deleted when lesson content repeats.
+`view` numbers lessons newest first, whereas `Person#getLessons` stores them oldest first. `Person#withLessonAdded` inserts each lesson in date order, keeping same-date records in logging order. The command therefore converts a one-based displayed lesson number to a zero-based stored position using `lessons.size() - lessonIndex.getOneBased()`. An assertion protects this internal conversion after the user-supplied index has been validated. Removing by position deletes only the selected occurrence even when two lessons have identical content and dates.
 
-`Person#withLessonRemoved` returns a copy with the remaining lessons and all
-student details preserved. `Model#setPerson` updates the student without
-resetting the filter; the existing `LogicManager` save path persists the change.
-Deleting the last lesson keeps the student with an empty history.
-Attempting another deletion reports `No lessons logged yet for NAME.`.
+`Person#withLessonRemoved` returns a new student with the selected record omitted and every student field and remaining lesson preserved. `Model#setPerson` replaces the old value in the backing `UniquePersonList`; the active filtered view continues to show the same matching students. The command then returns a confirmation containing the displayed lesson number, student name and deleted content. `LogicManager` persists the updated address book through the normal save path shown in the architecture sequence diagram.
+
+Deleting the final lesson therefore leaves the student present with an empty history. A later deletion attempt stops before mutation and reports `No lessons logged yet for NAME.`.
 
 ### Finding students by name
 
@@ -337,25 +314,25 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-The stories marked `Yes` in the **MVP** column form the proposed MVP.
+The stories marked `Yes` in the **MVP** column form the historical MVP scope. The separate **Status/version** column states what TutorLah actually implements; `Proposed` stories are not available in the current product.
 
-| Priority | MVP | As a … | I want to … | So that I can… |
-|----------|-----|--------|-------------|----------------|
-| `* * *` | Yes | tutor | add a student's details | keep their information in one place |
-| `* * *` | Yes | tutor | see a list of my students | identify the student whose information or lesson records I need |
-| `* * *` | Yes | tutor | delete the student and their associated lesson records | ensure those details are no longer kept in TutorLah |
-| `* * *` | Yes | tutor | add a dated record of what I covered to that student | avoid relying on memory before the next lesson |
-| `* * *` | Yes | tutor | view their lesson records with the most recent first | see where we stopped and what we covered previously |
-| `* *` | No | tutor | edit a student's details | keep their information accurate when it changes |
-| `* *` | No | tutor | store the student's phone number and address | reach them and find their home when needed |
-| `* *` | No | tutor managing many students | find a student by name | access the correct student's information quickly |
-| `* *` | No | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
-| `* *` | No | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
-| `* *` | No | tutor | archive a former student | remove them from the active list without losing their history |
-| `*` | No | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
-| `*` | No | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
-| `*` | No | tutor managing many students | add students in batches | avoid entering each student separately |
-| `*` | No | tutor | restore archived or deleted information | recover records removed accidentally |
+| Priority | MVP | Status/version | As a … | I want to … | So that I can… |
+|----------|-----|----------------|--------|-------------|----------------|
+| `* * *` | Yes | Implemented (v1.2) | tutor | add a student's details | keep their information in one place |
+| `* * *` | Yes | Implemented (v1.2) | tutor | see a list of my students | identify the student whose information or lesson records I need |
+| `* * *` | Yes | Implemented (v1.2) | tutor | delete the student and their associated lesson records | ensure those details are no longer kept in TutorLah |
+| `* * *` | Yes | Implemented (v1.4) | tutor | add a dated record of what I covered to that student | avoid relying on memory before the next lesson |
+| `* * *` | Yes | Implemented (v1.4) | tutor | view their dated lesson records with the most recent first | see where we stopped and what we covered previously |
+| `* *` | No | Implemented (v1.4) | tutor | edit a student's details | keep their information accurate when it changes |
+| `* *` | No | Implemented (v1.2) | tutor | store the student's phone number and address | reach them and find their home when needed |
+| `* *` | No | Implemented (v1.4) | tutor managing many students | find a student by name | access the correct student's information quickly |
+| `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
+| `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
+| `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
+| `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
+| `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
+| `*` | No | Proposed | tutor managing many students | add students in batches | avoid entering each student separately |
+| `*` | No | Proposed | tutor | restore archived or deleted information | recover records removed accidentally |
 
 ### Use cases
 
@@ -654,6 +631,30 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Adding students
+
+Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start TutorLah with `java -jar /absolute/path/to/TutorLah.jar` so the test does not use real student data.
+
+1. Enter `add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math`.<br>
+   Expected: `New student added: Amy Tan; Phone: 81230011; Address: 11 Example Street; Level: Sec 3; Subject: E-Math`, and Amy appears as student 1.
+1. Enter `add n/amy tan p/81230011 a/99 Other Street l/Sec 4 sub/A-Math`.<br>
+   Expected: `This student already exists in the list.` because the phone is identical and the name differs only by case. Amy's existing details remain unchanged.
+1. Enter `add n/Amy Tan p/81230012 a/12 Example Street l/JC1 sub/H2 Math`.<br>
+   Expected: the second Amy is accepted because the phone differs, and both students remain visible.
+1. Try omitting each required prefix in turn. Also try `p/123`, `l/`, `sub/`, a 101-character name and an address containing only spaces.<br>
+   Expected: each command is rejected with either the add-command usage or the relevant field constraint. Neither existing student changes.
+
+### Listing students
+
+Continue with the two fictional students created above.
+
+1. Enter `find amy`, then `list`.<br>
+   Expected: the search shows both matching students, and `list` restores the full list in its original order with `Listed 2 students.`.
+1. Enter `list extra`.<br>
+   Expected: `The list command does not accept parameters.` and the displayed list remains unchanged.
+1. In a separate test directory, prepare `data/addressbook.json` containing `{"persons": []}`, start TutorLah and enter `list`.<br>
+   Expected: `No students found. Use add to create a student.` and the empty panel displays the current add-command guidance.
+
 ### Deleting a person
 
 1. Deleting a person while all persons are being shown
@@ -681,16 +682,31 @@ testers are expected to do more *exploratory* testing.
 
 ### Deleting lesson records
 
-Run in a separate empty directory using `java -jar /absolute/path/to/TutorLah.jar`, with fictional students only. Add a student called Amy, note her displayed index, and use that index wherever `INDEX` appears below. Add another student, Ben, with a distinct phone number and a Calculus record.
+Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start with `java -jar /absolute/path/to/TutorLah.jar`, then enter:
 
-1. Log `Algebra`, `Geometry`, then `Algebra` for Amy. `view INDEX` must show `1. DD/MM/YYYY: Algebra`, `2. DD/MM/YYYY: Geometry`, `3. DD/MM/YYYY: Algebra`, each with today's date.
-1. Enter `deletelesson INDEX 1`. Expected: `Deleted lesson 1 for Amy: Algebra`. A subsequent view or card click must show `1. DD/MM/YYYY: Geometry`, `2. DD/MM/YYYY: Algebra`, proving the newest duplicate was deleted rather than the oldest.
-1. Enter `deletelesson INDEX 2`, then view Amy. Expected: only `1. DD/MM/YYYY: Geometry`. Amy's details and Ben's Calculus record must remain unchanged.
-1. Try `deletelesson INDEX 0`, `deletelesson INDEX 01`, `deletelesson INDEX 2`, missing arguments and extra arguments. Expected: the appropriate index error or usage message, with Amy's remaining lesson unchanged.
-1. Exit and restart. Expected: Amy still has only Geometry and Ben still has Calculus. Delete Amy's last lesson, then view her: `No lessons logged yet for Amy.`. Amy's student card must remain present. Restart again to confirm the empty history was saved.
-1. Try `deletelesson INDEX 1` again while Amy's history is empty. Expected:
-   `No lessons logged yet for Amy.`, with both students and saved data unchanged.
-1. Enter `find ben`, then `deletelesson 1 1`. Expected: `Deleted lesson 1 for Ben: Calculus`, with only Ben's card still displayed. `view 1` must show `No lessons logged yet for Ben.`. Enter `list` to confirm both students remain and Amy's history is unchanged. Restart to check that both students and their empty histories were saved.
+```text
+add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+log 1 c/Algebra
+log 1 c/Geometry
+log 1 c/Algebra
+log 2 c/Calculus
+```
+
+1. Enter `view 1`.<br>
+   Expected: Amy's three records appear as `1. DD/MM/YYYY: Algebra`, `2. DD/MM/YYYY: Geometry`, `3. DD/MM/YYYY: Algebra`, each with today's date.
+1. Enter `deletelesson 1 1`, then `view 1`.<br>
+   Expected: `Deleted lesson 1 for Amy Tan: Algebra`, followed by Geometry as lesson 1 and the older Algebra as lesson 2. This proves that only the newest duplicate was removed.
+1. Enter `deletelesson 1 2`, then `view 1`.<br>
+   Expected: `Deleted lesson 2 for Amy Tan: Algebra`, then only Geometry remains. Amy's details and Ben's Calculus record are unchanged.
+1. Try `deletelesson 1 0`, `deletelesson 1 01`, `deletelesson 1 2`, `deletelesson 0 1`, `deletelesson`, `deletelesson 1` and `deletelesson 1 1 extra`.<br>
+   Expected: the relevant lesson-index, student-index or usage error appears. Amy's remaining Geometry record is unchanged after every rejected command.
+1. Exit and restart, enter `view 1`, then `deletelesson 1 1` and `view 1`.<br>
+   Expected: Geometry survived the restart, its deletion succeeds, and Amy remains present with `No lessons logged yet for Amy Tan.`. Restart again to confirm the empty history was saved.
+1. Enter `deletelesson 1 1` while Amy's history is empty.<br>
+   Expected: `No lessons logged yet for Amy Tan.`, with both students and saved data unchanged.
+1. Enter `find ben`, then `deletelesson 1 1` and `view 1`.<br>
+   Expected: `Deleted lesson 1 for Ben Lim: Calculus`, while only Ben's card remains displayed. The view reports `No lessons logged yet for Ben Lim.`. Enter `list` to confirm both students remain; the search filter was retained during deletion and no unrelated student changed.
 
 Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
 

@@ -3,52 +3,70 @@
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
+skinparam classAttributeFontColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classFontSize 16
+skinparam linetype ortho
 
-Package Model as ModelPackage <<Rectangle>>{
-Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
-Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
-Class "<<interface>>\nModel" as Model
-Class AddressBook
-Class ModelManager
-Class UserPrefs
+package "Model (partial)" {
+    class "<<interface>>\nModel" as Model
+    class ModelManager
+    class AddressBook
+    class UniquePersonList
 
-Class UniquePersonList
-Class Person
-Class Address
-Class Email
-Class Name
-Class Phone
-Class Tag
+    class Person {
+        - name : Name
+        - phone : Phone
+        - address : Address
+        - level : Level
+        - subject : Subject
+        - lessons : List<Lesson>
+        + isSamePerson(other) : boolean
+        + withLessonAdded(lesson) : Person
+        + withLessonRemoved(index) : Person
+    }
 
-Class I #FFFFFF
+    class Name
+    class Phone
+    class Address
+    class Level
+    class Subject
+
+    class Lesson {
+        + content : String
+        - date : LocalDate
+        + getDate() : Optional<LocalDate>
+    }
 }
 
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Model
-
-AddressBook .up.|> ReadOnlyAddressBook
+show fields
+show Person methods
+show Lesson methods
+hide empty members
 
 ModelManager .up.|> Model
-Model .right.> ReadOnlyUserPrefs
-Model .left.> ReadOnlyAddressBook
-ModelManager -left-> "1" AddressBook
-ModelManager -right-> "1" UserPrefs
-UserPrefs .up.|> ReadOnlyUserPrefs
+ModelManager *-down-> "1" AddressBook
+AddressBook *-down-> "1" UniquePersonList
+UniquePersonList -down-> "0..*" Person : students
+ModelManager -right-> "0..*" Person : filtered view
 
-AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "~* all" Person
-Person *--> Name
-Person *--> Phone
-Person *--> Email
-Person *--> Address
-Person *--> "*" Tag
+Person *-down-> "1" Name
+Person *-down-> "1" Phone
+Person *-down-> "1" Address
+Person *-down-> "1" Level
+Person *-down-> "1" Subject
+Person *-down-> "0..*" Lesson : lessons
 
-Person -[hidden]up--> I
-UniquePersonList -[hidden]right-> I
+note right of Person
+  A student's identity is the same phone
+  and the same name, ignoring case.
+  Commands that rebuild a Person carry
+  its existing lessons across.
+end note
 
-Name -[hidden]right-> Phone
-Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
-
-ModelManager --> "~* filtered" Person
+note right of Lesson
+  Immutable lesson value.
+  date is absent for legacy v1.3 records.
+  Stored order is oldest to newest.
+end note
 @enduml

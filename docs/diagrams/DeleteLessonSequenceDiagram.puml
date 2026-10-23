@@ -1,0 +1,77 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam DefaultFontSize 16
+skinparam ParticipantFontColor #FFFFFF
+skinparam SequenceBoxFontColor #222222
+
+box Logic #F2F2FC
+    participant ":LogicManager" as logicManager LOGIC_COLOR
+    participant ":AddressBookParser" as addressBookParser LOGIC_COLOR
+    participant "command:\nDeleteLessonCommand" as command LOGIC_COLOR
+end box
+
+box Model #F3F8F1
+    participant "model:Model" as model MODEL_COLOR
+    participant "student:Person" as student MODEL_COLOR
+end box
+
+[-> logicManager : execute("deletelesson 1 2")
+activate logicManager
+
+logicManager -> addressBookParser : parseCommand("deletelesson 1 2")
+activate addressBookParser
+addressBookParser --> logicManager : command
+deactivate addressBookParser
+
+logicManager -> command : execute(model)
+activate command
+command -> model : getFilteredPersonList()
+activate model
+model --> command : displayedStudents
+deactivate model
+
+command -> command : validate studentIndex
+command -> command : student = displayedStudents.get(studentIndex.getZeroBased())
+command -> student : getLessons()
+activate student
+student --> command : lessons
+deactivate student
+command -> command : validate lessonIndex
+
+note right of command
+  All validation happens before mutation.
+  Displayed student 1 maps to filtered index 0.
+  Displayed lesson 2 maps to stored index
+  lessons.size() - 2.
+end note
+
+command -> command : toStoredLessonIndex(lessons.size(), 2)
+command -> student : withLessonRemoved(storedIndex)
+activate student
+student --> command : updatedStudent
+deactivate student
+
+command -> model : setPerson(student, updatedStudent)
+activate model
+model --> command : return
+deactivate model
+
+note right of model
+  Replacing the student keeps the active filter.
+  Only the selected occurrence is removed.
+  Other lessons remain; deleting the final lesson
+  leaves the student with an empty history.
+end note
+
+command --> logicManager : commandResult
+deactivate command
+
+note right of logicManager
+  The subsequent save is shown in the
+  architecture sequence diagram.
+end note
+
+[<-- logicManager : commandResult
+deactivate logicManager
+@enduml
