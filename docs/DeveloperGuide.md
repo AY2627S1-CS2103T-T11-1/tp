@@ -71,20 +71,21 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/ui/Ui.java).
 
-<puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
+<puml src="diagrams/UiClassDiagram.puml" alt="Partial UI class diagram showing the main window, callback fields, student cards and feedback display" width="850" />
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+This partial class diagram focuses on command input, student cards and feedback. `MainWindow` supplies a `CommandExecutor` callback to `CommandBox` and a `Consumer<Index>` callback to `PersonListPanel`. The fields shown on those classes hold the callbacks; neither input part needs a reference to the concrete `MainWindow` class. Solid arrows show held references, with `1` identifying a single referenced object; dashed arrows with `<<create>>` show creation dependencies. `PersonListPanel` creates `PersonCard` objects for visible students, and each card displays one `Person` from the Model component. The creation dependency does not describe how many cards are visible. `Person` remains the Java class name for a student.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+`UiManager` implements `Ui` and creates `MainWindow`. `MainWindow` and its visible UI parts inherit from `UiPart`; the window also creates `HelpWindow` and `StatusBarFooter`. These startup, shared-base and supporting classes are omitted from the focused diagram. The UI uses JavaFX, with layouts in `src/main/resources/view`, such as [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/resources/view/MainWindow.fxml).
 
-The `UI` component,
+The UI responsibilities are:
 
-* executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
-* keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+* `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
+* `PersonListPanel` observes the filtered student list supplied by `Logic`. Cards show each student's displayed index, name, phone, address, level and subject. The indexes follow the displayed list, including after a search or deletion.
+* A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses refresh the history; empty cells and other mouse buttons do not execute the shortcut.
+* `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider.
+* After a successful `view`, `MainWindow` asks `PersonListPanel` to highlight and scroll to the viewed student. Programmatic selection and list changes do not execute a view command.
 
 ### Logic component
 
@@ -162,6 +163,20 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Viewing lesson history
+
+Both `view INDEX` and a primary press on a student card reach `MainWindow#executeCommand`. Typed input arrives through the `CommandBox` callback; a card press arrives through `MainWindow#handlePersonClick`, which builds `view INDEX` using the card's current displayed index. The click path leaves command-box text unchanged.
+
+<puml src="diagrams/ViewHistorySequenceDiagram.puml" alt="Successful view sequence showing typed input and a student-card press joining the same UI execution path" width="950" />
+
+The sequence shows a successful view of displayed student 1. The `User` actor represents the person entering a command or pressing a student card. Both entry paths share the same execution flow in `MainWindow`. The diagram expands only the UI component; `Logic` is shown through its interface. Parsing, model access, saving, JavaFX internals and error paths are omitted. Activation bars and the private self-call from `handlePersonClick` to `executeCommand` are omitted. Solid arrows show input events or calls; dashed arrows show returns. A return labelled `return` carries no value. The final alternatives complete the same entry path chosen at the top.
+
+`MainWindow` passes the command to `Logic#execute`. A successful `ViewCommand` returns a `CommandResult` containing the feedback and the viewed student's displayed index. `MainWindow` displays the feedback, then passes the index to `PersonListPanel#selectPerson` to synchronise the highlight and scroll position. The index is present even when the student's history is empty. This selection does not invoke the click callback, so it cannot execute the command again.
+
+`ViewCommand` reads the student from `Model#getFilteredPersonList`, leaving the current filter and student data unchanged. It traverses the stored lessons backwards: the most recent lesson date appears first, with the most recently logged record first among equal dates. Existing undated records appear at the oldest end when lessons have been added in date order. Each row shows its displayed lesson number, formatted date and content; undated records use `(undated)`. An empty history returns `No lessons logged yet for NAME.`.
+
+If parsing or execution fails, `MainWindow` displays the error instead of the history and does not apply a viewed-student selection. For typed input, `CommandBox` keeps the failed command and marks it as an error. Card-click failures are displayed through the same execution path without clearing typed text. Although viewing does not modify students or lessons, it still goes through `LogicManager`'s existing save-after-success path.
 
 ### Rejecting blank Unicode fields
 
@@ -681,46 +696,39 @@ Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTe
 
 ### Finding students and restoring the full list
 
-Use fictional students in a separate test directory. Add `Tan Wei Ming`, `Tan Wei Jie` and `Alicia Lim` with distinct phone numbers and note their displayed indexes.
+Use a separate test directory and fictional data only. Before launching, create `data/addressbook.json` inside that directory containing `{"persons": []}`. A missing file loads sample students, so this valid empty file is needed for the indexes below. Start with `java -jar /absolute/path/to/TutorLah.jar`, then add these students in order:
+
+```text
+add n/Tan Wei Ming p/81230001 a/10 Example Street l/Sec 3 sub/E-Math
+add n/Tan Wei Jie p/81230002 a/20 Example Street l/Sec 4 sub/A-Math
+add n/Alicia Lim p/81230003 a/30 Example Street l/JC1 sub/H2 Math
+```
 
 1. Enter `find WEI`. Expected: only the two Wei students, numbered 1 and 2, with `Found 2 students.`.
-1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`.
-1. Enter `find ali`. Expected: `Alicia Lim` appears as student 1 even though the previous search hid her. Click the card or enter `view 1`: both must show Alicia's history.
-1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel says `No students to display.` and `Type list to show all students, or add one:`, followed by the add-command format and example. The same panel offers add guidance when there are no saved students.
-1. Enter `find` without keywords after a successful search. Expected: usage feedback, with the previous results unchanged.
-1. Enter `list`. Expected: all three students return in their original order. Exit and restart after another search: the complete list and all lesson records must still be present.
+1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`. Both keywords must occur in the name, ignoring case and keyword order.
+1. Enter `find ali`. Expected: only `Alicia Lim`, numbered 1, even though the previous search hid her. Enter `view 1`, then press her card. Both show `No lessons logged yet for Alicia Lim.` and highlight her card. Enter `view 2`: the student-index error appears and Alicia's card remains displayed.
+1. Enter `find` without keywords. Expected: usage feedback with Alicia still displayed. The failed command remains in the command box.
+1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel offers both `list` and the add-command format and example.
+1. Enter `list`. Expected: `Listed 3 students.` and all three students in their original order, with Alicia numbered 3. Press Alicia's card once: her empty-history message appears and her card is highlighted.
+1. Enter `find WEI`, then exit and restart. Expected: all three students return; searching did not remove hidden students or persist the filter.
 
 ### Lesson-history command sequences
 
-Run these checks in a separate test directory using `java -jar /absolute/path/to/TutorLah.jar`.
-The application stores data in the working directory; keep real student data out of this directory.
-Add two test students, Amy and Ben, and use their current displayed indexes in the commands below.
+Use another separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching as above. Start with `java -jar /absolute/path/to/TutorLah.jar`. The app stores data in the working directory; keep real student data out of this directory. Add these fictional students in order:
 
-1. Enter `view INDEX` for Amy before logging a lesson.
-   Expected: `No lessons logged yet for Amy.`.
-1. Enter `log INDEX c/Algebra` for Amy, then view Amy.
-   Expected: `Logged lesson for Amy on DD/MM/YYYY: Algebra` with today's date, then `Lesson records for Amy (1):` followed by `1. DD/MM/YYYY: Algebra`.
-1. Log `Geometry`, then `Algebra` again for Amy, and view Amy.
-   Expected: count 3, with `Algebra`, `Geometry`, `Algebra` in that order.
-   Both Algebra records remain because repeated content is allowed.
-1. View Ben before logging a lesson, then log `Calculus` for Ben and view him.
-   Expected: Ben's empty-history message first, then count 1 and `1. DD/MM/YYYY: Calculus`.
-   View Amy again: only Amy's three records are shown, with her name in the header.
-1. After a successful view, try an index past the end of the student list,
-   `view abc`, and `log INDEX c/`.
-   Expected: each error replaces the history with its own message and marks the
-   command box as an error. The failed command remains available for correction.
-   A subsequent valid view clears the error state and shows the original records.
-1. Delete Amy, then view Ben using his updated displayed index.
-   Expected: only Ben's Calculus record. The former out-of-range index remains invalid.
-1. Prepare a student with 40 lesson records, including a 300-character record.
-   View the student and scroll to the bottom.
-   Expected: the header identifies the student and count 40; row 1 is the latest
-   record, and row 40 is reachable. Long content wraps within the result area.
-   View another student: their feedback replaces the history and starts at the top.
-1. Repeat with the minimum window size (450 by 600) and a larger window. Drag the
-   horizontal result divider both ways. The command box and student list must
-   remain usable, and all records must remain reachable by scrolling.
+```text
+add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+```
+
+1. Enter `view 1`. Expected: `No lessons logged yet for Amy Tan.` and Amy's card highlighted, even though her history is empty.
+1. Enter `log 1 c/Algebra`, `log 1 c/Geometry`, then `log 1 c/Algebra`. Enter `view 1`. Expected: `Lesson records for Amy Tan (3):`, followed by Algebra, Geometry and Algebra, each with today's date. Both Algebra occurrences remain.
+1. Enter `view 2`, then `view 1`. Expected: Ben's empty-history message and highlight first, then Amy's three records and highlight. Press Ben's card once, then Amy's once. Each first press updates both the feedback and highlight to the chosen student.
+1. Enter `log 2 c/Calculus`. Type `log 2 c/unfinished` without pressing Enter, then press Ben's card twice. Expected: each press shows Ben's single Calculus record and keeps `log 2 c/unfinished` in the command box. Enter `view 2` instead: the same history appears and the successfully submitted command clears.
+1. Enter `view 999`, then `view abc`. Expected: the student-index error, then usage feedback, with the failed command retained and styled as an error. The previous selection is not changed by either failed typed view. Enter `view 1`: Amy's unchanged history returns and the successful command clears.
+1. Enter `find ben`, then `view 1` and press Ben's card. Expected: both show Ben's Calculus record while only Ben is displayed. Enter `list`, then `delete 1` to remove Amy. Ben becomes student 1; `view 1` and a single press on his card still show only his Calculus record. `view 2` reports an invalid student index.
+1. Prepare a separate fictional student with 40 lesson records, including a 300-character record. View the student and scroll to the bottom. Expected: the header shows count 40, the records are newest first, the long content wraps, and row 40 is reachable. Press the same card again, then view another student: both updates reset the result area to its beginning without losing records.
+1. Repeat the scrolling and selection checks in a smaller and a larger window, moving the horizontal divider both ways. The command box and student list must remain usable, and all records must remain reachable. Check the screen resolutions and scaling levels listed under Non-Functional Requirements as well.
 
 ### Lesson dates and data saved by v1.3
 

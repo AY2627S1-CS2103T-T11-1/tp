@@ -3,58 +3,41 @@
 skinparam arrowThickness 1.1
 skinparam arrowColor UI_COLOR_T4
 skinparam classBackgroundColor UI_COLOR
+skinparam classFontSize 17
+skinparam ClassAttributeFontColor #FFFFFF
+skinparam ClassAttributeIconSize 0
+skinparam ArrowFontSize 16
+skinparam ArrowFontStyle plain
+skinparam packageTitleAlignment left
+skinparam Padding 15
 
-package UI <<Rectangle>>{
-Class "<<interface>>\nUi" as Ui
-Class "{abstract}\nUiPart" as UiPart
-Class UiManager
-Class MainWindow
-Class HelpWindow
-Class ResultDisplay
-Class PersonListPanel
-Class PersonCard
-Class StatusBarFooter
-Class CommandBox
+package "UI (partial)" {
+    class MainWindow
+    class CommandBox {
+        - commandExecutor : CommandExecutor
+    }
+    class ResultDisplay
+    class PersonListPanel {
+        - onPersonClick : Consumer<Index>
+    }
+    class PersonCard
 }
 
-package Model <<Rectangle>> {
-Class HiddenModel #FFFFFF
+package Logic {
+    class "<<interface>>\nLogic" as LogicApi LOGIC_COLOR
 }
 
-package Logic <<Rectangle>> {
-Class HiddenLogic #FFFFFF
+package "Model (partial)" {
+    class Person MODEL_COLOR
 }
 
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Ui
+show fields
+hide empty members
 
-UiManager .left.|> Ui
-UiManager -down-> "1" MainWindow
-MainWindow *-down->  "1" CommandBox
-MainWindow *-down-> "1" ResultDisplay
-MainWindow *-down-> "1" PersonListPanel
-MainWindow *-down-> "1" StatusBarFooter
-MainWindow --> "0..1" HelpWindow
-
-PersonListPanel -down-> "*" PersonCard
-
-MainWindow -left-|> UiPart
-
-ResultDisplay --|> UiPart
-CommandBox --|> UiPart
-PersonListPanel --|> UiPart
-PersonCard --|> UiPart
-StatusBarFooter --|> UiPart
-HelpWindow --|> UiPart
-
-PersonCard ..> Model
-UiManager -right-> Logic
-MainWindow -left-> Logic
-
-PersonListPanel -[hidden]left- HelpWindow
-HelpWindow -[hidden]left- CommandBox
-CommandBox -[hidden]left- ResultDisplay
-ResultDisplay -[hidden]left- StatusBarFooter
-
-MainWindow -[hidden]-|> UiPart
+MainWindow -up-> "1" LogicApi
+MainWindow -down-> "1" ResultDisplay
+MainWindow .down.> CommandBox : <<create>>
+MainWindow -down-> "1" PersonListPanel
+PersonListPanel .down.> PersonCard : <<create>>
+PersonCard -right-> "1" Person
 @enduml
