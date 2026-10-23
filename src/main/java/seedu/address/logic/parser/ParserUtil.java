@@ -8,7 +8,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -25,6 +27,8 @@ import seedu.address.model.person.Subject;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    private static final Logger logger = LogsCenter.getLogger(ParserUtil.class);
 
     /** One or two digits for the day and month, and exactly four for the year, with no signs. */
     private static final String LESSON_DATE_INPUT_REGEX = "\\d{1,2}/\\d{1,2}/\\d{4}";
@@ -185,15 +189,18 @@ public class ParserUtil {
         requireNonNull(date);
         String trimmedDate = date.trim();
         if (!trimmedDate.matches(LESSON_DATE_INPUT_REGEX)) {
+            logger.fine("Rejected lesson date not in D/M/YYYY form: " + trimmedDate);
             throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS);
         }
         LocalDate parsedDate;
         try {
             parsedDate = LocalDate.parse(trimmedDate, LESSON_DATE_INPUT_FORMATTER);
         } catch (DateTimeParseException e) {
+            logger.fine("Rejected lesson date that does not exist: " + trimmedDate);
             throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS, e);
         }
         if (parsedDate.isBefore(Lesson.EARLIEST_DATE)) {
+            logger.fine("Rejected lesson date before " + Lesson.EARLIEST_DATE + ": " + trimmedDate);
             throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS);
         }
         return parsedDate;
