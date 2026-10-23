@@ -15,7 +15,7 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation, and with the Logic and parser diagrams.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation, and with the Logic/parser diagrams and Developer Guide maintenance.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records and logging lessons with a past date.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
@@ -166,14 +166,6 @@ The `Model` component,
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 
-<box type="info" seamless>
-
-**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
-
-<puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
-</box>
-
-
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
@@ -244,103 +236,9 @@ Attempting another deletion reports `No lessons logged yet for NAME.`.
 
 `view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
 
-### \[Proposed\] Undo/redo feature
-
-#### Proposed Implementation
-
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
-
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
-
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
-
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
-
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
-
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
-
 --------------------------------------------------------------------------------------------------------------------
 
-## **Documentation, logging, testing, dev-ops**
+## **Documentation, logging, testing, configuration, dev-ops**
 
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
@@ -568,7 +466,7 @@ The stories marked `Yes` in the **MVP** column form the proposed MVP.
 
       Use case resumes at step 2.
 
-**Use case: UC08 - Archive a student**
+**Use case: UC08 - Archive a student (proposed)**
 
 **Guarantees:** The archived student no longer appears in the active student list, but their details and lesson records are retained, unlike <u>UC03</u>.
 
@@ -590,50 +488,69 @@ The stories marked `Yes` in the **MVP** column form the proposed MVP.
 
 ### Non-Functional Requirements
 
-1.  **Platform independence:** TutorLah should work on Windows, Linux and macOS without relying on OS-specific libraries or features.
-2.  **Java version:** TutorLah should work on a computer that has Java `25`.
+These are product requirements, not a claim that every target has been
+verified. The save-failure limitation below remains a gap in the intended
+persistence and data-integrity guarantees.
+
+1.  **Platform support:** TutorLah should work on Windows, Linux and macOS.
+2.  **Java version:** TutorLah should work with Java `25`.
 3.  **Portable distribution:** TutorLah should be usable without an installer.
-4.  **Single-file distribution:** TutorLah should be packaged in a single JAR file that does not exceed `100 MB`.
-5.  **Typing-first interaction:** TutorLah should allow the tutor to complete every product workflow using typed commands. Adding a student and logging a lesson should each be possible using a single command.
-6.  **Error feedback:** Every rejected command should display a message that explains why the command was rejected and states the expected format.
-7.  **Data persistence:** After each successful command that changes data, TutorLah should save the updated student and lesson data to the local data file before accepting another command.
-8.  **Data integrity:** When a command is rejected, no student or lesson record should be added, deleted or modified.
-9.  **Human-editable storage:** TutorLah should store its data locally in a human-editable text file without requiring a database management system.
-10. **Offline operation:** Every TutorLah feature should work without an internet connection or a remote server. Student and lesson data should remain on the tutor's computer.
-11. **Screen support:** The GUI should work well at resolutions of `1920x1080` and higher with 100% and 125% scaling. It should remain usable at resolutions of `1280x720` and higher with 150% scaling.
-12. **Single-user operation:** TutorLah should support one tutor using one local data file on their own computer. It should not support shared use of the same data file by multiple users.
+4.  **Single-file distribution:** TutorLah should be packaged in one JAR file
+    that does not exceed `100 MB`.
+5.  **Typing-first interaction:** Student and lesson management should be
+    possible using typed commands. Adding a student and logging a lesson
+    should each take one command.
+6.  **Error feedback:** Rejected input should receive field- or command-specific
+    feedback. Missing or malformed command parts should also show usage.
+7.  **Data persistence:** After a successful command, TutorLah should save the
+    complete student and lesson data locally before returning success feedback.
+8.  **Data integrity:** A failed command should not add, delete or modify
+    student or lesson records.
+9.  **Human-editable storage:** Data should be stored locally in human-editable
+    JSON, without a database management system.
+10. **Offline operation:** Student and lesson management should work offline.
+    Accessing the online User Guide requires an internet connection.
+11. **Screen support:** The GUI should work well at `1920x1080` and higher
+    with 100% and 125% scaling, and remain usable at `1280x720` and higher
+    with 150% scaling.
+12. **Single-user operation:** TutorLah should support one tutor using one
+    local data file, not concurrent shared access by multiple users.
+
+**Known limitation:** `LogicManager` updates the model before saving. If saving
+fails, it reports an error but does not roll back the in-memory change.
 
 ### Glossary
 
-* **Active student**: A student who has not been archived and is available for
-  normal student-management operations.
+* **Active student (proposed)**: A student available for normal operations
+  under the future archiving feature. Archiving is not implemented yet.
 
-* **Archived student**: A student who no longer appears in the student list but
-  whose student details and lesson records are retained.
+* **Archived student (proposed)**: A student hidden from the active list while
+  their details and lesson records are retained.
 
 * **Data file**: The JSON file on the user's computer where TutorLah stores all
   student and lesson data.
 
-* **Duplicate student**: A student with the same name and phone number as an
-  existing student. TutorLah does not allow duplicate students.
+* **Duplicate student**: A student with the same phone number and the same
+  name, ignoring case, as an existing student.
 
 * **Lesson**: A teaching session between the tutor and a student.
 
 * **Lesson history**: All lesson records associated with a student.
 
-* **Lesson record**: A dated record of a completed lesson that describes what
-  was covered. It is distinct from a scheduled lesson.
+* **Lesson index**: The lesson number shown by `view`, starting at 1 with the
+  most recent record. `deletelesson` uses this displayed number.
 
-* **Level**: The student's stage of education, such as Secondary 3 or Year 1
-  of university.
+* **Lesson record**: A record of what was covered in a completed lesson. New
+  records have a lesson date; older undated records show `(undated)`.
 
-* **One-off lesson**: A scheduled lesson that is not part of a weekly lesson
-  slot.
+* **Level**: The student's stage of education, such as `Sec 3` or `JC1`.
 
-* **Rescheduling**: Changing the date or time of a scheduled lesson.
+* **One-off lesson (proposed)**: A scheduled lesson outside a weekly slot.
 
-* **Scheduled lesson**: A planned lesson that has not yet taken place, either
-  in a weekly lesson slot or as a one-off lesson.
+* **Rescheduling (proposed)**: Changing the date or time of a scheduled lesson.
+
+* **Scheduled lesson (proposed)**: A planned lesson that has not yet taken
+  place, either in a weekly slot or as a one-off lesson.
 
 * **Student**: A learner whose student details and lesson records are managed
   in TutorLah.
@@ -642,18 +559,18 @@ The stories marked `Yes` in the **MVP** column form the proposed MVP.
   name, phone number, address, level and subject.
 
 * **Student index**: The position of a student in the currently displayed
-  student list, starting from 1. Commands such as `delete 3` and `log 3` use
+  student list, starting from 1. Commands such as `delete 3` and `view 3` use
   this index rather than a permanent identifier, so a student's index can
   change when the displayed list changes.
 
-* **Student list**: The list of active students currently displayed by
-  TutorLah.
+* **Student list**: Students matching the current filter. `list` restores the
+  full list; filtering does not delete hidden students.
 
 * **Tutor**: The freelance or private tutor who uses TutorLah to manage
   students and lessons.
 
-* **Weekly lesson slot**: A fixed day and time reserved each week for a
-  student's regular lesson.
+* **Weekly lesson slot (proposed)**: A fixed day and time reserved each week
+  for a student's regular lesson.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -669,38 +586,50 @@ testers are expected to do more *exploratory* testing.
 
 ### Launch and shutdown
 
-1. Initial launch
+Use Java `25` and a separate empty test folder. Copy `TutorLah.jar` there and
+open a terminal in that folder. Keep real student data out of this test folder.
 
-   1. Download the JAR file and copy it into an empty folder.
+1. Run `java -jar TutorLah.jar` with no existing data file.
+   Expected: the GUI opens with sample students and a command box. Enter
+   `list` to display the students.
+1. Resize and move the window, then enter `exit`.
+   Expected: the window closes. Run the same launch command from the same
+   folder. The saved students, window size and window location are retained.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+### Deleting a student
 
-1. Saving window preferences
+Use another isolated test folder. Before launching, create
+`data/addressbook.json` containing `{"persons": []}`; a missing file would
+load sample students. Launch with `java -jar /absolute/path/to/TutorLah.jar`,
+then enter these commands in order:
 
-   1. Resize the window to an optimal size. Move the window to a different location. Close the window.
+```text
+add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+log 1 c/Algebra
+log 2 c/Calculus
+```
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
-
-1. _{ more test cases … }_
-
-### Deleting a person
-
-1. Deleting a person while all persons are being shown
-
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
-
-   1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
-
-   1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
-
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
-
-1. _{ more test cases … }_
+1. Try `delete 0`, `delete 01` and `delete 3`.
+   Expected: `The student index provided is invalid.`, with both students
+   and their lesson records unchanged.
+1. Try `delete` and `delete abc`.
+   Expected: `Invalid command format!` followed by the delete usage, with
+   the data unchanged.
+1. Enter `find ben`, then `delete 1`.
+   Expected: confirmation beginning `Deleted student: Ben Lim;` with Ben's
+   saved details. Ben and his Calculus record are deleted. The filter remains
+   and shows no students; Amy and her Algebra record are kept.
+1. Enter `list`, then `view 1`.
+   Expected: `Listed 1 student.`, with Amy numbered 1, followed by her single
+   dated Algebra record.
+1. Exit and restart from the same folder. Confirm Amy and her record remain,
+   then enter `delete 1` and `list`.
+   Expected: Amy and her record are deleted, and the list reports
+   `No students found. Use add to create a student.`.
+1. Exit and restart again, then enter `list` and `delete 1`.
+   Expected: the saved list is still empty (no sample students reappear),
+   and deletion gives `The student index provided is invalid.`.
 
 ### Saving data
 
