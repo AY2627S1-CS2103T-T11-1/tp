@@ -11,7 +11,7 @@ box Logic #F2F2FC
     participant "command:\nDeleteCommand" as command LOGIC_COLOR
 end box
 
-box Model #F3F8F1
+box Model #FBF1F2
     participant "model:Model" as model MODEL_COLOR
 end box
 
@@ -30,12 +30,11 @@ activate model
 model --> command : displayedStudents
 deactivate model
 
-command -> command : validate targetIndex
-command -> command : personToDelete =\ndisplayedStudents.get(targetIndex.getZeroBased())
-
 note right of command
-  The index refers to the currently displayed list.
-  It is validated before the Model is changed.
+  Resolve targetIndex against displayedStudents.
+  Displayed index 1 maps to zero-based position 0.
+  Validate it, then select personToDelete.
+  This happens before the Model is changed.
 end note
 
 command -> model : deletePerson(personToDelete)
