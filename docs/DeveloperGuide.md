@@ -54,9 +54,9 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below shows how the components interact with each other when the user successfully logs a lesson for an existing student with the command `log 1 c/Vectors`. `Logic` updates the student in `Model`, then asks `Storage` to save the whole address book to the data file. Error paths, such as an invalid index or a failed save, are omitted.
 
-<puml src="diagrams/ArchitectureSequenceDiagram.puml" width="574" />
+<puml src="diagrams/ArchitectureSequenceDiagram.puml" width="666" />
 
 Each of the four main components (also shown in the diagram above),
 
