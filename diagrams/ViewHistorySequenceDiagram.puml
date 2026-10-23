@@ -1,0 +1,42 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam DefaultFontSize 16
+skinparam ParticipantFontColor #FFFFFF
+skinparam SequenceBoxFontColor #222222
+
+actor User as user USER_COLOR
+box UI #F3F8F1
+    participant ":CommandBox" as commandBox UI_COLOR
+    participant ":PersonListPanel" as personListPanel UI_COLOR
+    participant ":MainWindow" as mainWindow UI_COLOR
+    participant ":ResultDisplay" as resultDisplay UI_COLOR
+end box
+box Logic #F2F2FC
+    participant ":Logic" as logic LOGIC_COLOR
+end box
+
+alt typed command
+    user -> commandBox : enter "view 1"
+    commandBox -> mainWindow : executeCommand("view 1")
+else primary press on student 1
+    user -> personListPanel : press student card
+    personListPanel -> mainWindow : handlePersonClick(index)
+end
+
+mainWindow -> logic : execute("view 1")
+logic --> mainWindow : result
+mainWindow -> resultDisplay : setFeedbackToUser(feedback)
+resultDisplay --> mainWindow : return
+mainWindow -> personListPanel : selectPerson(index)
+personListPanel --> mainWindow : return
+
+alt typed command
+    mainWindow --> commandBox : result
+    note over commandBox
+        Submitted text is cleared.
+    end note
+else primary press on student 1
+    mainWindow --> personListPanel : return
+end
+@enduml
