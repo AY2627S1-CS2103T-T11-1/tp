@@ -15,15 +15,9 @@ package "Model (partial)" {
     class UniquePersonList
 
     class Person {
-        - name : Name
-        - phone : Phone
-        - address : Address
-        - level : Level
-        - subject : Subject
-        - lessons : List<Lesson>
-        + isSamePerson(other) : boolean
-        + withLessonAdded(lesson) : Person
-        + withLessonRemoved(index) : Person
+        + isSamePerson(otherPerson : Person) : boolean
+        + withLessonAdded(lesson : Lesson) : Person
+        + withLessonRemoved(zeroBasedIndex : int) : Person
     }
 
     class Name
@@ -34,7 +28,7 @@ package "Model (partial)" {
 
     class Lesson {
         + content : String
-        - date : LocalDate
+        - date : LocalDate [0..1]
         + getDate() : Optional<LocalDate>
     }
 }
@@ -45,7 +39,7 @@ show Lesson methods
 hide empty members
 
 ModelManager .up.|> Model
-ModelManager *-down-> "1" AddressBook
+ModelManager -down-> "1" AddressBook
 AddressBook *-down-> "1" UniquePersonList
 UniquePersonList -down-> "0..*" Person : students
 ModelManager -right-> "0..*" Person : filtered view
@@ -56,17 +50,4 @@ Person *-down-> "1" Address
 Person *-down-> "1" Level
 Person *-down-> "1" Subject
 Person *-down-> "0..*" Lesson : lessons
-
-note right of Person
-  A student's identity is the same phone
-  and the same name, ignoring case.
-  Commands that rebuild a Person carry
-  its existing lessons across.
-end note
-
-note right of Lesson
-  Immutable lesson value.
-  date is absent for legacy v1.3 records.
-  Stored order is oldest to newest.
-end note
 @enduml
