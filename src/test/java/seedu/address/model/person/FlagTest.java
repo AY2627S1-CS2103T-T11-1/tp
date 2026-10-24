@@ -38,6 +38,7 @@ public class FlagTest {
 
     @Test
     public void isValidReason_acceptsBoundariesAndUsefulPunctuation() {
+        assertFalse(Flag.isValidReason(null));
         assertTrue(Flag.isValidReason("a"));
         assertTrue(Flag.isValidReason("a".repeat(Flag.MAX_REASON_LENGTH)));
         assertTrue(Flag.isValidReason("Missed a/level worksheet; call parent at 6:30."));
