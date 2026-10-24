@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
@@ -152,8 +153,6 @@ public class EditLessonCommand extends Command {
      * Fields that are not given keep their current values.
      */
     private static Lesson createEditedLesson(Lesson lessonToEdit, EditLessonDescriptor editLessonDescriptor) {
-        assert lessonToEdit != null;
-
         String updatedContent = editLessonDescriptor.getContent().orElse(lessonToEdit.content);
         Lesson lessonWithContent = lessonToEdit.withContent(updatedContent);
         return editLessonDescriptor.getDate().map(lessonWithContent::withDate).orElse(lessonWithContent);
@@ -175,15 +174,15 @@ public class EditLessonCommand extends Command {
     /**
      * Returns the newest-first number that {@code view} shows for {@code lesson} in {@code student}'s history.
      * Lessons are compared by identity, because another lesson can be equal to the edited one.
+     * {@code lesson} must be one of {@code student}'s lessons.
      */
     private static int getLessonNumber(Person student, Lesson lesson) {
         List<Lesson> lessons = student.getLessons();
-        for (int storedIndex = 0; storedIndex < lessons.size(); storedIndex++) {
-            if (lessons.get(storedIndex) == lesson) {
-                return lessons.size() - storedIndex;
-            }
-        }
-        throw new AssertionError("The edited lesson must be in the student's lessons");
+        int storedIndex = IntStream.range(0, lessons.size())
+                .filter(index -> lessons.get(index) == lesson)
+                .findFirst()
+                .getAsInt();
+        return lessons.size() - storedIndex;
     }
 
     /**
