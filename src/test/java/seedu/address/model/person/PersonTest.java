@@ -260,6 +260,17 @@ public class PersonTest {
     }
 
     /**
+     * Keeps the student's follow-up flag when a lesson is replaced.
+     */
+    @Test
+    public void withLessonReplaced_flaggedStudent_keepsFlag() {
+        Person flagged = new PersonBuilder(ALICE).withLessons("Algebra").withFlag("Review homework").build();
+        Person updated = flagged.withLessonReplaced(0, new Lesson("Linear algebra"));
+        assertEquals(flagged.getFlag(), updated.getFlag());
+        assertTrue(updated.isFlagged());
+    }
+
+    /**
      * Keeps an undated legacy lesson undated when only its content is replaced.
      */
     @Test

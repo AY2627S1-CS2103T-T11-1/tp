@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import seedu.address.logic.commands.EditLessonCommand.EditLessonDescriptor;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
@@ -197,6 +199,22 @@ public class EditLessonCommandTest {
         assertEquals(List.of(STUDENT, updated), model.getAddressBook().getPersonList());
         assertCommandFailure(new EditLessonCommand(SECOND, FIRST, content("Vectors"), OCT_24_CLOCK), model,
                 Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+    }
+
+    /**
+     * Keeps a student's follow-up flag whether the edit keeps the lesson in place or moves it to a new date.
+     */
+    @Test
+    public void execute_flaggedStudent_keepsFlag() throws Exception {
+        Flag flag = new Flag("Review homework");
+        Person flaggedStudent = STUDENT.withFlag(flag);
+        model.setPerson(STUDENT, flaggedStudent);
+
+        new EditLessonCommand(FIRST, SECOND, content("Vectors and scalars"), OCT_24_CLOCK).execute(model);
+        assertEquals(Optional.of(flag), model.getFilteredPersonList().get(0).getFlag());
+
+        new EditLessonCommand(FIRST, Index.fromOneBased(4), date(OCT_22), OCT_24_CLOCK).execute(model);
+        assertEquals(Optional.of(flag), model.getFilteredPersonList().get(0).getFlag());
     }
 
     @Test

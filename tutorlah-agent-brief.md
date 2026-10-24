@@ -285,7 +285,7 @@ accepted by the parser. Commands apply these errors consistently:
   creates undated lessons, which `view` shows as `(undated)`.
 - `Person#withLessonRemoved(int zeroBasedIndex)` returns a new `Person`
   without the selected lesson in stored order. Other fields are kept.
-- `Person#withLessonReplaced(int zeroBasedIndex, Lesson lesson)` returns a new `Person` with the lesson at that stored position replaced, keeping its position. It asserts that the date is unchanged; to change a date, use `withLessonRemoved` then `withLessonAdded`.
+- `Person#withLessonReplaced(int zeroBasedIndex, Lesson lesson)` returns a new `Person` with the lesson at that stored position replaced, keeping its position, the other lessons and the flag. It asserts that the date is unchanged; to change a date, use `withLessonRemoved` then `withLessonAdded`.
 - `Lesson#withContent(String)` returns a copy with new content and the same date, or undated if the lesson is undated.
 - `EditLessonCommand(Index, Index, EditLessonDescriptor[, Clock])` edits one lesson. `EditLessonDescriptor` holds the optional new content and date, like `EditCommand.EditPersonDescriptor`. Tests pass a fixed `Clock`, as for `LogCommand`.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.

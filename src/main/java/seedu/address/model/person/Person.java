@@ -190,7 +190,7 @@ public class Person {
         Lesson replacedLesson = updatedLessons.set(zeroBasedIndex, lesson);
         assert replacedLesson.getDate().equals(lesson.getDate())
                 : "Replacing a lesson must keep its date, or the lessons fall out of date order";
-        return new Person(name, phone, address, level, subject, updatedLessons);
+        return copyWith(updatedLessons, flag);
     }
 
     /**
