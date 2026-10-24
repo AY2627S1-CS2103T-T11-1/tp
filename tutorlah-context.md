@@ -132,7 +132,7 @@ recent date first. Lessons saved before v1.4 have no date and show
 - **Added in v1.4:** edit a student's details (lessons are kept), find
   students by partial name, delete individual lesson records, and date
   each logged lesson.
-- **Planned next:** edit lessons, parent or guardian contact,
+- **Planned next:** parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
 - **Out of scope:** arranging lessons, messaging parents, grading, payments,
