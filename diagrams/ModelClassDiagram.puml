@@ -17,6 +17,8 @@ package "Model (partial)" {
         + isSamePerson(otherPerson : Person) : boolean
         + withLessonAdded(lesson : Lesson) : Person
         + withLessonRemoved(zeroBasedIndex : int) : Person
+        + withFlag(flag : Flag) : Person
+        + withoutFlag() : Person
     }
 
     class Name
@@ -24,6 +26,11 @@ package "Model (partial)" {
     class Address
     class Level
     class Subject
+
+    class Flag {
+        - reason : String [0..1]
+        + getReason() : Optional<String>
+    }
 
     class Lesson {
         + content : String
@@ -35,6 +42,7 @@ package "Model (partial)" {
 show fields
 show Person methods
 show Lesson methods
+show Flag methods
 hide empty members
 
 ModelManager .up.|> Model
@@ -49,4 +57,5 @@ Person *-down-> "1" Address
 Person *-down-> "1" Level
 Person *-down-> "1" Subject
 Person *-down-> "0..*" Lesson : lessons
+Person *-down-> "0..1" Flag : follow-up flag
 @enduml
