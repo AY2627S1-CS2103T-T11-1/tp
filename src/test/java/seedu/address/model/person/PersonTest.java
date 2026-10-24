@@ -73,6 +73,11 @@ public class PersonTest {
         // different person -> returns false
         assertFalse(ALICE.equals(BOB));
 
+        // different flag -> returns false, but identity is unchanged
+        Person flaggedAlice = new PersonBuilder(ALICE).withFlag("Call parent").build();
+        assertFalse(ALICE.equals(flaggedAlice));
+        assertTrue(ALICE.isSamePerson(flaggedAlice));
+
         // different name -> returns false
         Person editedAlice = new PersonBuilder(ALICE).withName(VALID_NAME_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
@@ -101,6 +106,32 @@ public class PersonTest {
     @Test
     public void hashCode_equalPersons_sameHashCode() {
         assertEquals(ALICE.hashCode(), new PersonBuilder(ALICE).build().hashCode());
+    }
+
+    @Test
+    public void withFlagAndWithoutFlag_keepStudentDetailsAndLessons() {
+        Person original = new PersonBuilder(ALICE).withLessons("Algebra", "Geometry").build();
+        Flag flag = new Flag("Call parent");
+        Person flagged = original.withFlag(flag);
+        assertEquals(flag, flagged.getFlag().orElseThrow());
+        assertEquals(original.getLessons(), flagged.getLessons());
+        assertTrue(flagged.isSamePerson(original));
+        assertFalse(original.isFlagged());
+        assertEquals(original, flagged.withoutFlag());
+    }
+
+    @Test
+    public void lessonChanges_keepFlag() {
+        Flag flag = new Flag("Review homework");
+        Person flagged = new PersonBuilder(ALICE).withLessons("Algebra").withFlag("Review homework").build();
+        Person added = flagged.withLessonAdded(new Lesson("Geometry"));
+        assertEquals(flag, added.getFlag().orElseThrow());
+        assertEquals(flag, added.withLessonRemoved(0).getFlag().orElseThrow());
+    }
+
+    @Test
+    public void withFlag_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ALICE.withFlag(null));
     }
 
     @Test
@@ -219,7 +250,8 @@ public class PersonTest {
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", address=" + ALICE.getAddress() + ", level=" + ALICE.getLevel()
-                + ", subject=" + ALICE.getSubject() + ", lessons=" + ALICE.getLessons() + "}";
+                + ", subject=" + ALICE.getSubject() + ", lessons=" + ALICE.getLessons()
+                + ", flag=Optional.empty}";
         assertEquals(expected, ALICE.toString());
     }
 }
