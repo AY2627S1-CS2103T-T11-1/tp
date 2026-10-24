@@ -1,47 +1,51 @@
 @startuml
 !include style.puml
-skinparam arrowThickness 1.1
+skinparam arrowThickness 1.2
 skinparam arrowColor LOGIC_COLOR_T4
-skinparam classBackgroundColor LOGIC_COLOR
+skinparam classBackgroundColor LOGIC_COLOR_T1
+skinparam classBorderColor LOGIC_COLOR_T3
+skinparam classFontColor #1E293B
+skinparam classStereotypeFontColor #1E293B
+skinparam classFontSize 17
+skinparam ClassAttributeFontColor #1E293B
+skinparam ClassAttributeFontSize 16
+skinparam ClassAttributeIconSize 0
+skinparam ArrowFontStyle plain
+skinparam ArrowFontSize 15
+skinparam nodesep 55
+skinparam ranksep 65
+skinparam Padding 5
 
-package Logic as LogicPackage {
-
-package "Parser Classes" as ParserClasses{
+package "Logic (partial)" {
+    class "<<interface>>\nLogic" as Logic
+    class LogicManager
+    class AddressBookParser
+    abstract class Command
+    class LogCommand
+    class ViewCommand
+    class CommandResult {
+        - feedbackToUser : String
+        - showHelp : boolean
+        - exit : boolean
+        - viewedStudentIndex : Index [0..1]
+    }
 }
-Class XYZCommand
-Class CommandResult
-Class "{abstract}\nCommand" as Command
+class "<<interface>>\nModel" as ModelApi MODEL_COLOR_T1
+class "<<interface>>\nStorage" as StorageApi STORAGE_COLOR_T1
 
+show fields
+hide empty members
 
-Class "<<interface>>\nLogic" as Logic
-Class LogicManager
-}
+LogicManager .up.|> Logic
+LogicManager -left-> "1" AddressBookParser
+' Keep the end labels clear of the component border.
+LogicManager -right-> "1  " ModelApi
+LogicManager -right-> "1  " StorageApi
+LogicManager .down.> Command : calls execute
+AddressBookParser .down.> Command : returns
 
-package Model {
-Class HiddenModel #FFFFFF
-}
-
-package Storage {
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Logic
-
-LogicManager .right.|> Logic
-LogicManager -right->"1" ParserClasses
-ParserClasses ..> XYZCommand : <<create>>
-
-XYZCommand -up-|> Command
-LogicManager .left.> Command : <<call>>
-
-LogicManager --> Model
-LogicManager --> Storage
-Storage --[hidden] Model
-Command .[hidden]up.> Storage
-Command .right.> Model
-note right of XYZCommand: XYZCommand = AddCommand, \nDeleteCommand, etc
-
-Logic ..> CommandResult
-LogicManager .down.> CommandResult
-Command .up.> CommandResult : <<create>>
+LogCommand -right-|> Command
+ViewCommand -left-|> Command
+Command ..> ModelApi
+Command .down.> CommandResult : returns
 @enduml

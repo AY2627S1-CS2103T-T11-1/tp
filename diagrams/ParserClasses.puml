@@ -1,38 +1,33 @@
 @startuml
 !include style.puml
-skinparam arrowThickness 1.1
+skinparam arrowThickness 1.2
 skinparam arrowColor LOGIC_COLOR_T4
-skinparam classBackgroundColor LOGIC_COLOR
+skinparam classBackgroundColor LOGIC_COLOR_T1
+skinparam classBorderColor LOGIC_COLOR_T3
+skinparam classFontColor #1E293B
+skinparam classStereotypeFontColor #1E293B
+skinparam classFontSize 17
+skinparam ArrowFontStyle plain
+skinparam ArrowFontSize 15
+skinparam nodesep 45
+skinparam ranksep 60
+skinparam Padding 5
 
-Class "{abstract}\nCommand" as Command
-Class XYZCommand
+class AddressBookParser
+class "<<interface>>\nParser" as Parser
+class LogCommandParser
+class DeleteLessonCommandParser
+class LogCommand
+class DeleteLessonCommand
 
-package "Parser classes"{
-Class "<<interface>>\nParser" as Parser
-Class AddressBookParser
-Class XYZCommandParser
-Class CliSyntax
-Class ParserUtil
-Class ArgumentMultimap
-Class ArgumentTokenizer
-Class Prefix
-}
+AddressBookParser .down.> LogCommandParser : <<create>>
+AddressBookParser .down.> DeleteLessonCommandParser : <<create>>
+LogCommandParser .down.|> Parser
+DeleteLessonCommandParser .down.|> Parser
+LogCommandParser .down.> LogCommand : <<create>>
+DeleteLessonCommandParser .down.> DeleteLessonCommand : <<create>>
 
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> AddressBookParser
-
-AddressBookParser .down.> XYZCommandParser: <<create>>
-
-XYZCommandParser ..> XYZCommand : <<create>>
-AddressBookParser ..> Command : <<use>>
-XYZCommandParser .up.|> Parser
-XYZCommandParser ..> ArgumentMultimap
-XYZCommandParser ..> ArgumentTokenizer
-ArgumentTokenizer .left.> ArgumentMultimap
-XYZCommandParser ..> CliSyntax
-CliSyntax ..> Prefix
-XYZCommandParser ..> ParserUtil
-ParserUtil .down.> Prefix
-ArgumentTokenizer .down.> Prefix
-XYZCommand -up-|> Command
+' Keep the two command outputs outside the shared interface.
+LogCommand -[hidden]right-> Parser
+Parser -[hidden]right-> DeleteLessonCommand
 @enduml
