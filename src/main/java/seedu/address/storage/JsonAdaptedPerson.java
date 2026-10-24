@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -28,6 +30,8 @@ class JsonAdaptedPerson {
     private final String level;
     private final String subject;
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final JsonAdaptedFlag flag;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -37,7 +41,8 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("address") String address, @JsonProperty("level") String level,
-            @JsonProperty("subject") String subject, @JsonProperty("lessons") List<JsonAdaptedLesson> lessons) {
+            @JsonProperty("subject") String subject, @JsonProperty("lessons") List<JsonAdaptedLesson> lessons,
+            @JsonProperty("flag") JsonAdaptedFlag flag) {
         this.name = name;
         this.phone = phone;
         this.address = address;
@@ -46,6 +51,15 @@ class JsonAdaptedPerson {
         if (lessons != null) {
             this.lessons.addAll(lessons);
         }
+        this.flag = flag;
+    }
+
+    /**
+     * Constructs an unflagged adapted person. Kept for callers representing older data.
+     */
+    public JsonAdaptedPerson(String name, String phone, String address, String level, String subject,
+            List<JsonAdaptedLesson> lessons) {
+        this(name, phone, address, level, subject, lessons, null);
     }
 
     /**
@@ -58,6 +72,7 @@ class JsonAdaptedPerson {
         level = source.getLevel().value;
         subject = source.getSubject().value;
         source.getLessons().forEach(lesson -> lessons.add(new JsonAdaptedLesson(lesson)));
+        flag = source.getFlag().map(JsonAdaptedFlag::new).orElse(null);
     }
 
     /**
@@ -115,7 +130,12 @@ class JsonAdaptedPerson {
             modelLessons.add(lesson.toModelType());
         }
 
-        return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelLessons);
+        if (flag == null) {
+            return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelLessons);
+        }
+        final Flag modelFlag = flag.toModelType();
+        return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelLessons,
+                java.util.Optional.of(modelFlag));
     }
 
 }

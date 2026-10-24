@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 24, 2026, for issue #145 (editing a lesson record).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags) and #145 (editing a lesson record).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -104,7 +104,10 @@ ask the team. Do not guess.
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
+| Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
+| Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
+| Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
 
 **Lesson dates (#98, #120):** `log` dates each lesson with `date/DATE` if
@@ -161,6 +164,24 @@ student or lesson data, and filters are not persisted. The empty-list panel says
 followed by the add-command format and example. This offers useful guidance
 both when a search hides saved students and when no students are saved.
 
+**Follow-up flags (#142):** `flag` and `unflag` use the current displayed index
+and retain the active filter. A flag may omit its reason. Flagging an already
+flagged student without `r/` preserves its reason and reports `{NAME} is already
+flagged.`; supplying the same reason reports `{NAME} is already flagged with
+that reason.`; a different reason replaces it. `unflag` removes the flag and
+reason, or reports `{NAME} is not flagged.` if no flag exists. These no-change
+outcomes are command errors. `flagged` searches the complete saved collection,
+replaces any `find` filter and keeps original order. `list` restores all
+students. Unflagging from the flagged view removes that student from the view.
+Filters are not persisted, but flags are.
+
+Flagged cards show an amber `FLAGGED` badge. A reason is shown below the name
+as `Flag reason: {REASON}`; a reasonless flag has no empty row. JSON omits the
+`flag` property for an unflagged student, stores `"flag": {}` without a reason,
+and stores `"flag": {"reason": "..."}` with one. Data without `flag` loads as
+unflagged. Edit, log and deletelesson preserve the flag when rebuilding a
+student.
+
 ---
 
 ## 3. Fields and validation
@@ -174,6 +195,7 @@ both when a search hides saved students and when no students are saved.
 | Subject | `sub/` | 1 to 50 characters: letters, digits, spaces, hyphens | `Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.` |
 | Lesson content | `c/` | 1 to 300 printable characters, internal spaces kept | `Lesson content must not be blank and must be at most 300 characters.` |
 | Lesson date | `date/` | Optional. A real date as `D/M/YYYY` or `DD/MM/YYYY` (digits only, four-digit year), from 01/01/2000 (`Lesson.EARLIEST_DATE`), not in the future | `Lesson dates should be real dates from 01/01/2000 onwards, in the format DD/MM/YYYY, for example 21/10/2026.` |
+| Flag reason | `r/` | Optional. 1 to 100 characters after trimming surrounding Unicode whitespace; not blank and no control characters | `Flag reasons must not be blank and must be at most 100 characters.` |
 
 - Addresses and lesson content cannot consist entirely of Unicode whitespace
   or format characters, including non-breaking spaces, ZERO WIDTH SPACE
@@ -228,6 +250,12 @@ accepted by the parser. Commands apply these errors consistently:
 - `Person(Name, Phone, Address, Level, Subject)` creates a student with no
   lessons. `Person(Name, Phone, Address, Level, Subject, List<Lesson>)`
   creates one with lessons.
+- `Person(Name, Phone, Address, Level, Subject, List<Lesson>, Optional<Flag>)`
+  creates one with lessons and an optional follow-up flag.
+- `Person#getFlag()` returns an `Optional<Flag>` and `Person#isFlagged()` tests
+  whether it is present. `withFlag(Flag)` and `withoutFlag()` return immutable
+  copies and preserve all other fields. A `Flag` has an optional reason; reasons
+  use `Flag#isValidReason` and `Flag.MAX_REASON_LENGTH`.
 - `Person#getLessons()` returns an unmodifiable list, oldest first.
   `Person#withLessonAdded(Lesson)` returns a new `Person` with the lesson
   inserted in date order (see "Lesson order" in section 2).

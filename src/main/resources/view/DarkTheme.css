@@ -105,6 +105,25 @@
     -fx-text-fill: #5B6B79;
 }
 
+.flagged-badge {
+    -fx-background-color: #FEF3C7;
+    -fx-background-radius: 4;
+    -fx-border-color: #F59E0B;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+    -fx-font-family: "System";
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 5 1 5;
+    -fx-text-fill: #92400E !important;
+}
+
+.flag-reason {
+    -fx-font-family: "System";
+    -fx-font-size: 12px;
+    -fx-text-fill: #92400E !important;
+}
+
 /* ---------- Empty student list ---------- */
 
 .empty-state-title {

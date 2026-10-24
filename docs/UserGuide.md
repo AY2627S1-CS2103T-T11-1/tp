@@ -34,6 +34,10 @@ TutorLah is a **desktop application for freelance tutors to keep track of their 
 
    * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
 
+   * `flag 2 r/Missed homework twice` : Marks the 2nd displayed student for follow-up and records why.
+
+   * `flagged` : Shows all students currently marked for follow-up.
+
    * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
 
    * `log 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
@@ -109,7 +113,7 @@ Shows all students and reports the number displayed.
 
 Format: `list`
 
-* Restores the full student list after a `find` command.
+* Restores the full student list after a `find` or `flagged` command.
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
 * With one student: `Listed 1 student.`
 * Without students: `No students found. Use add to create a student.`
@@ -130,7 +134,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]...`
 * Matching ignores uppercase/lowercase. `find TAN` and `find tan` give the same results.
 * Every keyword must occur somewhere in the name, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`.
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no field prefixes, wildcard matching or spelling correction. Punctuation and accented characters must match as entered in the name, ignoring case.
-* Each search checks all saved students, replacing the previous search. The matches keep their original list order.
+* Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
 * With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.`
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
@@ -145,16 +149,51 @@ Examples:
 
 <a href="images/find-students.png"><img src="images/find-students.png" alt="Found 2 students after find TAN, showing Alex Tan and Ethan Tan" width="726"></a>
 
+### Flagging students for follow-up: `flag`, `unflag`, `flagged`
+
+Use a flag to mark a student who needs follow-up. A reason is optional. Flagged student cards show an amber `FLAGGED` badge, and cards with a reason show `Flag reason: REASON` below the name.
+
+Formats:
+
+* `flag INDEX [r/REASON]`
+* `unflag INDEX`
+* `flagged`
+
+`flag` and `unflag` use the student's number in the currently displayed list. `flagged` searches the complete saved student collection, displays all flagged students in their original order, and numbers the results from 1. The displayed numbers can be used directly with other index-based commands. Type `list` to restore all students.
+
+The optional `REASON`:
+
+* is 1 to 100 characters after surrounding whitespace is removed;
+* cannot be blank or contain control characters; and
+* may contain punctuation and text that resembles another prefix, such as `a/level`, `date/` or `c/homework`, because only lowercase `r/` is parsed by `flag`.
+
+Flagging an unflagged student adds the flag. Flagging an already flagged student with a different reason replaces the old reason. Repeating the same reason is rejected with `NAME is already flagged with that reason.` Omitting `r/` for an already flagged student keeps any existing reason and reports `NAME is already flagged.`
+
+`unflag` removes both the flag and its reason. Trying to unflag an unflagged student reports `NAME is not flagged.` When `unflag` is run from the `flagged` results, that student disappears from the displayed list because they no longer match the filter.
+
+Examples:
+
+* `flag 2`
+* `flag 2 r/Missed homework twice`
+* `unflag 2`
+* `flagged`
+
+Flags are saved automatically. Editing a student's details, logging a lesson or deleting one lesson does not change their flag. The active `find` or `flagged` filter itself is not saved across restarts.
+
+**Screenshot example:** `flag 1 r/Missed homework twice` marks Alex Tan and shows the confirmation, amber badge and reason on his card:
+
+<a href="images/flag-student.png"><img src="images/flag-student.png" alt="Alex Tan's card with an amber FLAGGED badge and the reason Missed homework twice" width="726"></a>
+
 ### Editing a student: `edit`
 
-Changes the details of an existing student. The student's lesson records are kept.
+Changes the details of an existing student. The student's lesson records and follow-up flag are kept.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
 * At least one field must be given. Fields can be given in any order, and each field can be given at most once.
 * Only the fields given are changed. Each field follows the same rules as in [`add`](#adding-a-student-add).
-* Lesson records logged for the student are not changed, and `view` shows them as before.
+* Lesson records and the follow-up flag are not changed, and `view` shows the lessons as before.
 * Editing a student so that they have the same phone number and the same name as another student, ignoring case, is rejected with `This student already exists in the list.`
 * If no field is given, for example `edit 1`, the edit is rejected with `At least one field to edit must be provided.`
 * **Caution:** a new name containing ` a/` after a space, such as `Muthu a/l Raju`, is not rejected by `edit`. It changes the student's address instead. Type it in capitals, for example `n/Muthu A/L Raju`. See [Known issues](#known-issues).
@@ -311,6 +350,8 @@ TutorLah data is saved automatically as a JSON file `data/addressbook.json`, rel
 
 In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. A date in any other format makes the data file invalid.
 
+A flagged student with a reason stores `"flag" : { "reason" : "REASON" }`; a flag without a reason stores `"flag" : { }`. An unflagged student has no `flag` property. Data files created before flags were introduced therefore continue to load every student as unflagged.
+
 Addresses and lesson content containing only whitespace or invisible formatting characters are invalid in data files too. If an older file contains these values, back up the file and correct them before opening it.
 
 <box type="warning" seamless>
@@ -354,8 +395,11 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
 **Edit lesson** | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`<br> e.g., `editlesson 2 1 c/Vectors date/21/10/2026`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
+**Flag**   | `flag INDEX [r/REASON]`<br> e.g., `flag 2 r/Missed homework twice`
+**Flagged** | `flagged` (use `list` to show all students again)
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
+**Unflag** | `unflag INDEX`<br> e.g., `unflag 2`
 **Help**   | `help`
 **Exit**   | `exit`

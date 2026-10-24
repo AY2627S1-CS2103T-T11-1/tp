@@ -21,12 +21,16 @@ import seedu.address.logic.commands.EditLessonCommand;
 import seedu.address.logic.commands.EditLessonCommand.EditLessonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.FlagCommand;
+import seedu.address.logic.commands.FlaggedCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
+import seedu.address.logic.commands.UnflagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -136,6 +140,16 @@ public class AddressBookParserTest {
                 parser.parseCommand("find Tan Wei"));
         assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE), ()
                 -> parser.parseCommand("find"));
+    }
+
+    @Test
+    public void parseCommand_flagCommands() throws Exception {
+        assertEquals(new FlagCommand(INDEX_FIRST_PERSON, new Flag("Call parent")),
+                parser.parseCommand("flag 1 r/Call parent"));
+        assertEquals(new UnflagCommand(INDEX_FIRST_PERSON), parser.parseCommand("unflag 1"));
+        assertTrue(parser.parseCommand("flagged") instanceof FlaggedCommand);
+        assertThrows(ParseException.class, FlaggedCommand.MESSAGE_INVALID_ARGUMENTS, () ->
+                parser.parseCommand("flagged 1"));
     }
 
     @Test

@@ -28,6 +28,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -49,6 +50,12 @@ public class EditCommandTest {
     public void assertLessonsKept_lessonsChanged_throwsAssertionError() {
         assertThrows(AssertionError.class, () -> EditCommand.assertLessonsKept(ALICE,
                 ALICE.withLessonAdded(new Lesson("Algebra"))));
+    }
+
+    @Test
+    public void assertFlagKept_flagChanged_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> EditCommand.assertFlagKept(ALICE,
+                ALICE.withFlag(new Flag("Needs follow-up"))));
     }
 
     @Test

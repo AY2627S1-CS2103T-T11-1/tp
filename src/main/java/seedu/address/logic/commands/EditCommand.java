@@ -83,6 +83,7 @@ public class EditCommand extends Command {
         Person studentToEdit = lastShownList.get(index.getZeroBased());
         Person editedStudent = createEditedPerson(studentToEdit, editPersonDescriptor);
         assertLessonsKept(studentToEdit, editedStudent);
+        assertFlagKept(studentToEdit, editedStudent);
 
         if (!studentToEdit.isSamePerson(editedStudent) && model.hasPerson(editedStudent)) {
             throw new CommandException(MESSAGE_DUPLICATE_STUDENT);
@@ -108,7 +109,7 @@ public class EditCommand extends Command {
         Subject updatedSubject = editPersonDescriptor.getSubject().orElse(personToEdit.getSubject());
 
         return new Person(updatedName, updatedPhone, updatedAddress, updatedLevel, updatedSubject,
-                personToEdit.getLessons());
+                personToEdit.getLessons(), personToEdit.getFlag());
     }
 
     /**
@@ -116,6 +117,13 @@ public class EditCommand extends Command {
      */
     static void assertLessonsKept(Person before, Person after) {
         assert after.getLessons().equals(before.getLessons()) : "Editing must keep lesson records";
+    }
+
+    /**
+     * Asserts that {@code after} has the same follow-up flag as {@code before}.
+     */
+    static void assertFlagKept(Person before, Person after) {
+        assert after.getFlag().equals(before.getFlag()) : "Editing must keep the follow-up flag";
     }
 
     @Override
