@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 22, 2026, for issue #120 (logging a lesson with a past date).
+Last updated: Oct 24, 2026, for issue #145 (editing a lesson record).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -100,6 +100,7 @@ ask the team. Do not guess.
 | Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME}: {CONTENT}` |
+| Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
@@ -144,6 +145,8 @@ the lesson number from `view` (newest first). Remove only that occurrence,
 even if contents repeat. Keep the student, remaining lessons and current
 filter. Deleting the last lesson leaves an empty history. Show confirmation;
 use `view` or a card click to see the remaining records.
+
+**Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `log` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
 
 **Find policy (#101):** every whitespace-separated keyword must occur somewhere
 in the student's name, ignoring case and keyword order. Partial names are
@@ -254,6 +257,9 @@ accepted by the parser. Commands apply these errors consistently:
   creates undated lessons, which `view` shows as `(undated)`.
 - `Person#withLessonRemoved(int zeroBasedIndex)` returns a new `Person`
   without the selected lesson in stored order. Other fields are kept.
+- `Person#withLessonReplaced(int zeroBasedIndex, Lesson lesson)` returns a new `Person` with the lesson at that stored position replaced, keeping its position. It asserts that the date is unchanged; to change a date, use `withLessonRemoved` then `withLessonAdded`.
+- `Lesson#withContent(String)` returns a copy with new content and the same date, or undated if the lesson is undated.
+- `EditLessonCommand(Index, Index, EditLessonDescriptor[, Clock])` edits one lesson. `EditLessonDescriptor` holds the optional new content and date, like `EditCommand.EditPersonDescriptor`. Tests pass a fixed `Clock`, as for `LogCommand`.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.
   Deleting a student removes their lessons, because lessons live inside
   `Person`.

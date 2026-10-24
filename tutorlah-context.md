@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 22, 2026, for issue #120 (logging a lesson with a past date).
+Last updated: Oct 24, 2026, for issue #145 (editing a lesson record).
 
 ## What it is
 
@@ -97,6 +97,14 @@ Added after the MVP (v1.4):
 `deletelesson` removes one record using the lesson number shown by `view`
 (newest first). The student and their other lesson records are kept.
 An empty history reports `No lessons logged yet for NAME.`.
+
+Added in v1.5:
+
+| Command | Format | Example |
+|---|---|---|
+| Edit a lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `editlesson 2 1 c/Vectors date/21/10/2026` |
+
+`editlesson` corrects one lesson's content, date or both, using the lesson number shown by `view`. A content-only edit keeps the lesson's number. A new date moves the lesson into date order, so the confirmation gives its new number.
 
 `find` shows students whose names contain every search keyword, ignoring case
 and keyword order; partial names are accepted. It searches all students each
