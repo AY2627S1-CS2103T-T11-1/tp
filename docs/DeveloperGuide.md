@@ -16,7 +16,7 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation, and with the Logic/parser diagrams and Developer Guide maintenance.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records and logging lessons with a past date.
+* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -189,6 +189,19 @@ If parsing or execution fails, `MainWindow` displays the error instead of the hi
 
 Deleting the final lesson therefore leaves the student present with an empty history. A later deletion attempt stops before mutation and reports `No lessons logged yet for NAME.`.
 
+### Editing a lesson record
+
+`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `log`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
+
+`EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does, reusing `DeleteLessonCommand#toStoredLessonIndex`. It then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
+
+The command keeps each student's lessons in date order with one of two operations:
+
+* If the date is unchanged, `Person#withLessonReplaced` puts the edited lesson in the same position. Removing and adding it again would move it after the other lessons on its date, which would change its number even though only its content changed. `withLessonReplaced` asserts that the date is unchanged, so it cannot break date order.
+* If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `log` uses for a backdated lesson.
+
+`Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
+
 ### Finding students by name
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
@@ -243,6 +256,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.4) | tutor managing many students | find a student by name | access the correct student's information quickly |
 | `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
+| `* *` | No | Implemented (v1.5) | tutor | correct the content or date of a lesson record | fix a mistake without deleting the record and logging it again |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
 | `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
 | `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
@@ -606,6 +620,34 @@ log 2 c/Calculus
    Expected: `Deleted lesson 1 for Ben Lim: Calculus`, while only Ben's card remains displayed. The view reports `No lessons logged yet for Ben Lim.`. Enter `list` to confirm both students remain; the search filter was retained during deletion and no unrelated student changed.
 
 Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
+
+### Editing lesson records
+
+These steps need today's date to be 23/10/2026 or later. Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start with `java -jar /absolute/path/to/TutorLah.jar`, then enter:
+
+```text
+add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+log 1 c/Algebra date/19/10/2026
+log 1 c/Vectors date/21/10/2026
+log 1 c/Trigonometry date/23/10/2026
+```
+
+1. Enter `view 1`.<br>
+   Expected: `1. 23/10/2026: Trigonometry`, `2. 21/10/2026: Vectors` and `3. 19/10/2026: Algebra`.
+1. Enter `editlesson 1 2 c/Vectors and scalars`, then `view 1`.<br>
+   Expected: `Edited lesson 2 for Amy Tan (now lesson 2). 21/10/2026: Vectors and scalars`. The lesson keeps its number and date.
+1. Enter `editlesson 1 3 date/22/10/2026`, then `view 1`.<br>
+   Expected: `Edited lesson 3 for Amy Tan (now lesson 2). 22/10/2026: Algebra`. The view shows Trigonometry, Algebra, then Vectors and scalars.
+1. Enter `editlesson 1 3 date/22/10/2026`.<br>
+   Expected: `Edited lesson 3 for Amy Tan (now lesson 2). 22/10/2026: Vectors and scalars`. On a date that already has a lesson, the edited lesson goes after it in storage, so `view` shows it first.
+1. Enter `editlesson 1 2 c/Vectors and scalars`.<br>
+   Expected: `The lesson already has those details.`, and nothing changes.
+1. Try `editlesson 1 1`, `editlesson 1 1 c/`, `editlesson 1 1 date/31/02/2026`, `editlesson 1 1 c/A c/B`, `editlesson 1 4 c/Algebra`, `editlesson 2 1 c/Algebra` and `editlesson 1 1 date/` followed by tomorrow's date.<br>
+   Expected: in order, the missing-field, content, date, duplicate-prefix, lesson-index, student-index and future-date errors. Amy's records are unchanged after every rejected command.
+1. Exit and restart from the same folder, then enter `view 1`.<br>
+   Expected: the edited content, dates and order were saved.
+
+Automated coverage is in `EditLessonCommandParserTest`, `EditLessonCommandTest`, `PersonTest`, `LessonTest` and `AddressBookParserTest`.
 
 ### Finding students and restoring the full list
 
