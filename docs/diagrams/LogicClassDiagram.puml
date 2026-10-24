@@ -38,13 +38,14 @@ hide empty members
 
 LogicManager .up.|> Logic
 LogicManager -left-> "1" AddressBookParser
-' Keep the end label clear of the component border.
+' Keep the end labels clear of the component border.
 LogicManager -right-> "1  " ModelApi
-LogicManager -right-> "1" StorageApi
+LogicManager -right-> "1  " StorageApi
 LogicManager .down.> Command : calls execute
 AddressBookParser .down.> Command : returns
 
-LogCommand -up-|> Command
-ViewCommand -up-|> Command
-Command .right.> CommandResult : returns
+LogCommand -right-|> Command
+ViewCommand -left-|> Command
+Command ..> ModelApi
+Command .down.> CommandResult : returns
 @enduml

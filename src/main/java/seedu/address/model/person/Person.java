@@ -6,7 +6,9 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.lesson.Lesson;
 
@@ -15,6 +17,8 @@ import seedu.address.model.lesson.Lesson;
  * Guarantees: details are present and not null, field values are validated, immutable.
  */
 public class Person {
+
+    private static final Logger logger = LogsCenter.getLogger(Person.class);
 
     // Identity fields
     private final Name name;
@@ -89,6 +93,10 @@ public class Person {
         int insertAt = updatedLessons.size();
         while (insertAt > 0 && isDatedAfter(updatedLessons.get(insertAt - 1), lesson)) {
             insertAt--;
+        }
+        if (insertAt < updatedLessons.size()) {
+            logger.fine("Inserted a backdated lesson at stored position " + (insertAt + 1) + " of "
+                    + (updatedLessons.size() + 1) + ", before newer lessons");
         }
         updatedLessons.add(insertAt, lesson);
         return new Person(name, phone, address, level, subject, updatedLessons);
