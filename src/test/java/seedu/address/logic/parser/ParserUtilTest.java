@@ -16,6 +16,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -232,6 +233,12 @@ public class ParserUtilTest {
         String subjectWithWhitespace = WHITESPACE + VALID_SUBJECT + WHITESPACE;
         Subject expectedSubject = new Subject(VALID_SUBJECT);
         assertEquals(expectedSubject, ParserUtil.parseSubject(subjectWithWhitespace));
+    }
+
+    @Test
+    public void parseFlagReason_mixedUnicodeWhitespace_returnsTrimmedFlag() throws Exception {
+        String reason = "Call parent";
+        assertEquals(new Flag(reason), ParserUtil.parseFlagReason("\u2003\u00a0" + reason + "\u00a0\u2003"));
     }
 
     @Test

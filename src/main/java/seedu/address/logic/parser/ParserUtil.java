@@ -16,6 +16,7 @@ import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -161,6 +162,44 @@ public class ParserUtil {
             throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
         }
         return new Subject(trimmedSubject);
+    }
+
+    /**
+     * Parses a flag reason after trimming surrounding Unicode whitespace.
+     * Meaningful internal spacing and punctuation are kept.
+     *
+     * @throws ParseException if the supplied reason is invalid
+     */
+    public static Flag parseFlagReason(String reason) throws ParseException {
+        requireNonNull(reason);
+        String trimmedReason = stripUnicodeWhitespace(reason);
+        if (!Flag.isValidReason(trimmedReason)) {
+            throw new ParseException(Flag.MESSAGE_REASON_CONSTRAINTS);
+        }
+        return new Flag(trimmedReason);
+    }
+
+    /**
+     * Removes Unicode whitespace, including non-breaking spaces, from both ends of {@code value}.
+     */
+    private static String stripUnicodeWhitespace(String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end) {
+            int codePoint = value.codePointAt(start);
+            if (!Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint)) {
+                break;
+            }
+            start += Character.charCount(codePoint);
+        }
+        while (start < end) {
+            int codePoint = value.codePointBefore(end);
+            if (!Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint)) {
+                break;
+            }
+            end -= Character.charCount(codePoint);
+        }
+        return value.substring(start, end);
     }
 
     /**

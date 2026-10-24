@@ -20,7 +20,14 @@
     </Label>
     <Label fx:id="name" text="\$first" styleClass="cell_big_label" HBox.hgrow="ALWAYS"
            wrapText="true" minWidth="0" maxWidth="Infinity" />
+    <Label fx:id="flaggedBadge" text="FLAGGED" styleClass="flagged-badge">
+      <minWidth>
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minWidth>
+    </Label>
   </HBox>
+  <Label fx:id="flagReason" styleClass="flag-reason" wrapText="true"
+         minWidth="0" maxWidth="Infinity" />
   <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
   <Label fx:id="address" styleClass="cell_small_label" text="\$address"
          wrapText="true" minWidth="0" maxWidth="Infinity" />
