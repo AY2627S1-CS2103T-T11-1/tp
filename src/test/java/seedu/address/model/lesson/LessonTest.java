@@ -49,6 +49,27 @@ public class LessonTest {
     }
 
     @Test
+    public void withContent_datedLesson_keepsDateAndOriginal() {
+        Lesson dated = new Lesson("Quadratic inequalities", OCT_18);
+        assertEquals(new Lesson("Vectors", OCT_18), dated.withContent("Vectors"));
+        assertEquals(new Lesson("Quadratic inequalities", OCT_18), dated);
+    }
+
+    @Test
+    public void withContent_undatedLesson_staysUndated() {
+        assertEquals(new Lesson("Vectors"), new Lesson("Quadratic inequalities").withContent("Vectors"));
+    }
+
+    @Test
+    public void withContent_invalidContent_throwsException() {
+        Lesson dated = new Lesson("Quadratic inequalities", OCT_18);
+        assertThrows(NullPointerException.class, () -> dated.withContent(null));
+        assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_CONSTRAINTS, () -> dated.withContent(" "));
+        assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_CONSTRAINTS, () ->
+                new Lesson("Quadratic inequalities").withContent("a".repeat(Lesson.MAX_LENGTH + 1)));
+    }
+
+    @Test
     public void constructor_invalidContent_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> new Lesson(""));
     }

@@ -126,6 +126,24 @@ public class Person {
     }
 
     /**
+     * Returns a copy of this student with the lesson at {@code zeroBasedIndex} in logging order
+     * replaced by {@code lesson}, which keeps that position.
+     * The replacement must have the same date, so that the lessons stay in date order.
+     * To change a lesson's date, remove it and add the changed lesson instead.
+     * This student is not modified.
+     *
+     * @throws IndexOutOfBoundsException if the index does not identify an existing lesson
+     */
+    public Person withLessonReplaced(int zeroBasedIndex, Lesson lesson) {
+        requireNonNull(lesson);
+        List<Lesson> updatedLessons = new ArrayList<>(lessons);
+        Lesson replacedLesson = updatedLessons.set(zeroBasedIndex, lesson);
+        assert replacedLesson.getDate().equals(lesson.getDate())
+                : "Replacing a lesson must keep its date, or the lessons fall out of date order";
+        return new Person(name, phone, address, level, subject, updatedLessons);
+    }
+
+    /**
      * Returns true if both students have the same phone number and the same name, ignoring case.
      * Two students may share a name, so the name alone does not identify a student.
      * This defines a weaker notion of equality between two students.
