@@ -15,9 +15,12 @@ import seedu.address.logic.commands.DeleteLessonCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.FlagCommand;
+import seedu.address.logic.commands.FlaggedCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
+import seedu.address.logic.commands.UnflagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -59,11 +62,14 @@ public class AddressBookParser {
             case DeleteLessonCommand.COMMAND_WORD -> new DeleteLessonCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
+            case FlagCommand.COMMAND_WORD -> new FlagCommandParser().parse(arguments);
+            case FlaggedCommand.COMMAND_WORD -> new FlaggedCommandParser().parse(arguments);
             case ListCommand.COMMAND_WORD -> new ListCommandParser().parse(arguments);
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case LogCommand.COMMAND_WORD -> new LogCommandParser().parse(arguments);
+            case UnflagCommand.COMMAND_WORD -> new UnflagCommandParser().parse(arguments);
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
