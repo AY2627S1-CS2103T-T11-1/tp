@@ -1,19 +1,21 @@
 # TutorLah: context
 
-Last updated: Oct 22, 2026, for issue #120 (logging a lesson with a past date).
+Last updated: Oct 24, 2026, for issue #111 (target user).
 
 ## What it is
 
-TutorLah is a desktop app for freelance maths tutors in Singapore. They use it
-to keep student details and record what each lesson covered. It is built by
+TutorLah is a desktop app for freelance tutors in Singapore who teach secondary
+and junior college (JC) students one-to-one. They use it to keep student
+details and record what each lesson covered. It is built by
 adapting AddressBook-Level3 (AB3), the SE-EDU sample app, and keeps AB3's
 architecture and typing-first workflow while reshaping the data and commands
 around tutoring.
 
 ## Who it's for
 
-Jaren is a full-time freelance maths tutor with about 18 one-to-one students,
-from Sec 1 E-Math to JC H2 Math. He teaches at their homes, travels between
+Jaren is a full-time freelance tutor in Singapore with about 18 one-to-one
+students from Sec 1 to JC2, in subjects such as A-Math, Physics and H2
+Chemistry. He teaches at their homes, travels between
 lessons on a tight schedule, and keeps everything on one laptop. His notes are
 split between a spiral notebook and WhatsApp chats with parents, so each lesson
 starts with working out where the last one stopped. He prefers typing to
