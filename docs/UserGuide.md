@@ -32,6 +32,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
    * `list` : Lists all students.
 
+   * `summary` : Shows totals for all students and lesson records, followed by a short overview paragraph.
+
    * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
 
    * `flag 2 r/Missed homework twice` : Marks the 2nd displayed student for follow-up and records why.
@@ -58,7 +60,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
 **Notes about the command format:**<br>
 
-* The command box clears after a successful command. Screenshot captions state which commands produced the displayed results. Screenshots use fictional data; your student names and indexes may differ. Click a screenshot to open its full-size image.
+* The command box clears after a successful command. Screenshot captions state which commands produced the displayed results. Main-window screenshots use the same window size and display width. Screenshots use fictional data; your student names and indexes may differ. Click a screenshot to open its full-size image.
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `Tan Wei Ming`.
@@ -79,6 +81,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
+
+The help window also reminds you to use `summary` for student and lesson totals.
 
 ![help message](images/helpMessage.png)
 
@@ -123,6 +127,44 @@ Format: `list`
 **Screenshot example:** after `find TAN`, run `list`. The confirmation `Listed 6 students.` shows that the full list has been restored. Priya Ramesh is again student 2:
 
 <a href="images/list-students.png"><img src="images/list-students.png" alt="Listed 6 students after list restores the full list following find TAN" width="726"></a>
+
+### Viewing student and lesson totals: `summary`
+
+Shows an overview of all students and their recorded lessons.
+
+Format: `summary`
+
+Example output for three students with three lesson records between them, one of whom has no records:
+
+```text
+Summary:
+Students: 3
+Lesson records: 3
+Students with no lessons: 1
+
+You have 3 students and 3 lesson records in total. 1 student has no lessons recorded.
+```
+
+* A short paragraph below the totals describes the collection and highlights students without recorded lessons. With no students, it suggests adding a student.
+* Totals include **all saved students**, even after `find` or `flagged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
+* Every lesson record counts, including undated records saved before v1.4 and separate records with identical content. These totals describe recorded history, not scheduled lessons or teaching hours.
+* `summary` accepts no parameters. For example, `summary 1` shows the summary usage and keeps the current list.
+* The command introduces no new saved fields and does not change students or lessons. Like other commands, it still uses the normal saving path and can report a file or permission error.
+
+**Screenshot example:** after `summary`, the complete collection contains three students and three lesson records. Ben has no lessons; Amy has two dated records and Chloe has one undated record:
+
+<a href="images/summary.png"><img src="images/summary.png" alt="Summary totals and student cards showing dated, undated and empty lesson histories" width="726" /></a>
+
+Each student card also shows a lesson-status line below the subject:
+
+| Recorded history | Card line |
+|---|---|
+| No lessons | `No lessons yet` |
+| One dated lesson | `1 lesson, last 21/10/2026` |
+| Multiple dated lessons | `5 lessons, last 21/10/2026` |
+| Only undated lessons | `5 lessons, last (undated)` |
+
+`last` means the most recent **recorded lesson date**, rather than when a command was typed. When dated and undated lessons coexist, all records count and the most recent dated lesson supplies the date. The line refreshes after `log`, `editlesson` and `deletelesson`, and a student's flag and reason remain visible.
 
 ### Finding students: `find`
 
@@ -407,6 +449,7 @@ Action     | Format, Examples
 **Flag**   | `flag INDEX [r/REASON]`<br> e.g., `flag 2 r/Missed homework twice`
 **Flagged** | `flagged` (use `list` to show all students again)
 **List**   | `list`
+**Summary** | `summary` (totals cover all students and keep the current filter)
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
 **Unflag** | `unflag INDEX`<br> e.g., `unflag 2`

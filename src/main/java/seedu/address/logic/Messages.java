@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.address.logic.parser.Prefix;
+import seedu.address.model.StudentSummary;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
@@ -64,6 +65,39 @@ public class Messages {
         return lesson.getDate()
                 .map(date -> date.format(LESSON_DATE_FORMATTER))
                 .orElse(UNDATED_LESSON);
+    }
+
+    /**
+     * Formats a student's lesson count and latest recorded date for their card.
+     */
+    public static String formatLessonStatus(Person person) {
+        int count = person.getLessonCount();
+        if (count == 0) {
+            return "No lessons yet";
+        }
+        String lastDate = person.getLatestLessonDate()
+                .map(date -> date.format(LESSON_DATE_FORMATTER))
+                .orElse(UNDATED_LESSON);
+        return count + (count == 1 ? " lesson, last " : " lessons, last ") + lastDate;
+    }
+
+    /**
+     * Describes the complete collection and highlights students without recorded lessons.
+     */
+    public static String formatSummaryParagraph(StudentSummary summary) {
+        int students = summary.getStudentCount();
+        if (students == 0) {
+            return "No students yet. Add a student to start recording lessons.";
+        }
+        long lessons = summary.getLessonCount();
+        String overview = "You have " + students + (students == 1 ? " student" : " students")
+                + " and " + lessons + (lessons == 1 ? " lesson record" : " lesson records") + " in total. ";
+        int withoutLessons = summary.getStudentsWithoutLessons();
+        if (withoutLessons == 0) {
+            return overview + "Every student has at least one lesson recorded.";
+        }
+        return overview + withoutLessons + (withoutLessons == 1 ? " student has" : " students have")
+                + " no lessons recorded.";
     }
 
 }

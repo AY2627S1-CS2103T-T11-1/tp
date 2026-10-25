@@ -15,9 +15,7 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
-* Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
+* OpenAI Codex and Anthropic Claude Code were used for assistance during this project.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -207,6 +205,14 @@ The command keeps each student's lessons in date order with one of two operation
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
+### Student and lesson summaries
+
+`AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns three labelled totals plus a short paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. The existing post-command saving and failed-save rollback still apply.
+
+`Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
+
+`StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, failed saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
+
 ### Finding students by name, subject and level
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which tokenizes the `n/`, `sub/` and `l/` prefixes. It first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space, because `ArgumentTokenizer` only recognises a prefix after an ASCII space; otherwise a pasted `sub/math l/sec` with a non-breaking space would read `l/sec` as more subject keywords. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on Unicode whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
@@ -275,6 +281,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
 | `* *` | No | Implemented (v1.5) | tutor | correct the content or date of a lesson record | fix a mistake without deleting the record and logging it again |
 | `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
+| `* *` | No | Implemented (v1.5) | tutor | see total students and lesson records and each student's lesson count | review my recorded workload and spot students without lessons |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
 | `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
 | `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
@@ -598,6 +605,18 @@ Use Java `25` and a separate empty test folder. Copy `TutorLah.jar` there and op
 
 1. Run `java -jar TutorLah.jar` with no existing data file. Expected: the GUI opens with sample students and a command box. Enter `list` to display the students.
 1. Resize and move the window, then enter `exit`. Expected: the window closes. Run the same launch command from the same folder. The saved students, window size and window location are retained.
+
+### Student and lesson summaries
+
+Use a separate test folder with an empty student file and fictional data only.
+
+1. Enter `summary`. Expected: all three totals are zero, followed by `No students yet. Add a student to start recording lessons.`.
+1. Add Amy Tan and Ben Lim, then log two dated lessons for Amy. Expected: Amy's card shows `2 lessons, last DATE` using the later date, and Ben's shows `No lessons yet`. `summary` reports 2 students, 2 lesson records and 1 student with no lessons, followed by `You have 2 students and 2 lesson records in total. 1 student has no lessons recorded.`.
+1. Enter `find ben`, then `summary`. Expected: the same totals, with only Ben still displayed as student 1. Repeat after flagging Ben and entering `flagged`, and after a search that finds no students.
+1. Enter `summary 1`. Expected: the summary usage, with the preceding filter and student data unchanged.
+1. Enter `list`, edit Amy's latest lesson to an earlier date, then remove her lessons one at a time using `deletelesson`. Expected: the card immediately follows the most recent remaining date, the count decreases, and removing the last record shows `No lessons yet`. `summary` then reports 2 students, 0 lesson records and 2 students with no lessons.
+1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons, last (undated)` (or `1 lesson, last (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
+1. Check the status alongside a flag reason, selected and hovered cards, long student details and the supported display sizes/scales. Expected: the status and reason remain readable without overlapping other fields.
 
 ### Adding students
 

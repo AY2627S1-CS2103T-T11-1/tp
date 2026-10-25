@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 25, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record) and #116 (save-failure rollback).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record) and #116 (save-failure rollback); #146 adds student and lesson summaries.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -107,8 +107,15 @@ ask the team. Do not guess.
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
+| Summary | `summary` | `Summary:` then `Students: {COUNT}`, `Lesson records: {COUNT}` and `Students with no lessons: {COUNT}`, each on a new line, then a blank line and a summary paragraph |
 | Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
+
+**Summary paragraph (#146):** after the totals and a blank line, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
+
+**Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the normal post-command saving path still runs.
+
+**Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, use `(undated)` in place of the date. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep flag badge/reason visibility independent. The help window includes `Use summary to see student and lesson totals.`.
 
 **Lesson dates (#98, #120):** `log` dates each lesson with `date/DATE` if
 given, otherwise today's date from the system clock. `{DATE}` is
@@ -262,6 +269,8 @@ accepted by the parser. Commands apply these errors consistently:
   whether it is present. `withFlag(Flag)` and `withoutFlag()` return immutable
   copies and preserve all other fields. A `Flag` has an optional reason; reasons
   use `Flag#isValidReason` and `Flag.MAX_REASON_LENGTH`.
+- `StudentSummary(ReadOnlyAddressBook)` captures immutable student, lesson and empty-history totals through `getStudentCount()`, `getLessonCount()` (a `long`) and `getStudentsWithoutLessons()`. It is not a persisted model field.
+- `Person#getLessonCount()` includes undated records; `getLatestLessonDate()` returns the greatest recorded `LocalDate`, or empty if none are dated. `Messages#formatLessonStatus(Person)` formats the card line.
 - `Person#getLessons()` returns an unmodifiable list, oldest first.
   `Person#withLessonAdded(Lesson)` returns a new `Person` with the lesson
   inserted in date order (see "Lesson order" in section 2).

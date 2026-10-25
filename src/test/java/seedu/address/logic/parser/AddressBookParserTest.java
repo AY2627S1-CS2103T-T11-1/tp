@@ -26,6 +26,7 @@ import seedu.address.logic.commands.FlaggedCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
+import seedu.address.logic.commands.SummaryCommand;
 import seedu.address.logic.commands.UnflagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -40,6 +41,15 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_summary() throws Exception {
+        assertTrue(parser.parseCommand("summary") instanceof SummaryCommand);
+        assertTrue(parser.parseCommand("  summary  ") instanceof SummaryCommand);
+        assertTrue(parser.parseCommand("summary \u00a0") instanceof SummaryCommand);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, SummaryCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, usage, () -> parser.parseCommand("summary all"));
+    }
 
     @Test
     public void parseCommand_view() throws Exception {

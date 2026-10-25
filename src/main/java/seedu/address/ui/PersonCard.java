@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import seedu.address.logic.Messages;
 import seedu.address.model.person.Person;
 
 /**
@@ -41,6 +42,8 @@ public class PersonCard extends UiPart<Region> {
     private Label level;
     @FXML
     private Label subject;
+    @FXML
+    private Label lessonStatus;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -64,5 +67,6 @@ public class PersonCard extends UiPart<Region> {
         address.setText(person.getAddress().value);
         level.setText(person.getLevel().value);
         subject.setText(person.getSubject().value);
+        lessonStatus.setText(Messages.formatLessonStatus(person));
     }
 }
