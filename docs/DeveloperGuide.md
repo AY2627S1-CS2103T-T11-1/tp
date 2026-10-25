@@ -243,11 +243,14 @@ The command keeps each student's lessons in date order with one of two operation
 
 **Target user profile**:
 
-* is a freelance or private tutor who manages multiple students and recurring lessons
+* is a freelance or private tutor in Singapore who teaches secondary and junior college (JC) students, from Sec 1 to JC2
+* teaches about 10 to 20 students one-to-one, usually at the students' homes, in subjects such as A-Math, Physics and H2 Chemistry
 * needs to keep student details and lesson histories in one place
 * reviews previous lesson records when preparing for each student's next lesson
 * prefers a desktop application with keyboard-driven interaction
 * is comfortable entering text commands
+
+Because the students are in Singapore, TutorLah expects 8-digit Singapore phone numbers and uses local level names such as `Sec 3` and `JC1`. No feature depends on the subject taught.
 
 **Value proposition**: Manage student details and lesson records quickly in one keyboard-driven desktop application, so tutors can prepare for upcoming lessons without relying on scattered notes or memory.
 
@@ -545,6 +548,8 @@ These are product requirements, not a claim that every target has been verified.
 
 * **Flagged student**: A student who currently has a follow-up flag.
 
+* **JC (junior college)**: The two-year pre-university stage in Singapore, written `JC1` and `JC2`.
+
 * **Lesson**: A teaching session between the tutor and a student.
 
 * **Lesson history**: All lesson records associated with a student.
@@ -560,6 +565,8 @@ These are product requirements, not a claim that every target has been verified.
 * **Rescheduling (proposed)**: Changing the date or time of a scheduled lesson.
 
 * **Scheduled lesson (proposed)**: A planned lesson that has not yet taken place, either in a weekly slot or as a one-off lesson.
+
+* **Sec (secondary)**: Secondary school in Singapore, from `Sec 1` to `Sec 4` or `Sec 5`.
 
 * **Student**: A learner whose student details and lesson records are managed in TutorLah.
 
