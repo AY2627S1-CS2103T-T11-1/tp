@@ -31,8 +31,8 @@ import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Flag;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentContainsKeywordsPredicate;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -136,8 +136,10 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_find() throws Exception {
-        assertEquals(new FindCommand(new NameContainsKeywordsPredicate(List.of("Tan", "Wei"))),
+        assertEquals(new FindCommand(new StudentContainsKeywordsPredicate(List.of("Tan", "Wei"), List.of(), List.of())),
                 parser.parseCommand("find Tan Wei"));
+        assertEquals(new FindCommand(new StudentContainsKeywordsPredicate(List.of("Tan"), List.of("Physics"),
+                List.of("Sec", "3"))), parser.parseCommand("find Tan sub/Physics l/Sec 3"));
         assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE), ()
                 -> parser.parseCommand("find"));
     }

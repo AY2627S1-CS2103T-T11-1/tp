@@ -14,9 +14,10 @@
 ## **Acknowledgements**
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
-* `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
+* `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
+* Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -206,11 +207,11 @@ The command keeps each student's lessons in date order with one of two operation
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
-### Finding students by name
+### Finding students by name, subject and level
 
-`AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
+`AddressBookParser` routes `find` input to `FindCommandParser`, which tokenizes the `n/`, `sub/` and `l/` prefixes. It first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space, because `ArgumentTokenizer` only recognises a prefix after an ASCII space; otherwise a pasted `sub/math l/sec` with a non-breaking space would read `l/sec` as more subject keywords. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on Unicode whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
 
-`NameContainsKeywordsPredicate` stores an immutable copy of the keywords as typed. A name matches when it contains every keyword as a substring, regardless of keyword order. Each candidate substring is compared with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use the stored keyword list; matching ignores case without changing the keywords.
+`StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched, and `isNameSearchOnly()` reports when only name keywords were given, so that `FindCommand` can add a hint about `sub/` and `l/` when such a search finds no one. All three fields share `StringUtil#containsIgnoreCase`, which compares each candidate substring with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
 
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
@@ -269,6 +270,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.4) | tutor | edit a student's details | keep their information accurate when it changes |
 | `* *` | No | Implemented (v1.2) | tutor | store the student's phone number and address | reach them and find their home when needed |
 | `* *` | No | Implemented (v1.4) | tutor managing many students | find a student by name | access the correct student's information quickly |
+| `* *` | No | Implemented (v1.5) | tutor | find students by subject and level | prepare common material for students with similar needs |
 | `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
 | `* *` | No | Implemented (v1.5) | tutor | correct the content or date of a lesson record | fix a mistake without deleting the record and logging it again |
@@ -745,7 +747,10 @@ add n/Alicia Lim p/81230003 a/30 Example Street l/JC1 sub/H2 Math
 1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`. Both keywords must occur in the name, ignoring case and keyword order.
 1. Enter `find ali`. Expected: only `Alicia Lim`, numbered 1, even though the previous search hid her. Enter `view 1`, then press her card. Both show `No lessons logged yet for Alicia Lim.` and highlight her card. Enter `view 2`: the student-index error appears and Alicia's card remains displayed.
 1. Enter `find` without keywords. Expected: usage feedback with Alicia still displayed. The failed command remains in the command box.
-1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students.`. The empty panel offers both `list` and the add-command format and example.
+1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students. To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`. The hint appears because the search used names only; `find sub/chemistry` gives the message without it. The empty panel offers both `list` and the add-command format and example.
+1. Enter `find sub/math`. Expected: all three students, with `Found 3 students.`, because `E-Math`, `A-Math` and `H2 Math` all contain `math`.
+1. Enter `find sub/math l/sec`. Expected: only the two Wei students. Then enter `find tan l/4`. Expected: only `Tan Wei Jie`, combining a bare name keyword with a level.
+1. Enter `find sub/math sub/h2`. Expected: `Multiple values specified for the following single-valued field(s): sub/` and the previous results stay displayed. Enter `find l/`. Expected: the level constraint message, also without changing the displayed list.
 1. Enter `list`. Expected: `Listed 3 students.` and all three students in their original order, with Alicia numbered 3. Press Alicia's card once: her empty-history message appears and her card is highlighted.
 1. Enter `find WEI`, then exit and restart. Expected: all three students return; searching did not remove hidden students or persist the filter.
 
