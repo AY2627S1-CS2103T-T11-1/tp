@@ -10,7 +10,7 @@
 
 ![Ui](images/Ui.png)
 
-**TutorLah is a desktop application for managing your contact details.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
+**TutorLah is a desktop application for freelance tutors in Singapore to keep track of their secondary and junior college (JC) students and the lessons they have taught them.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
 
 * If you are interested in using TutorLah, head over to the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start).
 * If you are interested in developing TutorLah, the [**Developer Guide**](DeveloperGuide.html) is a good place to start.
