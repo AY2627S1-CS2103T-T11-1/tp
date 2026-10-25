@@ -10,7 +10,8 @@ TutorLah is a desktop application for freelance tutors in Singapore who teach se
 
 * Add, edit, find, list and delete students, with each student's level and subject.
 * Log a dated record of what each lesson covered, including lessons taught on an earlier date.
-* View a student's lesson records, most recent first, and delete an incorrect record.
+* View a student's lesson records, most recent first, and edit or delete an incorrect record.
+* Flag students who need follow-up, with an optional reason, and list the flagged students.
 
 See the [User Guide](https://ay2627s1-cs2103t-t11-1.github.io/tp/UserGuide.html) for every command.
 
