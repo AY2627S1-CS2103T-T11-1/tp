@@ -39,6 +39,30 @@ public class StringUtil {
     }
 
     /**
+     * Returns true if {@code text} contains {@code keyword} as a substring, ignoring case.
+     * Each candidate substring is compared with {@link String#regionMatches(boolean, int, String, int, int)},
+     * so matching does not depend on the system locale or on context-sensitive case conversion,
+     * such as the Greek final sigma.
+     *   <br>examples:<pre>
+     *       containsIgnoreCase("H2 Math", "math") == true
+     *       containsIgnoreCase("Sec 3", "SEC 3") == true
+     *       containsIgnoreCase("Math", "maths") == false
+     *       </pre>
+     * @param text cannot be null
+     * @param keyword cannot be null
+     */
+    public static boolean containsIgnoreCase(String text, String keyword) {
+        requireNonNull(text);
+        requireNonNull(keyword);
+        for (int start = 0; start <= text.length() - keyword.length(); start++) {
+            if (text.regionMatches(true, start, keyword, 0, keyword.length())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns a detailed message of {@code t}, including the stack trace.
      */
     public static String getDetails(Throwable t) {

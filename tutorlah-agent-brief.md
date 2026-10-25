@@ -103,7 +103,7 @@ ask the team. Do not guess.
 | Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
-| Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
+| Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given |
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
@@ -139,7 +139,7 @@ Other messages:
 - Duplicate student: `This student already exists in the list.` (used by `add` and `edit`)
 - `edit` with no field: `At least one field to edit must be provided.`
 - `list` with extra text: `The list command does not accept parameters.`
-- `find` without keywords: invalid command format with the find usage; the current filter is kept.
+- `find` without any keyword or field: invalid command format with the find usage; the current filter is kept. A blank `n/`, `sub/` or `l/` value gives that field's constraint message (`Name`, `Subject` or `Level`), and a repeated prefix gives the duplicate-prefix message.
 - Invalid index (see section 4): `The student index provided is invalid.`
 - Invalid lesson index: `The lesson index provided is invalid.`
 
@@ -151,10 +151,14 @@ use `view` or a card click to see the remaining records.
 
 **Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `log` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
 
-**Find policy (#101):** every whitespace-separated keyword must occur somewhere
-in the student's name, ignoring case and keyword order. Partial names are
-supported. Leading, trailing and repeated whitespace is ignored. Keywords
-are literal text, not field prefixes, wildcards or spelling corrections.
+**Find policy (#101, extended in #143):** bare keywords before any prefix and
+the `n/` value search names, `sub/` searches subjects and `l/` searches levels.
+Every whitespace-separated keyword must occur somewhere in its field, ignoring
+case and keyword order, and every given field must match. Partial words are
+supported. Each prefix may appear once and must not be blank. Leading,
+trailing and repeated whitespace is ignored. Keywords are literal text, not
+wildcards or spelling corrections; other prefixes such as `a/` stay part of
+the name keywords.
 Each find searches the full address book and keeps the original list order.
 Displayed indexes restart at 1 and are used by commands and card clicks.
 `list` restores all students; add and edit also restore the full list. View,
@@ -305,7 +309,7 @@ accepted by the parser. Commands apply these errors consistently:
   student and lesson index validation. `parseStudentIndex` delegates to it
   with the student-index error message.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
-- `FindCommand(NameContainsKeywordsPredicate)` replaces the displayed filter. The predicate requires a non-empty list of non-blank keywords and keeps an immutable copy as typed. Each keyword matches a literal name substring using locale-independent `String#regionMatches(true, ...)`, without lowercasing the name or keywords. Predicate equality and hashing use the stored keyword list. `FindCommandParser` splits on whitespace without interpreting prefixes.
+- `FindCommand(StudentContainsKeywordsPredicate)` replaces the displayed filter. The predicate takes name, subject and level keyword lists, needs at least one keyword in total and no blank keyword, and keeps immutable copies as typed. Each keyword matches a literal substring of its own field through `StringUtil#containsIgnoreCase`, which uses locale-independent `String#regionMatches(true, ...)` without lowercasing the text or keywords. An empty list means the field is not searched. Predicate equality and hashing use all three lists. `FindCommandParser` tokenizes only `n/`, `sub/` and `l/`; the preamble and `n/` value are name keywords.
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.

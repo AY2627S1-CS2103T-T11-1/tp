@@ -123,6 +123,36 @@ public class StringUtilTest {
         assertTrue(StringUtil.containsWordIgnoreCase("AAA bBb ccc  bbb", "bbB"));
     }
 
+    //---------------- Tests for containsIgnoreCase --------------------------------------
+
+    /*
+     * Equivalence partitions for keyword: null, part of the text, the whole text, not in the text,
+     * longer than the text; for text: null, empty, non-empty.
+     */
+
+    @Test
+    public void containsIgnoreCase_nullInputs_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.containsIgnoreCase(null, "abc"));
+        assertThrows(NullPointerException.class, () -> StringUtil.containsIgnoreCase("abc", null));
+    }
+
+    @Test
+    public void containsIgnoreCase_validInputs_correctResult() {
+        // Part of the text, including across a space and with different case
+        assertTrue(StringUtil.containsIgnoreCase("H2 Math", "math"));
+        assertTrue(StringUtil.containsIgnoreCase("H2 Math", "2 M"));
+        assertTrue(StringUtil.containsIgnoreCase("Sec 3", "SEC 3"));
+        assertTrue(StringUtil.containsIgnoreCase("Sec 3", "3")); // last character (boundary case)
+
+        // The whole text
+        assertTrue(StringUtil.containsIgnoreCase("Physics", "physics"));
+
+        // Not in the text, or longer than the text
+        assertFalse(StringUtil.containsIgnoreCase("Physics", "chem"));
+        assertFalse(StringUtil.containsIgnoreCase("Math", "maths"));
+        assertFalse(StringUtil.containsIgnoreCase("", "a")); // empty text (boundary case)
+    }
+
     //---------------- Tests for getDetails --------------------------------------
 
     /*

@@ -68,7 +68,7 @@ public class FindCommandIntegrationTest {
         assertEquals(List.of(WEI_MING, WEI_JIE), logic.getFilteredPersonList());
         assertEquals("Found 1 student.", logic.execute("find ali").getFeedbackToUser());
         assertEquals(List.of(ALICIA), logic.getFilteredPersonList());
-        assertEquals(FindCommand.MESSAGE_NO_MATCHES, logic.execute("find unknown").getFeedbackToUser());
+        assertEquals(FindCommand.MESSAGE_NO_NAME_MATCHES, logic.execute("find unknown").getFeedbackToUser());
         assertEquals("Found 1 student.", logic.execute("find ming tan").getFeedbackToUser());
         assertEquals(List.of(WEI_MING), logic.getFilteredPersonList());
         assertEquals(beforeFind, model.getAddressBook());
@@ -78,6 +78,24 @@ public class FindCommandIntegrationTest {
         assertEquals(List.of(WEI_MING, WEI_JIE, ALICIA), reloaded.getFilteredPersonList());
         assertEquals("Listed 3 students.", logic.execute("list").getFeedbackToUser());
         assertEquals(List.of(WEI_MING, WEI_JIE, ALICIA), logic.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_findBySubjectAndLevel_filtersDisplayedStudentsWithoutChangingSavedData() throws Exception {
+        logic.execute("add n/Priya Ramesh p/81230004 a/12 Clementi Rd l/Sec 3 sub/Physics");
+        logic.execute("add n/Marcus Lim p/81230005 a/3 Tampines Ave l/Sec 4 sub/Physics");
+        Person priya = model.getAddressBook().getPersonList().get(3);
+        Person marcus = model.getAddressBook().getPersonList().get(4);
+        String savedData = Files.readString(dataFile);
+
+        assertEquals("Found 2 students.", logic.execute("find sub/physics").getFeedbackToUser());
+        assertEquals(List.of(priya, marcus), logic.getFilteredPersonList());
+        assertEquals("Found 1 student.", logic.execute("find sub/Physics l/Sec 3").getFeedbackToUser());
+        assertEquals(List.of(priya), logic.getFilteredPersonList());
+        assertEquals("Found 1 student.", logic.execute("find lim sub/phys").getFeedbackToUser());
+        assertEquals(List.of(marcus), logic.getFilteredPersonList());
+        assertEquals("No lessons logged yet for Marcus Lim.", logic.execute("view 1").getFeedbackToUser());
+        assertEquals(savedData, Files.readString(dataFile));
     }
 
     @Test
