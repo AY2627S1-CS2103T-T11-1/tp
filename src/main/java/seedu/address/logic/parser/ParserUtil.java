@@ -8,12 +8,15 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -25,6 +28,8 @@ import seedu.address.model.person.Subject;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    private static final Logger logger = LogsCenter.getLogger(ParserUtil.class);
 
     /** One or two digits for the day and month, and exactly four for the year, with no signs. */
     private static final String LESSON_DATE_INPUT_REGEX = "\\d{1,2}/\\d{1,2}/\\d{4}";
@@ -160,6 +165,44 @@ public class ParserUtil {
     }
 
     /**
+     * Parses a flag reason after trimming surrounding Unicode whitespace.
+     * Meaningful internal spacing and punctuation are kept.
+     *
+     * @throws ParseException if the supplied reason is invalid
+     */
+    public static Flag parseFlagReason(String reason) throws ParseException {
+        requireNonNull(reason);
+        String trimmedReason = stripUnicodeWhitespace(reason);
+        if (!Flag.isValidReason(trimmedReason)) {
+            throw new ParseException(Flag.MESSAGE_REASON_CONSTRAINTS);
+        }
+        return new Flag(trimmedReason);
+    }
+
+    /**
+     * Removes Unicode whitespace, including non-breaking spaces, from both ends of {@code value}.
+     */
+    private static String stripUnicodeWhitespace(String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end) {
+            int codePoint = value.codePointAt(start);
+            if (!Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint)) {
+                break;
+            }
+            start += Character.charCount(codePoint);
+        }
+        while (start < end) {
+            int codePoint = value.codePointBefore(end);
+            if (!Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint)) {
+                break;
+            }
+            end -= Character.charCount(codePoint);
+        }
+        return value.substring(start, end);
+    }
+
+    /**
      * Parses a {@code String content} into a {@code Lesson}.
      * Leading and trailing whitespaces will be trimmed; spaces inside the content are kept.
      *
@@ -185,15 +228,18 @@ public class ParserUtil {
         requireNonNull(date);
         String trimmedDate = date.trim();
         if (!trimmedDate.matches(LESSON_DATE_INPUT_REGEX)) {
+            logger.fine("Rejected lesson date not in D/M/YYYY form: " + trimmedDate);
             throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS);
         }
         LocalDate parsedDate;
         try {
             parsedDate = LocalDate.parse(trimmedDate, LESSON_DATE_INPUT_FORMATTER);
         } catch (DateTimeParseException e) {
+            logger.fine("Rejected lesson date that does not exist: " + trimmedDate);
             throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS, e);
         }
         if (parsedDate.isBefore(Lesson.EARLIEST_DATE)) {
+            logger.fine("Rejected lesson date before " + Lesson.EARLIEST_DATE + ": " + trimmedDate);
             throw new ParseException(Lesson.MESSAGE_DATE_CONSTRAINTS);
         }
         return parsedDate;

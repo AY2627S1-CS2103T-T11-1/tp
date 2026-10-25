@@ -4,7 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 /**
- * Represents the subject a student is taught in the address book, such as "E-Math" or "H2 Math".
+ * Represents the subject a student is taught in the address book,
+ * such as "E-Math", "Physics" or "H2 Chemistry".
  * Guarantees: immutable; is valid as declared in {@link #isValidSubject(String)}
  */
 public class Subject {

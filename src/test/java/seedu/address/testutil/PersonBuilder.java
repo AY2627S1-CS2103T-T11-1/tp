@@ -3,9 +3,11 @@ package seedu.address.testutil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -29,6 +31,7 @@ public class PersonBuilder {
     private Level level;
     private Subject subject;
     private List<Lesson> lessons;
+    private Optional<Flag> flag;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -40,6 +43,7 @@ public class PersonBuilder {
         level = new Level(DEFAULT_LEVEL);
         subject = new Subject(DEFAULT_SUBJECT);
         lessons = new ArrayList<>();
+        flag = Optional.empty();
     }
 
     /**
@@ -52,6 +56,7 @@ public class PersonBuilder {
         level = personToCopy.getLevel();
         subject = personToCopy.getSubject();
         lessons = new ArrayList<>(personToCopy.getLessons());
+        flag = personToCopy.getFlag();
     }
 
     /**
@@ -102,8 +107,32 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Flags the {@code Person} being built without a reason.
+     */
+    public PersonBuilder withFlag() {
+        flag = Optional.of(new Flag());
+        return this;
+    }
+
+    /**
+     * Flags the {@code Person} being built with {@code reason}.
+     */
+    public PersonBuilder withFlag(String reason) {
+        flag = Optional.of(new Flag(reason));
+        return this;
+    }
+
+    /**
+     * Removes the flag from the {@code Person} being built.
+     */
+    public PersonBuilder withoutFlag() {
+        flag = Optional.empty();
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, address, level, subject, lessons);
+        return new Person(name, phone, address, level, subject, lessons, flag);
     }
 
 }

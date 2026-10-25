@@ -254,6 +254,66 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void studentCard_flaggedBadgeAndReason_followFlagState() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person withoutReason = new PersonBuilder(SHORT_PERSON).withFlag().build();
+            Person withReason = new PersonBuilder(CHARLOTTE)
+                    .withFlag("Missed homework twice; call parent before the next lesson").build();
+            ListView<?> list = createList(FXCollections.observableArrayList(SHORT_PERSON, withoutReason, withReason));
+            layout(list, 400);
+
+            Label unflaggedBadge = label(cellAt(list, 0), "flaggedBadge");
+            Label unflaggedReason = label(cellAt(list, 0), "flagReason");
+            assertFalse(unflaggedBadge.isVisible());
+            assertFalse(unflaggedBadge.isManaged());
+            assertFalse(unflaggedReason.isVisible());
+            assertFalse(unflaggedReason.isManaged());
+
+            assertEquals("FLAGGED", label(cellAt(list, 1), "flaggedBadge").getText());
+            assertTrue(label(cellAt(list, 1), "flaggedBadge").isVisible());
+            assertFalse(label(cellAt(list, 1), "flagReason").isManaged());
+
+            Label reason = label(cellAt(list, 2), "flagReason");
+            assertEquals("Flag reason: Missed homework twice; call parent before the next lesson", reason.getText());
+            assertTrue(reason.isVisible());
+            assertTrue(reason.isManaged());
+            assertTrue(reason.isWrapText());
+            assertVisibleCardsFit(list);
+        });
+    }
+
+    @Test
+    public void commandBox_flagFilterAndUnflag_updatesCardsAndDisplayedList(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "flag 2 r/Call parent");
+                assertTrue(label(cellAt(list, 1), "flaggedBadge").isVisible());
+                assertEquals("Flag reason: Call parent", label(cellAt(list, 1), "flagReason").getText());
+
+                enterClickTestCommand(root, "flagged");
+                assertEquals(1, list.getItems().size());
+                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
+                assertEquals("1. ", label(cellAt(list, 0), "id").getText());
+
+                enterClickTestCommand(root, "unflag 1");
+                assertTrue(model.getFilteredPersonList().isEmpty());
+                assertTrue(root.lookup("#emptyState").isVisible());
+                enterClickTestCommand(root, "list");
+                assertEquals(2, list.getItems().size());
+                assertFalse(label(cellAt(list, 1), "flaggedBadge").isVisible());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void commandBox_viewMovesHighlight_retainsSelectionOnError(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();

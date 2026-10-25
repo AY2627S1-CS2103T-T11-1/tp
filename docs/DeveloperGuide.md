@@ -15,7 +15,7 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation and student follow-up flags, and with the Logic/parser diagrams and Developer Guide maintenance.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records and logging lessons with a past date.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
@@ -39,7 +39,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -63,7 +63,7 @@ Each of the four main components (also shown in the diagram above),
 * defines its *API* in an `interface` with the same name as the Component.
 * provides its functionality through a concrete `{Component Name}Manager` class that implements the corresponding API interface.
 
-For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram.
+For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram. For example, `UiManager` holds a `Logic`, not a `LogicManager`, and `LogicManager` holds a `Model` and a `Storage`.
 
 <puml src="diagrams/ComponentManagers.puml" width="300" />
 
@@ -82,18 +82,29 @@ This partial class diagram focuses on command input, student cards and feedback.
 The UI responsibilities are:
 
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
-* `PersonListPanel` observes the filtered student list supplied by `Logic`. Cards show each student's displayed index, name, phone, address, level and subject. The indexes follow the displayed list, including after a search or deletion.
+* `PersonListPanel` observes the filtered student list supplied by `Logic`. Cards show each student's displayed index, name, phone, address, level and subject. A flagged card also shows an amber badge and its optional reason. The indexes follow the displayed list, including after filtering or deletion.
 * A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses refresh the history; empty cells and other mouse buttons do not execute the shortcut.
 * `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider.
 * After a successful `view`, `MainWindow` asks `PersonListPanel` to highlight and scroll to the viewed student. Programmatic selection and list changes do not execute a view command.
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API**: [`Logic.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/Logic.java)
 
-Here's a (partial) class diagram of the `Logic` component:
+<!-- These PNG link targets are generated by the puml tags during the build. -->
+<a href="diagrams/LogicClassDiagram.png" no-validation><puml src="diagrams/LogicClassDiagram.puml" alt="Partial Logic class diagram showing command execution, held references and command results" width="740" /></a>
 
-<puml src="diagrams/LogicClassDiagram.puml" width="550"/>
+[`LogicManager`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/LogicManager.java) implements `Logic` and holds one `AddressBookParser`, `Model` and `Storage`. Solid arrows show held references; dashed arrows show dependencies. Hollow triangles point to a superclass or interface. Lavender identifies Logic classes, pink the Model API and yellow the Storage API. The `Logic (partial)` boundary keeps those external APIs outside the component. `LogCommand` and `ViewCommand` are representative subclasses of `Command`. Other commands, parser internals and dependencies specific to individual commands are omitted; shared dependencies on `Model` and `CommandResult` are shown on `Command`. Click a class diagram in this section to open its full-size image.
+
+How command execution works:
+
+1. `AddressBookParser#parseCommand` returns a concrete `Command` for the input.
+1. `LogicManager` calls `Command#execute(Model)`, which reads or updates the model and returns a `CommandResult`.
+1. `LogicManager` saves the complete address book through `Storage`, then returns the result to the UI. This save also runs for non-mutating commands such as `list` and `view`.
+
+`CommandResult` contains feedback and the help/exit flags. A successful `view` also supplies a displayed student `Index`, even for an empty history; other commands leave it absent (`0..1`). The UI uses it to highlight the student, as shown in [Viewing lesson history](#viewing-lesson-history).
+
+Invalid input raises `ParseException`; execution or save failures raise `CommandException`. A failed save prevents the normal result from reaching the UI, but does not roll back a change already made to the model.
 
 The sequence diagram below follows the successful execution of `deletelesson 1 2`. It shows how the command validates displayed indexes, converts the newest-first lesson number to the stored position, and replaces the student with an updated immutable value. Calls on the returned `Person` value are summarized in a note so that the diagram exposes only Logic internals and treats Model as a black box. Parser internals and persistence are omitted here; they are covered by the parser class diagram and architecture sequence diagram respectively.
 
@@ -103,34 +114,32 @@ Student deletion follows a related but distinct path. For a successful `delete 1
 
 <puml src="diagrams/DeleteStudentSequenceDiagram.puml" alt="Successful student-deletion sequence using the displayed student index and the selected Person" width="950" />
 
+The following diagram focuses on parser selection and command creation:
 
-How the `Logic` component works:
+<a href="diagrams/ParserClasses.png" no-validation><puml src="diagrams/ParserClasses.puml" alt="Partial parser class diagram showing selection of lesson parsers and creation of their commands" width="520" /></a>
 
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to replace a student after deleting one lesson).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+[`AddressBookParser`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/parser/AddressBookParser.java) separates the command word from its arguments and creates the matching parser. Command-specific parsers implement the generic `Parser` interface: for example, `LogCommandParser` implements `Parser<LogCommand>` and returns a `LogCommand`. The type parameter and common `Command` superclass are omitted from this diagram. Dashed arrows labelled `<<create>>` show object creation, not held references. Other command parsers are omitted; `help` and `exit` are created directly without separate parsers.
 
-Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
+The helper dependencies are shown separately to keep the overview readable. Pale grey-blue boxes identify helpers within the same parser package.
 
-<puml src="diagrams/ParserClasses.puml" width="600"/>
+<a href="diagrams/ParserHelpers.png" no-validation><puml src="diagrams/ParserHelpers.puml" alt="Partial parser helper diagram showing tokenization for logging and shared validation for both lesson parsers" width="500" /></a>
 
-How the parsing works:
-* When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
-* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date.
+* `DeleteLessonCommandParser` splits two positional indexes on whitespace, without using the tokenizer. It shares `ParserUtil`'s index validation, using the appropriate student- or lesson-index error message.
+
+The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
 
 ### Model component
 
 The **API** of this component is specified in [`Model.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/model/Model.java).
 
-<puml src="diagrams/ModelClassDiagram.puml" alt="Partial Model class diagram showing students, their value fields and owned lesson records" width="950" />
+<puml src="diagrams/ModelClassDiagram.puml" alt="Partial Model class diagram showing students, value fields, optional follow-up flags and owned lesson records" width="950" />
 
 This partial class diagram focuses on student and lesson data. `ModelManager` implements the `Model` API and owns one `AddressBook`; user-preference classes are omitted. The address book delegates uniqueness and list operations to `UniquePersonList`, while `ModelManager` exposes a filtered view of the same students for searches and displayed indexes.
 
-`Person` is the Java class representing a student. It is an immutable value containing `Name`, `Phone`, `Address`, `Level`, `Subject` and an immutable list of zero or more `Lesson` values. A `Lesson` contains content and an optional date: records saved by v1.3 have no date, while newer records have a `LocalDate`. Lessons belong to their student, so deleting a student also deletes their lesson history.
+`Person` is the Java class representing a student. It is an immutable value containing `Name`, `Phone`, `Address`, `Level`, `Subject`, an immutable list of zero or more `Lesson` values, and zero or one `Flag`. A `Flag` marks unresolved follow-up and may contain one validated reason. A `Lesson` contains content and an optional date: records saved by v1.3 have no date, while newer records have a `LocalDate`. Lessons and flags belong to their student, so deleting a student also deletes them.
 
-Two students have the same identity only when their phone numbers match and their names match ignoring case. Other fields, including lessons, contribute to full equality but not duplicate detection. `Person#withLessonAdded` and `Person#withLessonRemoved` return new `Person` objects rather than mutating the existing value. Any other operation that rebuilds a student, such as editing details, carries the existing lesson list across.
+Two students have the same identity only when their phone numbers match and their names match ignoring case. Other fields, including lessons and flags, contribute to full equality but not duplicate detection. `Person#withLessonAdded`, `Person#withLessonRemoved`, `Person#withFlag` and `Person#withoutFlag` return new `Person` objects rather than mutating the existing value. Any operation that rebuilds a student carries both the existing lesson list and flag across unless it is intentionally changing the flag.
 
 Lesson records are stored oldest first by date. Undated legacy records remain at the oldest end, and records on the same date retain logging order. `view` reverses this stored order for display. The Model component has no dependency on UI, Logic or Storage, so its domain objects and rules remain meaningful independently of those components.
 
@@ -194,103 +203,17 @@ Deleting the final lesson therefore leaves the student present with an empty his
 
 `view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
 
-### \[Proposed\] Undo/redo feature
+### Flagging students for follow-up
 
-#### Proposed Implementation
+`FlagCommandParser` tokenizes only `r/`, leaving text such as `a/level` inside a reason. It parses the preamble with the shared student-index policy, rejects duplicate `r/` prefixes, trims surrounding Unicode whitespace and constructs an immutable `Flag`. A present flag may omit its reason, but a supplied reason must contain meaningful non-control text and be at most 100 characters.
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+`FlagCommand` and `UnflagCommand` obtain their target from `Model#getFilteredPersonList`, so they act on the displayed number after either `find` or `flagged`. They replace the immutable `Person` through `Model#setPerson` without changing its identity, details or lessons. Reflagging with a new reason replaces only the `Flag`; reflagging without a reason never clears an existing reason. `FlaggedCommand` applies `Person#isFlagged` to the full backing student list through `Model#updateFilteredPersonList`. Consequently, unflagging a student while that filter is active removes the updated value from the displayed list automatically.
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
-
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
-
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
-
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
-
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
-
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
-
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
-
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
+`JsonAdaptedPerson` omits its nullable adapted flag for unflagged students. A present `JsonAdaptedFlag` omits its nullable reason, producing an empty JSON object for a reasonless flag. This distinguishes all three persisted states while keeping older data files compatible. The UI derives badge and reason-row visibility directly from each immutable `Person`; no separate UI state is stored.
 
 --------------------------------------------------------------------------------------------------------------------
 
-## **Documentation, logging, testing, dev-ops**
+## **Documentation, logging, testing, configuration, dev-ops**
 
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
@@ -332,6 +255,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.4) | tutor managing many students | find a student by name | access the correct student's information quickly |
 | `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
+| `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
 | `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
 | `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
@@ -518,7 +442,39 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
       Use case resumes at step 2.
 
-**Use case: UC08 - Archive a student**
+**Use case: UC08 - Flag a student for follow-up**
+
+**Guarantees:** Flagging changes only the selected student's follow-up flag and optional reason. Their details and lesson records are kept.
+
+**MSS**
+
+1.  Tutor views a student list.
+2.  Tutor requests to flag a specific displayed student and may provide a reason.
+3.  TutorLah flags the student and shows a confirmation.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The reason is blank, too long or contains a control character.
+
+    * 2b1. TutorLah shows an error message describing the reason restrictions.
+
+      Use case resumes at step 2.
+
+* 2c. The student is already flagged and no new reason was supplied.
+
+    * 2c1. TutorLah informs Tutor that no change was made.
+
+      Use case ends.
+
+**Use case: UC09 - Archive a student (proposed)**
 
 **Guarantees:** The archived student no longer appears in the active student list, but their details and lesson records are retained, unlike <u>UC03</u>.
 
@@ -540,70 +496,66 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 ### Non-Functional Requirements
 
-1.  **Platform independence:** TutorLah should work on Windows, Linux and macOS without relying on OS-specific libraries or features.
-2.  **Java version:** TutorLah should work on a computer that has Java `25`.
+These are product requirements, not a claim that every target has been verified. The save-failure limitation under data integrity remains a gap in the intended guarantees.
+
+1.  **Platform support:** TutorLah should work on Windows, Linux and macOS.
+2.  **Java version:** TutorLah should work with Java `25`.
 3.  **Portable distribution:** TutorLah should be usable without an installer.
-4.  **Single-file distribution:** TutorLah should be packaged in a single JAR file that does not exceed `100 MB`.
-5.  **Typing-first interaction:** TutorLah should allow the tutor to complete every product workflow using typed commands. Adding a student and logging a lesson should each be possible using a single command.
-6.  **Error feedback:** Every rejected command should display a message that explains why the command was rejected and states the expected format.
-7.  **Data persistence:** After each successful command that changes data, TutorLah should save the updated student and lesson data to the local data file before accepting another command.
-8.  **Data integrity:** When a command is rejected, no student or lesson record should be added, deleted or modified.
-9.  **Human-editable storage:** TutorLah should store its data locally in a human-editable text file without requiring a database management system.
-10. **Offline operation:** Every TutorLah feature should work without an internet connection or a remote server. Student and lesson data should remain on the tutor's computer.
-11. **Screen support:** The GUI should work well at resolutions of `1920x1080` and higher with 100% and 125% scaling. It should remain usable at resolutions of `1280x720` and higher with 150% scaling.
-12. **Single-user operation:** TutorLah should support one tutor using one local data file on their own computer. It should not support shared use of the same data file by multiple users.
+4.  **Single-file distribution:** TutorLah should be packaged in one JAR file that does not exceed `100 MB`.
+5.  **Typing-first interaction:** Student and lesson management should be possible using typed commands. Adding a student and logging a lesson should each take one command.
+6.  **Error feedback:** Rejected input should receive field- or command-specific feedback. Missing or malformed command parts should also show usage.
+7.  **Data persistence:** After a successful command, TutorLah should save the complete student and lesson data locally before returning success feedback.
+8.  **Data integrity:** A failed command should not add, delete or modify student or lesson records.
+
+    **Known limitation:** `LogicManager` updates the model before saving. If saving fails, it reports an error but does not roll back the in-memory change.
+
+9.  **Human-editable storage:** Data should be stored locally in human-editable JSON, without a database management system.
+10. **Offline operation:** Student and lesson management should work offline. Accessing the online User Guide requires an internet connection.
+11. **Screen support:** The GUI should work well at `1920x1080` and higher with 100% and 125% scaling, and remain usable at `1280x720` and higher with 150% scaling.
+12. **Single-user operation:** TutorLah should support one tutor using one local data file, not concurrent shared access by multiple users.
+
 
 ### Glossary
 
-* **Active student**: A student who has not been archived and is available for
-  normal student-management operations.
+* **Active student (proposed)**: A student available for normal operations under the future archiving feature. Archiving is not implemented yet.
 
-* **Archived student**: A student who no longer appears in the student list but
-  whose student details and lesson records are retained.
+* **Archived student (proposed)**: A student hidden from the active list while their details and lesson records are retained.
 
-* **Data file**: The JSON file on the user's computer where TutorLah stores all
-  student and lesson data.
+* **Data file**: The JSON file on the user's computer where TutorLah stores all student and lesson data.
 
-* **Duplicate student**: A student with the same name and phone number as an
-  existing student. TutorLah does not allow duplicate students.
+* **Duplicate student**: A student with the same phone number and the same name, ignoring case, as an existing student.
+
+* **Flag**: A persistent marker that a student needs follow-up, optionally including one reason.
+
+* **Flagged student**: A student who currently has a follow-up flag.
 
 * **Lesson**: A teaching session between the tutor and a student.
 
 * **Lesson history**: All lesson records associated with a student.
 
-* **Lesson record**: A dated record of a completed lesson that describes what
-  was covered. It is distinct from a scheduled lesson.
+* **Lesson index**: The lesson number shown by `view`, starting at 1 with the most recent record. `deletelesson` uses this displayed number.
 
-* **Level**: The student's stage of education, such as Secondary 3 or Year 1
-  of university.
+* **Lesson record**: A record of what was covered in a completed lesson. New records have a lesson date; older undated records show `(undated)`.
 
-* **One-off lesson**: A scheduled lesson that is not part of a weekly lesson
-  slot.
+* **Level**: The student's stage of education, such as `Sec 3` or `JC1`.
 
-* **Rescheduling**: Changing the date or time of a scheduled lesson.
+* **One-off lesson (proposed)**: A scheduled lesson outside a weekly slot.
 
-* **Scheduled lesson**: A planned lesson that has not yet taken place, either
-  in a weekly lesson slot or as a one-off lesson.
+* **Rescheduling (proposed)**: Changing the date or time of a scheduled lesson.
 
-* **Student**: A learner whose student details and lesson records are managed
-  in TutorLah.
+* **Scheduled lesson (proposed)**: A planned lesson that has not yet taken place, either in a weekly slot or as a one-off lesson.
 
-* **Student details**: The information stored for a student, including their
-  name, phone number, address, level and subject.
+* **Student**: A learner whose student details and lesson records are managed in TutorLah.
 
-* **Student index**: The position of a student in the currently displayed
-  student list, starting from 1. Commands such as `delete 3` and `log 3` use
-  this index rather than a permanent identifier, so a student's index can
-  change when the displayed list changes.
+* **Student details**: The information stored for a student, including their name, phone number, address, level and subject.
 
-* **Student list**: The list of active students currently displayed by
-  TutorLah.
+* **Student index**: The position of a student in the currently displayed student list, starting from 1. Commands such as `delete 3` and `view 3` use this index rather than a permanent identifier, so a student's index can change when the displayed list changes.
 
-* **Tutor**: The freelance or private tutor who uses TutorLah to manage
-  students and lessons.
+* **Student list**: Students matching the current filter. `list` restores the full list; filtering does not delete hidden students.
 
-* **Weekly lesson slot**: A fixed day and time reserved each week for a
-  student's regular lesson.
+* **Tutor**: The freelance or private tutor who uses TutorLah to manage students and lessons.
+
+* **Weekly lesson slot (proposed)**: A fixed day and time reserved each week for a student's regular lesson.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -619,21 +571,10 @@ testers are expected to do more *exploratory* testing.
 
 ### Launch and shutdown
 
-1. Initial launch
+Use Java `25` and a separate empty test folder. Copy `TutorLah.jar` there and open a terminal in that folder. Keep real student data out of this test folder.
 
-   1. Download the JAR file and copy it into an empty folder.
-
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
-
-1. Saving window preferences
-
-   1. Resize the window to an optimal size. Move the window to a different location. Close the window.
-
-   1. Relaunch the app by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
-
-1. _{ more test cases … }_
+1. Run `java -jar TutorLah.jar` with no existing data file. Expected: the GUI opens with sample students and a command box. Enter `list` to display the students.
+1. Resize and move the window, then enter `exit`. Expected: the window closes. Run the same launch command from the same folder. The saved students, window size and window location are retained.
 
 ### Adding students
 
@@ -659,22 +600,36 @@ Continue with the two fictional students created above.
 1. In a separate test directory, prepare `data/addressbook.json` containing `{"persons": []}`, start TutorLah and enter `list`.<br>
    Expected: `No students found. Use add to create a student.` and the empty panel displays the current add-command guidance.
 
-### Deleting a person
+### Deleting a student
 
-1. Deleting a person while all persons are being shown
+Use another isolated test folder. Before launching, create `data/addressbook.json` containing `{"persons": []}`; a missing file would load sample students. Launch with `java -jar /absolute/path/to/TutorLah.jar`, then enter these commands in order:
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+```text
+add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+log 1 c/Algebra
+log 2 c/Calculus
+```
 
-   1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+1. Try `delete 0`, `delete 01` and `delete 3`. Expected: `The student index provided is invalid.`, with both students and their lesson records unchanged.
+1. Try `delete` and `delete abc`. Expected: `Invalid command format!` followed by the delete usage, with the data unchanged.
+1. Enter `find ben`, then `delete 1`. Expected: confirmation beginning `Deleted student: Ben Lim;` with Ben's saved details. Ben and his Calculus record are deleted. The filter remains and shows no students; Amy and her Algebra record are kept.
+1. Enter `list`, then `view 1`. Expected: `Listed 1 student.`, with Amy numbered 1, followed by her single dated Algebra record.
+1. Exit and restart from the same folder. Confirm Amy and her record remain, then enter `delete 1` and `list`. Expected: Amy and her record are deleted, and the list reports `No students found. Use add to create a student.`.
+1. Exit and restart again, then enter `list` and `delete 1`. Expected: the saved list is still empty (no sample students reappear), and deletion gives `The student index provided is invalid.`.
 
-   1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+### Flagging students for follow-up
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+Use a separate test directory containing two fictional students. Enter the following commands in order:
 
-1. _{ more test cases … }_
+1. Enter `flag 1`. Expected: student 1 shows an amber `FLAGGED` badge with no empty reason row, and the confirmation is `Flagged student: NAME.`.
+1. Enter `flag 2 r/Missed homework twice`. Expected: student 2 shows the badge and `Flag reason: Missed homework twice`; the confirmation includes the same reason.
+1. Enter `flag 2 r/Call parent about a/level worksheet`. Expected: only student 2's reason changes, including the literal `a/level` text. Enter the same command again; TutorLah reports that the student is already flagged with that reason and makes no change.
+1. Enter `flagged`. Expected: both flagged students appear in their original order, renumbered from 1. Enter `unflag 1`; the first student disappears from the filtered list. Enter `list`; both saved students reappear, with only the second still flagged.
+1. Try an empty `r/`, two `r/` prefixes, a 101-character reason, `flag 0`, `unflag 01`, and `flagged extra`. Expected: each command gives the corresponding reason, duplicate-prefix, index or unsupported-parameter error without changing any flag.
+1. Edit the remaining flagged student, log and delete one lesson, then exit and restart. Expected: the student's badge and reason remain, while the active `flagged` filter is not restored. Enter `unflag INDEX`, exit and restart again; the student remains unflagged and their JSON object has no `flag` property.
+
+Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
 
 ### Saving data
 

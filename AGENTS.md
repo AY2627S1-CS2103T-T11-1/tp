@@ -9,6 +9,9 @@ read these two files in the repo root:
 2. `tutorlah-context.md`: what TutorLah is, who it is for and how it differs
    from AB3.
 
+For any Developer Guide diagram work, also read `tutorlah-uml-guide.md`: the
+course's UML expectations, the notation checklist and our PlantUML setup.
+
 Do not commit, push, or post issues, PRs, comments, reviews or releases. A
 member of the team does that after reading the change.
 

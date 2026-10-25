@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Flag;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -56,6 +57,30 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS, VALID_LEVEL, VALID_SUBJECT, null);
         assertEquals(List.of(), person.toModelType().getLessons());
+    }
+
+    @Test
+    public void toModelType_personWithFlag_returnsFlagWithReason() throws Exception {
+        Person flagged = new PersonBuilder(BENSON).withFlag("Call parent").build();
+        assertEquals(flagged, new JsonAdaptedPerson(flagged).toModelType());
+
+        JsonAdaptedPerson withoutReason = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
+                VALID_LEVEL, VALID_SUBJECT, VALID_LESSONS, new JsonAdaptedFlag((String) null));
+        assertEquals(new Flag(), withoutReason.toModelType().getFlag().orElseThrow());
+    }
+
+    @Test
+    public void toModelType_missingFlag_returnsUnflaggedPerson() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
+                VALID_LEVEL, VALID_SUBJECT, VALID_LESSONS, null);
+        assertEquals(java.util.Optional.empty(), person.toModelType().getFlag());
+    }
+
+    @Test
+    public void toModelType_invalidFlagReason_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
+                VALID_LEVEL, VALID_SUBJECT, VALID_LESSONS, new JsonAdaptedFlag(" "));
+        assertThrows(IllegalValueException.class, Flag.MESSAGE_REASON_CONSTRAINTS, person::toModelType);
     }
 
     @Test

@@ -6,7 +6,10 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.lesson.Lesson;
 
@@ -15,6 +18,8 @@ import seedu.address.model.lesson.Lesson;
  * Guarantees: details are present and not null, field values are validated, immutable.
  */
 public class Person {
+
+    private static final Logger logger = LogsCenter.getLogger(Person.class);
 
     // Identity fields
     private final Name name;
@@ -25,13 +30,14 @@ public class Person {
     private final Level level;
     private final Subject subject;
     private final List<Lesson> lessons;
+    private final Optional<Flag> flag;
 
     /**
      * Creates a student with no lesson records.
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Address address, Level level, Subject subject) {
-        this(name, phone, address, level, subject, List.of());
+        this(name, phone, address, level, subject, List.of(), Optional.empty());
     }
 
     /**
@@ -39,13 +45,23 @@ public class Person {
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Address address, Level level, Subject subject, List<Lesson> lessons) {
-        requireAllNonNull(name, phone, address, level, subject, lessons);
+        this(name, phone, address, level, subject, lessons, Optional.empty());
+    }
+
+    /**
+     * Creates a student with the given lesson records and optional follow-up flag.
+     * Every field, including {@code flag}, must be present and not null.
+     */
+    public Person(Name name, Phone phone, Address address, Level level, Subject subject, List<Lesson> lessons,
+            Optional<Flag> flag) {
+        requireAllNonNull(name, phone, address, level, subject, lessons, flag);
         this.name = name;
         this.phone = phone;
         this.address = address;
         this.level = level;
         this.subject = subject;
         this.lessons = List.copyOf(lessons);
+        this.flag = flag;
     }
 
     public Name getName() {
@@ -66,6 +82,20 @@ public class Person {
 
     public Subject getSubject() {
         return subject;
+    }
+
+    /**
+     * Returns this student's follow-up flag, if present.
+     */
+    public Optional<Flag> getFlag() {
+        return flag;
+    }
+
+    /**
+     * Returns true if this student has a follow-up flag.
+     */
+    public boolean isFlagged() {
+        return flag.isPresent();
     }
 
     /**
@@ -90,8 +120,12 @@ public class Person {
         while (insertAt > 0 && isDatedAfter(updatedLessons.get(insertAt - 1), lesson)) {
             insertAt--;
         }
+        if (insertAt < updatedLessons.size()) {
+            logger.fine("Inserted a backdated lesson at stored position " + (insertAt + 1) + " of "
+                    + (updatedLessons.size() + 1) + ", before newer lessons");
+        }
         updatedLessons.add(insertAt, lesson);
-        return new Person(name, phone, address, level, subject, updatedLessons);
+        return copyWith(updatedLessons, flag);
     }
 
     /**
@@ -114,7 +148,31 @@ public class Person {
     public Person withLessonRemoved(int zeroBasedIndex) {
         List<Lesson> updatedLessons = new ArrayList<>(lessons);
         updatedLessons.remove(zeroBasedIndex);
-        return new Person(name, phone, address, level, subject, updatedLessons);
+        return copyWith(updatedLessons, flag);
+    }
+
+    /**
+     * Returns a copy of this student carrying {@code updatedFlag}.
+     * All student details and lesson records are kept.
+     */
+    public Person withFlag(Flag updatedFlag) {
+        requireNonNull(updatedFlag);
+        return copyWith(lessons, Optional.of(updatedFlag));
+    }
+
+    /**
+     * Returns an unflagged copy of this student.
+     * All student details and lesson records are kept.
+     */
+    public Person withoutFlag() {
+        return copyWith(lessons, Optional.empty());
+    }
+
+    /**
+     * Rebuilds this immutable student while keeping every field not supplied here.
+     */
+    private Person copyWith(List<Lesson> updatedLessons, Optional<Flag> updatedFlag) {
+        return new Person(name, phone, address, level, subject, updatedLessons, updatedFlag);
     }
 
     /**
@@ -152,13 +210,14 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && level.equals(otherPerson.level)
                 && subject.equals(otherPerson.subject)
-                && lessons.equals(otherPerson.lessons);
+                && lessons.equals(otherPerson.lessons)
+                && Objects.equals(flag, otherPerson.flag);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, address, level, subject, lessons);
+        return Objects.hash(name, phone, address, level, subject, lessons, flag);
     }
 
     @Override
@@ -170,6 +229,7 @@ public class Person {
                 .add("level", level)
                 .add("subject", subject)
                 .add("lessons", lessons)
+                .add("flag", flag)
                 .toString();
     }
 
