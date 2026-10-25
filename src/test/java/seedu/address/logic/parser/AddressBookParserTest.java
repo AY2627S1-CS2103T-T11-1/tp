@@ -17,6 +17,8 @@ import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteLessonCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.commands.EditLessonCommand;
+import seedu.address.logic.commands.EditLessonCommand.EditLessonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.FlagCommand;
@@ -75,6 +77,18 @@ public class AddressBookParserTest {
         assertEquals(new DeleteLessonCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON),
                 parser.parseCommand("deletelesson 1 1"));
         assertThrows(ParseException.class, () -> parser.parseCommand("deletelesson 1"));
+    }
+
+    /**
+     * Routes lesson editing separately from editing a student's details.
+     */
+    @Test
+    public void parseCommand_editLesson() throws Exception {
+        EditLessonDescriptor descriptor = new EditLessonDescriptor();
+        descriptor.setContent("Vectors");
+        assertEquals(new EditLessonCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, descriptor),
+                parser.parseCommand(EditLessonCommand.COMMAND_WORD + " 1 1 " + PREFIX_CONTENT + "Vectors"));
+        assertThrows(ParseException.class, () -> parser.parseCommand("editlesson 1 1"));
     }
 
     @Test

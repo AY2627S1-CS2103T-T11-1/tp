@@ -271,7 +271,7 @@ Format: `log INDEX c/CONTENT [date/DATE]`
 * `DATE` must be a real date from 01/01/2000 up to today: future dates and dates such as `31/02/2026` are rejected. The day and month have one or two digits, and the year has exactly four.
 * Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
 * Lessons are kept in date order, so a lesson logged later for an earlier date takes its place by date. Lessons on the same date keep the order they were logged in. Logging the same content twice records two lessons.
-* Logged lessons cannot be edited yet. To remove an incorrect record, use `deletelesson` as described below.
+* To correct a logged lesson's content or date, use `editlesson`. To remove an incorrect record, use `deletelesson`. Both are described below.
 
 Examples:
 * `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
@@ -291,7 +291,7 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 * `STUDENT_INDEX` is the student's number in the currently displayed student list.
 * `LESSON_INDEX` is the lesson's current number shown by `view STUDENT_INDEX`. Lesson 1 is the most recent lesson, not the oldest.
 * Both indexes must be positive whole numbers without leading zeros. Exactly two arguments are required, in the order shown.
-* Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson changes them. Running `view` first is recommended, not required.
+* Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson, or changing a lesson's date with `editlesson`, can change them. Running `view` first is recommended, not required.
 * Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
 * Confirmation: `Deleted lesson LESSON_INDEX for NAME: CONTENT`. Run `view STUDENT_INDEX` again or click the student's card to see the remaining records.
 * Student details, other students' records and the current student filter are unchanged. Deleting the final lesson keeps the student with an empty history.
@@ -313,6 +313,26 @@ Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026, `
 Run `deletelesson 1 2`, then `view 1`. Three lessons remain, numbered 1 to 3. Alex's student details are kept:
 
 <a href="images/lesson-history-after-delete.png"><img src="images/lesson-history-after-delete.png" alt="Three remaining lessons after deletelesson 1 2 followed by view 1; Alex Tan's details are unchanged" width="726"></a>
+
+### Editing a lesson record: `editlesson`
+
+Corrects the content or date of one lesson record, without deleting it and logging it again.
+
+Format: `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`
+
+* `STUDENT_INDEX` and `LESSON_INDEX` work as in `deletelesson`: the student's number in the displayed student list, and the lesson's current number shown by `view STUDENT_INDEX`, where lesson 1 is the most recent.
+* Give at least one of `c/` and `date/`. Without either, the command reports `At least one field to edit must be provided.`
+* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today.
+* Changing only the content keeps the lesson's number.
+* Changing the date moves the lesson to its place in date order, so its number can change. On a date that already has lessons, the edited lesson goes after them, so `view` shows it first among that date's lessons. The confirmation gives the new number to use in later `editlesson` and `deletelesson` commands.
+* Lessons saved before v1.4 have no date and show `(undated)`. Editing only their content keeps them undated, and giving `date/` dates them. A date cannot be removed from a dated lesson.
+* If the new content and date are the same as the lesson's current ones, the command reports `The lesson already has those details.` and nothing changes.
+* Confirmation: `Edited lesson LESSON_INDEX for NAME (now lesson NEW_INDEX). DATE: CONTENT`.
+* Student details, other lessons, other students and the current student filter are unchanged. Index errors and an empty history give the same messages as `deletelesson`, and a future date gives the same message as `log`.
+
+Examples:
+* `editlesson 2 1 c/Quadratic inequalities and homework review` corrects the content of student 2's most recent lesson. It stays lesson 1.
+* Suppose `view 1` shows `1. 23/10/2026: Trigonometry`, `2. 21/10/2026: Vectors` and `3. 19/10/2026: Algebra`. `editlesson 1 3 date/22/10/2026` moves Algebra to 22/10/2026 and confirms `Edited lesson 3 for NAME (now lesson 2). 22/10/2026: Algebra`. A following `view 1` lists Trigonometry, Algebra and Vectors, in that order.
 
 ### Exiting the program: `exit`
 
@@ -373,6 +393,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete lesson** | `deletelesson STUDENT_INDEX LESSON_INDEX`<br> e.g., `view 2`, then `deletelesson 2 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
+**Edit lesson** | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`<br> e.g., `editlesson 2 1 c/Vectors date/21/10/2026`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
 **Flag**   | `flag INDEX [r/REASON]`<br> e.g., `flag 2 r/Missed homework twice`
 **Flagged** | `flagged` (use `list` to show all students again)

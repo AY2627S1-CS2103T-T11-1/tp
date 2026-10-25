@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 24, 2026, for issue #142 (student follow-up flags).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags) and #145 (editing a lesson record).
 
 ## What it is
 
@@ -112,6 +112,14 @@ students. Flag state is persisted; filter state is not.
 (newest first). The student and their other lesson records are kept.
 An empty history reports `No lessons logged yet for NAME.`.
 
+Added in v1.5:
+
+| Command | Format | Example |
+|---|---|---|
+| Edit a lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `editlesson 2 1 c/Vectors date/21/10/2026` |
+
+`editlesson` corrects one lesson's content, date or both, using the lesson number shown by `view`. A content-only edit keeps the lesson's number. A new date moves the lesson into date order, so the confirmation gives its new number.
+
 `find` shows students whose names contain every search keyword, ignoring case
 and keyword order; partial names are accepted. It searches all students each
 time and uses literal keywords without field prefixes or spelling correction.
@@ -139,8 +147,8 @@ recent date first. Lessons saved before v1.4 have no date and show
   students by partial name, delete individual lesson records, and date
   each logged lesson.
 - **Added in v1.5:** persistent follow-up flags with optional reasons and a
-  filtered flagged-student view.
-- **Planned next:** edit lessons, parent or guardian contact,
+  filtered flagged-student view, and editing a lesson record's content or date.
+- **Planned next:** parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
 - **Out of scope:** arranging lessons, messaging parents, grading, payments,
