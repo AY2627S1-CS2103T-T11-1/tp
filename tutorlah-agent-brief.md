@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 25, 2026, for issues #142 (student follow-up flags) and #145 (editing a lesson record).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record) and #116 (save-failure rollback).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -247,6 +247,8 @@ accepted by the parser. Commands apply these errors consistently:
 ---
 
 ## 5. Agreed Java interfaces (as on `master`)
+
+- `Model#getFilteredPersonListPredicate()` captures the active student filter as a non-null predicate. `LogicManager` snapshots the address book and filter before command execution. If saving fails, it restores changed student data and the captured filter before throwing the existing save-error `CommandException`. Lesson records and flags are preserved, and later commands cannot silently save the failed mutation.
 
 - `seedu.address.model.person.Level` and `Subject`: same shape as
   `Address` (public `value`, `isValidLevel` / `isValidSubject`,

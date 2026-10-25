@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 25, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record), #111 (target user) and #143 (finding students by subject and level).
+Last updated: Oct 25, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback) and #143 (finding students by subject and level).
 
 ## What it is
 
@@ -49,6 +49,8 @@ recorded about them, not building a new kind of app.
 - **Command style:** a command word, an index, then `prefix/value` parameters
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
+
+If a command cannot be saved, TutorLah restores its preceding in-memory student data and active filter, then reports the save error. Retrying uses the original displayed indexes; a later command cannot silently persist a failed mutation.
 
 ## Where the changes land in the code
 
