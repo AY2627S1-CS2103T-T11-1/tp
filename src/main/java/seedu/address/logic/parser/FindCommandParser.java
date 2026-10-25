@@ -27,6 +27,8 @@ public class FindCommandParser implements Parser<FindCommand> {
 
     /** Unicode whitespace and invisible formatting characters, which do not count as a search value. */
     private static final String BLANK_VALUE_REGEX = "[\\p{IsWhite_Space}\\p{Cf}]*";
+    /** Any single Unicode whitespace character, such as a non-breaking space, EM SPACE or tab. */
+    private static final String UNICODE_WHITESPACE_REGEX = "(?U)\\s";
 
     /**
      * Creates a find command from the bare name keywords and the given fields.
@@ -35,7 +37,10 @@ public class FindCommandParser implements Parser<FindCommand> {
      */
     public FindCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_SUBJECT, PREFIX_LEVEL);
+        // The tokenizer only recognises a prefix after an ASCII space, so treat all whitespace the same way first.
+        String normalisedArgs = args.replaceAll(UNICODE_WHITESPACE_REGEX, " ");
+        ArgumentMultimap argMultimap =
+                ArgumentTokenizer.tokenize(normalisedArgs, PREFIX_NAME, PREFIX_SUBJECT, PREFIX_LEVEL);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_SUBJECT, PREFIX_LEVEL);
 
         List<String> nameKeywords = new ArrayList<>(splitKeywords(argMultimap.getPreamble()));

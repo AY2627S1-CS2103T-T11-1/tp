@@ -92,6 +92,8 @@ public class FindCommandIntegrationTest {
         assertEquals(List.of(priya, marcus), logic.getFilteredPersonList());
         assertEquals("Found 1 student.", logic.execute("find sub/Physics l/Sec 3").getFeedbackToUser());
         assertEquals(List.of(priya), logic.getFilteredPersonList());
+        assertEquals("Found 1 student.", logic.execute("find sub/Physics\u00a0l/Sec 3").getFeedbackToUser());
+        assertEquals(List.of(priya), logic.getFilteredPersonList());
         assertEquals("Found 1 student.", logic.execute("find lim sub/phys").getFeedbackToUser());
         assertEquals(List.of(marcus), logic.getFilteredPersonList());
         assertEquals("No lessons logged yet for Marcus Lim.", logic.execute("view 1").getFeedbackToUser());

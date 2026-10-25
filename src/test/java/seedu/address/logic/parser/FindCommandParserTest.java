@@ -81,6 +81,21 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_unicodeWhitespaceBeforePrefix_startsField() {
+        // pasted commands may separate a prefix from the previous text with a non-breaking space, EM SPACE or tab
+        FindCommand expected = find(List.of(), List.of("math"), List.of("sec"));
+        for (String separator : List.of("\u00a0", "\u2003", "\t", "\u3000")) {
+            assertParseSuccess(parser, " sub/math" + separator + "l/sec", expected);
+            assertParseSuccess(parser, separator + "sub/math l/sec", expected);
+        }
+        assertParseSuccess(parser, "tan\u00a0sub/math\tn/wei",
+                find(List.of("tan", "wei"), List.of("math"), List.of()));
+        assertParseFailure(parser, " sub/math\u2003l/", Level.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " sub/math\u00a0sub/h2",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_SUBJECT));
+    }
+
+    @Test
     public void parse_fieldsWithoutBareKeywords_searchesOnlyThoseFields() {
         assertParseSuccess(parser, " sub/Physics l/Sec 3",
                 find(List.of(), List.of("Physics"), List.of("Sec", "3")));
