@@ -28,6 +28,10 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label name;
     @FXML
+    private Label flaggedBadge;
+    @FXML
+    private Label flagReason;
+    @FXML
     private Label id;
     @FXML
     private Label phone;
@@ -46,6 +50,16 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
+        flaggedBadge.setVisible(person.isFlagged());
+        flaggedBadge.setManaged(person.isFlagged());
+        person.getFlag().flatMap(flag -> flag.getReason()).ifPresentOrElse(reason -> {
+            flagReason.setText("Flag reason: " + reason);
+            flagReason.setVisible(true);
+            flagReason.setManaged(true);
+        }, () -> {
+            flagReason.setVisible(false);
+            flagReason.setManaged(false);
+        });
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
         level.setText(person.getLevel().value);

@@ -34,6 +34,10 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
    * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
 
+   * `flag 2 r/Missed homework twice` : Marks the 2nd displayed student for follow-up and records why.
+
+   * `flagged` : Shows all students currently marked for follow-up.
+
    * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
 
    * `log 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
@@ -92,12 +96,12 @@ Format: `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT`
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 20 characters of letters, digits and spaces, such as `Sec 3` or `JC1`.
-* `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math` or `H2 Math`.
+* `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math`, `Physics` or `H2 Chemistry`.
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
 
 Examples:
 * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
-* `add n/Ramesh s/o Kumar p/9123 4567 a/12 Clementi Rd l/Sec 3 sub/A-Math`
+* `add n/Ramesh s/o Kumar p/9123 4567 a/12 Clementi Rd l/Sec 3 sub/Physics`
 
 **Screenshot example:** `add n/Jamie Lee p/81230007 a/60 Example Street l/JC1 sub/H2 Math` adds a JC1 student taking H2 Math. The confirmation and Jamie's card show the saved details. The student list has been scrolled down to show the new card:
 
@@ -109,7 +113,7 @@ Shows all students and reports the number displayed.
 
 Format: `list`
 
-* Restores the full student list after a `find` command.
+* Restores the full student list after a `find` or `flagged` command.
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
 * With one student: `Listed 1 student.`
 * Without students: `No students found. Use add to create a student.`
@@ -130,7 +134,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]...`
 * Matching ignores uppercase/lowercase. `find TAN` and `find tan` give the same results.
 * Every keyword must occur somewhere in the name, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`.
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no field prefixes, wildcard matching or spelling correction. Punctuation and accented characters must match as entered in the name, ignoring case.
-* Each search checks all saved students, replacing the previous search. The matches keep their original list order.
+* Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
 * With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.`
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
@@ -145,16 +149,51 @@ Examples:
 
 <a href="images/find-students.png"><img src="images/find-students.png" alt="Found 2 students after find TAN, showing Alex Tan and Ethan Tan" width="726"></a>
 
+### Flagging students for follow-up: `flag`, `unflag`, `flagged`
+
+Use a flag to mark a student who needs follow-up. A reason is optional. Flagged student cards show an amber `FLAGGED` badge, and cards with a reason show `Flag reason: REASON` below the name.
+
+Formats:
+
+* `flag INDEX [r/REASON]`
+* `unflag INDEX`
+* `flagged`
+
+`flag` and `unflag` use the student's number in the currently displayed list. `flagged` searches the complete saved student collection, displays all flagged students in their original order, and numbers the results from 1. The displayed numbers can be used directly with other index-based commands. Type `list` to restore all students.
+
+The optional `REASON`:
+
+* is 1 to 100 characters after surrounding whitespace is removed;
+* cannot be blank or contain control characters; and
+* may contain punctuation and text that resembles another prefix, such as `a/level`, `date/` or `c/homework`, because only lowercase `r/` is parsed by `flag`.
+
+Flagging an unflagged student adds the flag. Flagging an already flagged student with a different reason replaces the old reason. Repeating the same reason is rejected with `NAME is already flagged with that reason.` Omitting `r/` for an already flagged student keeps any existing reason and reports `NAME is already flagged.`
+
+`unflag` removes both the flag and its reason. Trying to unflag an unflagged student reports `NAME is not flagged.` When `unflag` is run from the `flagged` results, that student disappears from the displayed list because they no longer match the filter.
+
+Examples:
+
+* `flag 2`
+* `flag 2 r/Missed homework twice`
+* `unflag 2`
+* `flagged`
+
+Flags are saved automatically. Editing a student's details, logging a lesson or deleting one lesson does not change their flag. The active `find` or `flagged` filter itself is not saved across restarts.
+
+**Screenshot example:** `flag 1 r/Missed homework twice` marks Alex Tan and shows the confirmation, amber badge and reason on his card:
+
+<a href="images/flag-student.png"><img src="images/flag-student.png" alt="Alex Tan's card with an amber FLAGGED badge and the reason Missed homework twice" width="726"></a>
+
 ### Editing a student: `edit`
 
-Changes the details of an existing student. The student's lesson records are kept.
+Changes the details of an existing student. The student's lesson records and follow-up flag are kept.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
 * At least one field must be given. Fields can be given in any order, and each field can be given at most once.
 * Only the fields given are changed. Each field follows the same rules as in [`add`](#adding-a-student-add).
-* Lesson records logged for the student are not changed, and `view` shows them as before.
+* Lesson records and the follow-up flag are not changed, and `view` shows the lessons as before.
 * Editing a student so that they have the same phone number and the same name as another student, ignoring case, is rejected with `This student already exists in the list.`
 * If no field is given, for example `edit 1`, the edit is rejected with `At least one field to edit must be provided.`
 * **Caution:** a new name containing ` a/` after a space, such as `Muthu a/l Raju`, is not rejected by `edit`. It changes the student's address instead. Type it in capitals, for example `n/Muthu A/L Raju`. See [Known issues](#known-issues).
@@ -232,11 +271,11 @@ Format: `log INDEX c/CONTENT [date/DATE]`
 * `DATE` must be a real date from 01/01/2000 up to today: future dates and dates such as `31/02/2026` are rejected. The day and month have one or two digits, and the year has exactly four.
 * Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
 * Lessons are kept in date order, so a lesson logged later for an earlier date takes its place by date. Lessons on the same date keep the order they were logged in. Logging the same content twice records two lessons.
-* Logged lessons cannot be edited yet. To remove an incorrect record, use `deletelesson` as described below.
+* To correct a logged lesson's content or date, use `editlesson`. To remove an incorrect record, use `deletelesson`. Both are described below.
 
 Examples:
 * `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
-* `log 1 c/Revision of trigonometric identities, Q1-5 for homework` logs a lesson for the 1st student in the list.
+* `log 1 c/Electric circuits: series and parallel, Q1-5 for homework` logs a lesson for the 1st student in the list.
 * `log 2 c/Surds and indices date/20/10/2026` logs a lesson taught on 20 October 2026 for the 2nd student, placed among their records by that date.
 
 **Screenshot example:** after `list`, the command `log 1 c/Trigonometry: solved right-angled triangle problems. date/18/10/2026` records an earlier lesson for Alex Tan. The confirmation includes the lesson date and content:
@@ -252,7 +291,7 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 * `STUDENT_INDEX` is the student's number in the currently displayed student list.
 * `LESSON_INDEX` is the lesson's current number shown by `view STUDENT_INDEX`. Lesson 1 is the most recent lesson, not the oldest.
 * Both indexes must be positive whole numbers without leading zeros. Exactly two arguments are required, in the order shown.
-* Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson changes them. Running `view` first is recommended, not required.
+* Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson, or changing a lesson's date with `editlesson`, can change them. Running `view` first is recommended, not required.
 * Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
 * Confirmation: `Deleted lesson LESSON_INDEX for NAME: CONTENT`. Run `view STUDENT_INDEX` again or click the student's card to see the remaining records.
 * Student details, other students' records and the current student filter are unchanged. Deleting the final lesson keeps the student with an empty history.
@@ -275,6 +314,26 @@ Run `deletelesson 1 2`, then `view 1`. Three lessons remain, numbered 1 to 3. Al
 
 <a href="images/lesson-history-after-delete.png"><img src="images/lesson-history-after-delete.png" alt="Three remaining lessons after deletelesson 1 2 followed by view 1; Alex Tan's details are unchanged" width="726"></a>
 
+### Editing a lesson record: `editlesson`
+
+Corrects the content or date of one lesson record, without deleting it and logging it again.
+
+Format: `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`
+
+* `STUDENT_INDEX` and `LESSON_INDEX` work as in `deletelesson`: the student's number in the displayed student list, and the lesson's current number shown by `view STUDENT_INDEX`, where lesson 1 is the most recent.
+* Give at least one of `c/` and `date/`. Without either, the command reports `At least one field to edit must be provided.`
+* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today.
+* Changing only the content keeps the lesson's number.
+* Changing the date moves the lesson to its place in date order, so its number can change. On a date that already has lessons, the edited lesson goes after them, so `view` shows it first among that date's lessons. The confirmation gives the new number to use in later `editlesson` and `deletelesson` commands.
+* Lessons saved before v1.4 have no date and show `(undated)`. Editing only their content keeps them undated, and giving `date/` dates them. A date cannot be removed from a dated lesson.
+* If the new content and date are the same as the lesson's current ones, the command reports `The lesson already has those details.` and nothing changes.
+* Confirmation: `Edited lesson LESSON_INDEX for NAME (now lesson NEW_INDEX). DATE: CONTENT`.
+* Student details, other lessons, other students and the current student filter are unchanged. Index errors and an empty history give the same messages as `deletelesson`, and a future date gives the same message as `log`.
+
+Examples:
+* `editlesson 2 1 c/Quadratic inequalities and homework review` corrects the content of student 2's most recent lesson. It stays lesson 1.
+* Suppose `view 1` shows `1. 23/10/2026: Trigonometry`, `2. 21/10/2026: Vectors` and `3. 19/10/2026: Algebra`. `editlesson 1 3 date/22/10/2026` moves Algebra to 22/10/2026 and confirms `Edited lesson 3 for NAME (now lesson 2). 22/10/2026: Algebra`. A following `view 1` lists Trigonometry, Algebra and Vectors, in that order.
+
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -290,6 +349,8 @@ TutorLah automatically saves data after each successful command. You do not need
 TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
 
 In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. A date in any other format makes the data file invalid.
+
+A flagged student with a reason stores `"flag" : { "reason" : "REASON" }`; a flag without a reason stores `"flag" : { }`. An unflagged student has no `flag` property. Data files created before flags were introduced therefore continue to load every student as unflagged.
 
 Addresses and lesson content containing only whitespace or invisible formatting characters are invalid in data files too. If an older file contains these values, back up the file and correct them before opening it.
 
@@ -332,9 +393,13 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete lesson** | `deletelesson STUDENT_INDEX LESSON_INDEX`<br> e.g., `view 2`, then `deletelesson 2 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
+**Edit lesson** | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`<br> e.g., `editlesson 2 1 c/Vectors date/21/10/2026`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
+**Flag**   | `flag INDEX [r/REASON]`<br> e.g., `flag 2 r/Missed homework twice`
+**Flagged** | `flagged` (use `list` to show all students again)
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
+**Unflag** | `unflag INDEX`<br> e.g., `unflag 2`
 **Help**   | `help`
 **Exit**   | `exit`

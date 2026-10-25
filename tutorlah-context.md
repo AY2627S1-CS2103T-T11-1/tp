@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 24, 2026, for issue #111 (target user).
+Last updated: Oct 25, 2026, for issue #111 (target user), after #142 (student follow-up flags) and #145 (editing a lesson record).
 
 ## What it is
 
@@ -33,13 +33,13 @@ recorded about them, not building a new kind of app.
 | | AB3 | TutorLah |
 |---|---|---|
 | **Entity** | `Person` (a contact) | Student |
-| **Fields** | name, phone, email, address, tags | name, phone, address, **level**, **subject**. Email and tags are not in the spec. |
+| **Fields** | name, phone, email, address, tags | name, phone, address, **level**, **subject**, and an optional follow-up **flag** with an optional reason. Email and tags are not in the spec. |
 | **Name rule** | letters and digits only (`[\p{Alnum}][\p{Alnum} ]*`) | Unicode letters, spaces, `'` `-` `.` `/`, with no digits, so names like Mary-Anne, O'Brien and Ramesh s/o Kumar work |
 | **Phone rule** | digits only, at least 3 | exactly 8 digits, since every Singapore number is 8 digits and a fixed length catches typos |
 | **Duplicate** | same name (`isSamePerson`) | same phone **and** same name ignoring case, since two students can both be "Tan Wei Ming" |
 | **`list`** | ignores any extra text | rejects parameters; reports `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | **New entity** | none | **Lesson**: a record of what was covered and the date it was logged, owned by a student |
-| **New commands** | none | `log INDEX c/CONTENT [date/DATE]` and `view INDEX` |
+| **New commands** | none | Lesson commands plus `flag INDEX [r/REASON]`, `unflag INDEX` and `flagged` |
 
 ## What stays from AB3
 
@@ -53,13 +53,14 @@ recorded about them, not building a new kind of app.
 ## Where the changes land in the code
 
 - **Model:** the `Person` fields change, `Level` and `Subject` are added, the
-  duplicate rule changes, and a new `Lesson` list sits on each student.
+  duplicate rule changes, a `Lesson` list sits on each student, and an optional
+  immutable `Flag` records follow-up state.
 - **Logic:** `AddCommandParser` gets new prefixes (`l/`, `sub/`), and there are
   new `LogCommand` and `ViewCommand` classes with their parsers. `list` gets
   a check that rejects parameters.
-- **Storage:** `JsonAdaptedPerson` saves level, subject and lessons. This is the
-  same pattern as the `remark` tutorial.
-- **UI:** the person card shows level and subject. Lessons appear in the result
+- **Storage:** `JsonAdaptedPerson` saves level, subject, lessons and optional flags.
+- **UI:** the person card shows level and subject. Flagged cards show an amber
+  `FLAGGED` badge and an optional `Flag reason:` row. Lessons appear in the result
   box. Tutors can type `view INDEX` or left-click a student card to view that
   student's history. Repeated clicks refresh it, while command text is preserved.
   The click callback uses the current displayed index and the existing command path.
@@ -94,11 +95,32 @@ Added after the MVP (v1.4):
 | Delete a lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `deletelesson 2 1` |
 | Find students | `find KEYWORD [MORE_KEYWORDS]...` | `find tan wei` |
 
+Added in v1.5:
+
+| Command | Format | Example |
+|---|---|---|
+| Flag a student | `flag INDEX [r/REASON]` | `flag 2 r/Missed homework twice` |
+| Remove a flag | `unflag INDEX` | `unflag 2` |
+| List flagged students | `flagged` | `flagged` |
+
+Flags mark unresolved follow-up without changing student identity or lesson
+history. The reason is optional and can be replaced by flagging again with a
+different reason. `flagged` replaces the current filter and `list` restores all
+students. Flag state is persisted; filter state is not.
+
 `edit` changes only the fields given and keeps the student's lesson records.
 
 `deletelesson` removes one record using the lesson number shown by `view`
 (newest first). The student and their other lesson records are kept.
 An empty history reports `No lessons logged yet for NAME.`.
+
+Added in v1.5:
+
+| Command | Format | Example |
+|---|---|---|
+| Edit a lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `editlesson 2 1 c/Vectors date/21/10/2026` |
+
+`editlesson` corrects one lesson's content, date or both, using the lesson number shown by `view`. A content-only edit keeps the lesson's number. A new date moves the lesson into date order, so the confirmation gives its new number.
 
 `find` shows students whose names contain every search keyword, ignoring case
 and keyword order; partial names are accepted. It searches all students each
@@ -126,7 +148,9 @@ recent date first. Lessons saved before v1.4 have no date and show
 - **Added in v1.4:** edit a student's details (lessons are kept), find
   students by partial name, delete individual lesson records, and date
   each logged lesson.
-- **Planned next:** edit lessons, parent or guardian contact,
+- **Added in v1.5:** persistent follow-up flags with optional reasons and a
+  filtered flagged-student view, and editing a lesson record's content or date.
+- **Planned next:** parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.
 - **Out of scope:** arranging lessons, messaging parents, grading, payments,

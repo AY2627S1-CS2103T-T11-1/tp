@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 22, 2026, for issue #120 (logging a lesson with a past date).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags) and #145 (editing a lesson record).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -100,10 +100,14 @@ ask the team. Do not guess.
 | Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME}: {CONTENT}` |
+| Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find KEYWORD [MORE_KEYWORDS]...` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.` |
+| Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
+| Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
+| Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
 
 **Lesson dates (#98, #120):** `log` dates each lesson with `date/DATE` if
@@ -145,6 +149,8 @@ even if contents repeat. Keep the student, remaining lessons and current
 filter. Deleting the last lesson leaves an empty history. Show confirmation;
 use `view` or a card click to see the remaining records.
 
+**Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `log` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
+
 **Find policy (#101):** every whitespace-separated keyword must occur somewhere
 in the student's name, ignoring case and keyword order. Partial names are
 supported. Leading, trailing and repeated whitespace is ignored. Keywords
@@ -157,6 +163,24 @@ student or lesson data, and filters are not persisted. The empty-list panel says
 `No students to display.` and `Type list to show all students, or add one:`,
 followed by the add-command format and example. This offers useful guidance
 both when a search hides saved students and when no students are saved.
+
+**Follow-up flags (#142):** `flag` and `unflag` use the current displayed index
+and retain the active filter. A flag may omit its reason. Flagging an already
+flagged student without `r/` preserves its reason and reports `{NAME} is already
+flagged.`; supplying the same reason reports `{NAME} is already flagged with
+that reason.`; a different reason replaces it. `unflag` removes the flag and
+reason, or reports `{NAME} is not flagged.` if no flag exists. These no-change
+outcomes are command errors. `flagged` searches the complete saved collection,
+replaces any `find` filter and keeps original order. `list` restores all
+students. Unflagging from the flagged view removes that student from the view.
+Filters are not persisted, but flags are.
+
+Flagged cards show an amber `FLAGGED` badge. A reason is shown below the name
+as `Flag reason: {REASON}`; a reasonless flag has no empty row. JSON omits the
+`flag` property for an unflagged student, stores `"flag": {}` without a reason,
+and stores `"flag": {"reason": "..."}` with one. Data without `flag` loads as
+unflagged. Edit, log and deletelesson preserve the flag when rebuilding a
+student.
 
 ---
 
@@ -171,6 +195,7 @@ both when a search hides saved students and when no students are saved.
 | Subject | `sub/` | 1 to 50 characters: letters, digits, spaces, hyphens | `Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.` |
 | Lesson content | `c/` | 1 to 300 printable characters, internal spaces kept | `Lesson content must not be blank and must be at most 300 characters.` |
 | Lesson date | `date/` | Optional. A real date as `D/M/YYYY` or `DD/MM/YYYY` (digits only, four-digit year), from 01/01/2000 (`Lesson.EARLIEST_DATE`), not in the future | `Lesson dates should be real dates from 01/01/2000 onwards, in the format DD/MM/YYYY, for example 21/10/2026.` |
+| Flag reason | `r/` | Optional. 1 to 100 characters after trimming surrounding Unicode whitespace; not blank and no control characters | `Flag reasons must not be blank and must be at most 100 characters.` |
 
 - Addresses and lesson content cannot consist entirely of Unicode whitespace
   or format characters, including non-breaking spaces, ZERO WIDTH SPACE
@@ -225,6 +250,12 @@ accepted by the parser. Commands apply these errors consistently:
 - `Person(Name, Phone, Address, Level, Subject)` creates a student with no
   lessons. `Person(Name, Phone, Address, Level, Subject, List<Lesson>)`
   creates one with lessons.
+- `Person(Name, Phone, Address, Level, Subject, List<Lesson>, Optional<Flag>)`
+  creates one with lessons and an optional follow-up flag.
+- `Person#getFlag()` returns an `Optional<Flag>` and `Person#isFlagged()` tests
+  whether it is present. `withFlag(Flag)` and `withoutFlag()` return immutable
+  copies and preserve all other fields. A `Flag` has an optional reason; reasons
+  use `Flag#isValidReason` and `Flag.MAX_REASON_LENGTH`.
 - `Person#getLessons()` returns an unmodifiable list, oldest first.
   `Person#withLessonAdded(Lesson)` returns a new `Person` with the lesson
   inserted in date order (see "Lesson order" in section 2).
@@ -254,6 +285,9 @@ accepted by the parser. Commands apply these errors consistently:
   creates undated lessons, which `view` shows as `(undated)`.
 - `Person#withLessonRemoved(int zeroBasedIndex)` returns a new `Person`
   without the selected lesson in stored order. Other fields are kept.
+- `Person#withLessonReplaced(int zeroBasedIndex, Lesson lesson)` returns a new `Person` with the lesson at that stored position replaced, keeping its position, the other lessons and the flag. It asserts that the date is unchanged; to change a date, use `withLessonRemoved` then `withLessonAdded`.
+- `Lesson#withContent(String)` returns a copy with new content and the same date, or undated if the lesson is undated.
+- `EditLessonCommand(Index, Index, EditLessonDescriptor[, Clock])` edits one lesson. `EditLessonDescriptor` holds the optional new content and date, like `EditCommand.EditPersonDescriptor`. Tests pass a fixed `Clock`, as for `LogCommand`.
 - Logging a lesson is `model.setPerson(target, target.withLessonAdded(lesson))`.
   Deleting a student removes their lessons, because lessons live inside
   `Person`.

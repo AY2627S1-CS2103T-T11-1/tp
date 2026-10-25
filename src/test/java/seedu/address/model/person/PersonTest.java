@@ -73,6 +73,11 @@ public class PersonTest {
         // different person -> returns false
         assertFalse(ALICE.equals(BOB));
 
+        // different flag -> returns false, but identity is unchanged
+        Person flaggedAlice = new PersonBuilder(ALICE).withFlag("Call parent").build();
+        assertFalse(ALICE.equals(flaggedAlice));
+        assertTrue(ALICE.isSamePerson(flaggedAlice));
+
         // different name -> returns false
         Person editedAlice = new PersonBuilder(ALICE).withName(VALID_NAME_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
@@ -101,6 +106,32 @@ public class PersonTest {
     @Test
     public void hashCode_equalPersons_sameHashCode() {
         assertEquals(ALICE.hashCode(), new PersonBuilder(ALICE).build().hashCode());
+    }
+
+    @Test
+    public void withFlagAndWithoutFlag_keepStudentDetailsAndLessons() {
+        Person original = new PersonBuilder(ALICE).withLessons("Algebra", "Geometry").build();
+        Flag flag = new Flag("Call parent");
+        Person flagged = original.withFlag(flag);
+        assertEquals(flag, flagged.getFlag().orElseThrow());
+        assertEquals(original.getLessons(), flagged.getLessons());
+        assertTrue(flagged.isSamePerson(original));
+        assertFalse(original.isFlagged());
+        assertEquals(original, flagged.withoutFlag());
+    }
+
+    @Test
+    public void lessonChanges_keepFlag() {
+        Flag flag = new Flag("Review homework");
+        Person flagged = new PersonBuilder(ALICE).withLessons("Algebra").withFlag("Review homework").build();
+        Person added = flagged.withLessonAdded(new Lesson("Geometry"));
+        assertEquals(flag, added.getFlag().orElseThrow());
+        assertEquals(flag, added.withLessonRemoved(0).getFlag().orElseThrow());
+    }
+
+    @Test
+    public void withFlag_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ALICE.withFlag(null));
     }
 
     @Test
@@ -207,6 +238,73 @@ public class PersonTest {
         assertThrows(IndexOutOfBoundsException.class, () -> ALICE.withLessonRemoved(0));
     }
 
+    /**
+     * Replaces exactly one stored occurrence in place and preserves all other student data and immutability.
+     */
+    @Test
+    public void withLessonReplaced_sameDate_keepsPositionAndOtherData() {
+        LocalDate date = LocalDate.of(2026, 10, 21);
+        Lesson first = new Lesson("Algebra", date);
+        Lesson second = new Lesson("Vectors", date);
+        Lesson later = new Lesson("Surds", LocalDate.of(2026, 10, 22));
+        Person original = new PersonBuilder(ALICE).build().withLessonAdded(first).withLessonAdded(second)
+                .withLessonAdded(later);
+
+        Lesson edited = second.withContent("Vectors and scalars");
+        Person updated = original.withLessonReplaced(1, edited);
+
+        assertEquals(List.of(first, edited, later), updated.getLessons());
+        assertEquals(List.of(first, second, later), original.getLessons());
+        assertEquals(new PersonBuilder(ALICE).build(), new PersonBuilder(updated).withLessons().build());
+        assertThrows(UnsupportedOperationException.class, () -> updated.getLessons().clear());
+    }
+
+    /**
+     * Keeps the student's follow-up flag when a lesson is replaced.
+     */
+    @Test
+    public void withLessonReplaced_flaggedStudent_keepsFlag() {
+        Person flagged = new PersonBuilder(ALICE).withLessons("Algebra").withFlag("Review homework").build();
+        Person updated = flagged.withLessonReplaced(0, new Lesson("Linear algebra"));
+        assertEquals(flagged.getFlag(), updated.getFlag());
+        assertTrue(updated.isFlagged());
+    }
+
+    /**
+     * Keeps an undated legacy lesson undated when only its content is replaced.
+     */
+    @Test
+    public void withLessonReplaced_undatedLesson_staysUndated() {
+        Person original = new PersonBuilder(ALICE).withLessons("Algebra", "Geometry").build();
+        Person updated = original.withLessonReplaced(0, new Lesson("Linear algebra"));
+        assertEquals(new PersonBuilder(ALICE).withLessons("Linear algebra", "Geometry").build(), updated);
+    }
+
+    /**
+     * Rejects positions outside the stored lesson list and a missing lesson.
+     */
+    @Test
+    public void withLessonReplaced_invalidArguments_throwsException() {
+        Person student = new PersonBuilder(ALICE).withLessons("Algebra").build();
+        Lesson lesson = new Lesson("Geometry");
+        assertThrows(IndexOutOfBoundsException.class, () -> student.withLessonReplaced(-1, lesson));
+        assertThrows(IndexOutOfBoundsException.class, () -> student.withLessonReplaced(1, lesson));
+        assertThrows(IndexOutOfBoundsException.class, () -> ALICE.withLessonReplaced(0, lesson));
+        assertThrows(NullPointerException.class, () -> student.withLessonReplaced(0, null));
+    }
+
+    /**
+     * Rejects a replacement with a different date, which would break date order.
+     */
+    @Test
+    public void withLessonReplaced_differentDate_throwsAssertionError() {
+        Person student = new PersonBuilder(ALICE).build()
+                .withLessonAdded(new Lesson("Algebra", LocalDate.of(2026, 10, 21)));
+        assertThrows(AssertionError.class, () ->
+                student.withLessonReplaced(0, new Lesson("Algebra", LocalDate.of(2026, 10, 22))));
+        assertThrows(AssertionError.class, () -> student.withLessonReplaced(0, new Lesson("Algebra")));
+    }
+
     @Test
     public void equals_differentLessons_returnsFalse() {
         Person withLesson = new PersonBuilder(ALICE).withLessons("Quadratic inequalities").build();
@@ -219,7 +317,8 @@ public class PersonTest {
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", address=" + ALICE.getAddress() + ", level=" + ALICE.getLevel()
-                + ", subject=" + ALICE.getSubject() + ", lessons=" + ALICE.getLessons() + "}";
+                + ", subject=" + ALICE.getSubject() + ", lessons=" + ALICE.getLessons()
+                + ", flag=Optional.empty}";
         assertEquals(expected, ALICE.toString());
     }
 }

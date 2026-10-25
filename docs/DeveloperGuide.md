@@ -15,8 +15,8 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records and Unicode blank-field validation, and with the Logic/parser diagrams and Developer Guide maintenance.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records and logging lessons with a past date.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation and student follow-up flags, and with the Logic/parser diagrams and Developer Guide maintenance.
+* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ This partial class diagram focuses on command input, student cards and feedback.
 The UI responsibilities are:
 
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
-* `PersonListPanel` observes the filtered student list supplied by `Logic`. Cards show each student's displayed index, name, phone, address, level and subject. The indexes follow the displayed list, including after a search or deletion.
+* `PersonListPanel` observes the filtered student list supplied by `Logic`. Cards show each student's displayed index, name, phone, address, level and subject. A flagged card also shows an amber badge and its optional reason. The indexes follow the displayed list, including after filtering or deletion.
 * A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses refresh the history; empty cells and other mouse buttons do not execute the shortcut.
 * `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider.
 * After a successful `view`, `MainWindow` asks `PersonListPanel` to highlight and scroll to the viewed student. Programmatic selection and list changes do not execute a view command.
@@ -110,6 +110,10 @@ The sequence diagram below follows the successful execution of `deletelesson 1 2
 
 <puml src="diagrams/DeleteLessonSequenceDiagram.puml" alt="Successful lesson-deletion sequence from command parsing through replacing the student in Model" width="950" />
 
+Student deletion follows a related but distinct path. For a successful `delete 1`, `DeleteCommand` resolves the index against the currently displayed filtered list, validates it, and passes the selected `Person` rather than the numeric index to `Model#deletePerson`. The local validation and selection steps are summarized in a note because they are not calls to another participant. Removing that student also removes their owned lesson history. Parser internals and the common persistence path are omitted for the same reasons as above.
+
+<puml src="diagrams/DeleteStudentSequenceDiagram.puml" alt="Successful student-deletion sequence using the displayed student index and the selected Person" width="950" />
+
 The following diagram focuses on parser selection and command creation:
 
 <a href="diagrams/ParserClasses.png" no-validation><puml src="diagrams/ParserClasses.puml" alt="Partial parser class diagram showing selection of lesson parsers and creation of their commands" width="520" /></a>
@@ -129,13 +133,13 @@ The helper diagram omits prefix classes, model values and exceptions to focus on
 
 The **API** of this component is specified in [`Model.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/model/Model.java).
 
-<puml src="diagrams/ModelClassDiagram.puml" alt="Partial Model class diagram showing students, their value fields and owned lesson records" width="950" />
+<puml src="diagrams/ModelClassDiagram.puml" alt="Partial Model class diagram showing students, value fields, optional follow-up flags and owned lesson records" width="950" />
 
 This partial class diagram focuses on student and lesson data. `ModelManager` implements the `Model` API and owns one `AddressBook`; user-preference classes are omitted. The address book delegates uniqueness and list operations to `UniquePersonList`, while `ModelManager` exposes a filtered view of the same students for searches and displayed indexes.
 
-`Person` is the Java class representing a student. It is an immutable value containing `Name`, `Phone`, `Address`, `Level`, `Subject` and an immutable list of zero or more `Lesson` values. A `Lesson` contains content and an optional date: records saved by v1.3 have no date, while newer records have a `LocalDate`. Lessons belong to their student, so deleting a student also deletes their lesson history.
+`Person` is the Java class representing a student. It is an immutable value containing `Name`, `Phone`, `Address`, `Level`, `Subject`, an immutable list of zero or more `Lesson` values, and zero or one `Flag`. A `Flag` marks unresolved follow-up and may contain one validated reason. A `Lesson` contains content and an optional date: records saved by v1.3 have no date, while newer records have a `LocalDate`. Lessons and flags belong to their student, so deleting a student also deletes them.
 
-Two students have the same identity only when their phone numbers match and their names match ignoring case. Other fields, including lessons, contribute to full equality but not duplicate detection. `Person#withLessonAdded` and `Person#withLessonRemoved` return new `Person` objects rather than mutating the existing value. Any other operation that rebuilds a student, such as editing details, carries the existing lesson list across.
+Two students have the same identity only when their phone numbers match and their names match ignoring case. Other fields, including lessons and flags, contribute to full equality but not duplicate detection. `Person#withLessonAdded`, `Person#withLessonRemoved`, `Person#withFlag` and `Person#withoutFlag` return new `Person` objects rather than mutating the existing value. Any operation that rebuilds a student carries both the existing lesson list and flag across unless it is intentionally changing the flag.
 
 Lesson records are stored oldest first by date. Undated legacy records remain at the oldest end, and records on the same date retain logging order. `view` reverses this stored order for display. The Model component has no dependency on UI, Logic or Storage, so its domain objects and rules remain meaningful independently of those components.
 
@@ -189,6 +193,19 @@ If parsing or execution fails, `MainWindow` displays the error instead of the hi
 
 Deleting the final lesson therefore leaves the student present with an empty history. A later deletion attempt stops before mutation and reports `No lessons logged yet for NAME.`.
 
+### Editing a lesson record
+
+`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `log`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
+
+`EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does, reusing `DeleteLessonCommand#toStoredLessonIndex`. It then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
+
+The command keeps each student's lessons in date order with one of two operations:
+
+* If the date is unchanged, `Person#withLessonReplaced` puts the edited lesson in the same position. Removing and adding it again would move it after the other lessons on its date, which would change its number even though only its content changed. `withLessonReplaced` asserts that the date is unchanged, so it cannot break date order.
+* If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `log` uses for a backdated lesson.
+
+`Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
+
 ### Finding students by name
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which splits it into whitespace-separated literal keywords and rejects an empty search. It does not use field prefixes, so a search for `a/l` cannot be interpreted as an address edit.
@@ -198,6 +215,14 @@ Deleting the final lesson therefore leaves the student present with an empty his
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
 `view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
+
+### Flagging students for follow-up
+
+`FlagCommandParser` tokenizes only `r/`, leaving text such as `a/level` inside a reason. It parses the preamble with the shared student-index policy, rejects duplicate `r/` prefixes, trims surrounding Unicode whitespace and constructs an immutable `Flag`. A present flag may omit its reason, but a supplied reason must contain meaningful non-control text and be at most 100 characters.
+
+`FlagCommand` and `UnflagCommand` obtain their target from `Model#getFilteredPersonList`, so they act on the displayed number after either `find` or `flagged`. They replace the immutable `Person` through `Model#setPerson` without changing its identity, details or lessons. Reflagging with a new reason replaces only the `Flag`; reflagging without a reason never clears an existing reason. `FlaggedCommand` applies `Person#isFlagged` to the full backing student list through `Model#updateFilteredPersonList`. Consequently, unflagging a student while that filter is active removes the updated value from the displayed list automatically.
+
+`JsonAdaptedPerson` omits its nullable adapted flag for unflagged students. A present `JsonAdaptedFlag` omits its nullable reason, producing an empty JSON object for a reasonless flag. This distinguishes all three persisted states while keeping older data files compatible. The UI derives badge and reason-row visibility directly from each immutable `Person`; no separate UI state is stored.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -246,6 +271,8 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.4) | tutor managing many students | find a student by name | access the correct student's information quickly |
 | `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
+| `* *` | No | Implemented (v1.5) | tutor | correct the content or date of a lesson record | fix a mistake without deleting the record and logging it again |
+| `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
 | `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
 | `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
@@ -432,7 +459,39 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
       Use case resumes at step 2.
 
-**Use case: UC08 - Archive a student (proposed)**
+**Use case: UC08 - Flag a student for follow-up**
+
+**Guarantees:** Flagging changes only the selected student's follow-up flag and optional reason. Their details and lesson records are kept.
+
+**MSS**
+
+1.  Tutor views a student list.
+2.  Tutor requests to flag a specific displayed student and may provide a reason.
+3.  TutorLah flags the student and shows a confirmation.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The reason is blank, too long or contains a control character.
+
+    * 2b1. TutorLah shows an error message describing the reason restrictions.
+
+      Use case resumes at step 2.
+
+* 2c. The student is already flagged and no new reason was supplied.
+
+    * 2c1. TutorLah informs Tutor that no change was made.
+
+      Use case ends.
+
+**Use case: UC09 - Archive a student (proposed)**
 
 **Guarantees:** The archived student no longer appears in the active student list, but their details and lesson records are retained, unlike <u>UC03</u>.
 
@@ -482,6 +541,10 @@ These are product requirements, not a claim that every target has been verified.
 * **Data file**: The JSON file on the user's computer where TutorLah stores all student and lesson data.
 
 * **Duplicate student**: A student with the same phone number and the same name, ignoring case, as an existing student.
+
+* **Flag**: A persistent marker that a student needs follow-up, optionally including one reason.
+
+* **Flagged student**: A student who currently has a follow-up flag.
 
 * **JC (junior college)**: The two-year pre-university stage in Singapore, written `JC1` and `JC2`.
 
@@ -576,6 +639,19 @@ log 2 c/Calculus
 1. Exit and restart from the same folder. Confirm Amy and her record remain, then enter `delete 1` and `list`. Expected: Amy and her record are deleted, and the list reports `No students found. Use add to create a student.`.
 1. Exit and restart again, then enter `list` and `delete 1`. Expected: the saved list is still empty (no sample students reappear), and deletion gives `The student index provided is invalid.`.
 
+### Flagging students for follow-up
+
+Use a separate test directory containing two fictional students. Enter the following commands in order:
+
+1. Enter `flag 1`. Expected: student 1 shows an amber `FLAGGED` badge with no empty reason row, and the confirmation is `Flagged student: NAME.`.
+1. Enter `flag 2 r/Missed homework twice`. Expected: student 2 shows the badge and `Flag reason: Missed homework twice`; the confirmation includes the same reason.
+1. Enter `flag 2 r/Call parent about a/level worksheet`. Expected: only student 2's reason changes, including the literal `a/level` text. Enter the same command again; TutorLah reports that the student is already flagged with that reason and makes no change.
+1. Enter `flagged`. Expected: both flagged students appear in their original order, renumbered from 1. Enter `unflag 1`; the first student disappears from the filtered list. Enter `list`; both saved students reappear, with only the second still flagged.
+1. Try an empty `r/`, two `r/` prefixes, a 101-character reason, `flag 0`, `unflag 01`, and `flagged extra`. Expected: each command gives the corresponding reason, duplicate-prefix, index or unsupported-parameter error without changing any flag.
+1. Edit the remaining flagged student, log and delete one lesson, then exit and restart. Expected: the student's badge and reason remain, while the active `flagged` filter is not restored. Enter `unflag INDEX`, exit and restart again; the student remains unflagged and their JSON object has no `flag` property.
+
+Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
@@ -613,6 +689,34 @@ log 2 c/Calculus
    Expected: `Deleted lesson 1 for Ben Lim: Calculus`, while only Ben's card remains displayed. The view reports `No lessons logged yet for Ben Lim.`. Enter `list` to confirm both students remain; the search filter was retained during deletion and no unrelated student changed.
 
 Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
+
+### Editing lesson records
+
+These steps need today's date to be 23/10/2026 or later. Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start with `java -jar /absolute/path/to/TutorLah.jar`, then enter:
+
+```text
+add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+log 1 c/Algebra date/19/10/2026
+log 1 c/Vectors date/21/10/2026
+log 1 c/Trigonometry date/23/10/2026
+```
+
+1. Enter `view 1`.<br>
+   Expected: `1. 23/10/2026: Trigonometry`, `2. 21/10/2026: Vectors` and `3. 19/10/2026: Algebra`.
+1. Enter `editlesson 1 2 c/Vectors and scalars`, then `view 1`.<br>
+   Expected: `Edited lesson 2 for Amy Tan (now lesson 2). 21/10/2026: Vectors and scalars`. The lesson keeps its number and date.
+1. Enter `editlesson 1 3 date/22/10/2026`, then `view 1`.<br>
+   Expected: `Edited lesson 3 for Amy Tan (now lesson 2). 22/10/2026: Algebra`. The view shows Trigonometry, Algebra, then Vectors and scalars.
+1. Enter `editlesson 1 3 date/22/10/2026`.<br>
+   Expected: `Edited lesson 3 for Amy Tan (now lesson 2). 22/10/2026: Vectors and scalars`. On a date that already has a lesson, the edited lesson goes after it in storage, so `view` shows it first.
+1. Enter `editlesson 1 2 c/Vectors and scalars`.<br>
+   Expected: `The lesson already has those details.`, and nothing changes.
+1. Try `editlesson 1 1`, `editlesson 1 1 c/`, `editlesson 1 1 date/31/02/2026`, `editlesson 1 1 c/A c/B`, `editlesson 1 4 c/Algebra`, `editlesson 2 1 c/Algebra` and `editlesson 1 1 date/` followed by tomorrow's date.<br>
+   Expected: in order, the missing-field, content, date, duplicate-prefix, lesson-index, student-index and future-date errors. Amy's records are unchanged after every rejected command.
+1. Exit and restart from the same folder, then enter `view 1`.<br>
+   Expected: the edited content, dates and order were saved.
+
+Automated coverage is in `EditLessonCommandParserTest`, `EditLessonCommandTest`, `PersonTest`, `LessonTest` and `AddressBookParserTest`.
 
 ### Finding students and restoring the full list
 

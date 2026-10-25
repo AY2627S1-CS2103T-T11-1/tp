@@ -86,6 +86,14 @@ public class Lesson {
     }
 
     /**
+     * Returns a copy of this lesson with {@code content} and the same date.
+     * The copy of an undated lesson is also undated.
+     */
+    public Lesson withContent(String content) {
+        return date == null ? new Lesson(content) : new Lesson(content, date);
+    }
+
+    /**
      * Returns the lesson content only. Command confirmations may print a lesson through this method,
      * so it must not include the date or other fields.
      */
