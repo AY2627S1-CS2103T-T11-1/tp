@@ -8,9 +8,12 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.util.function.Predicate;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.AddressBookBuilder;
 
 public class ModelManagerTest {
@@ -68,6 +71,24 @@ public class ModelManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getFilteredPersonList().remove(0));
+    }
+
+    @Test
+    public void getFilteredPersonListPredicate_noFilter_matchesAllStudents() {
+        assertTrue(modelManager.getFilteredPersonListPredicate().test(ALICE));
+        assertTrue(modelManager.getFilteredPersonListPredicate().test(BENSON));
+    }
+
+    @Test
+    public void getFilteredPersonListPredicate_filterChanges_savedPredicateKeepsItsMeaning() {
+        modelManager.updateFilteredPersonList(ALICE::equals);
+        Predicate<Person> savedPredicate = modelManager.getFilteredPersonListPredicate();
+        modelManager.updateFilteredPersonList(BENSON::equals);
+        assertTrue(savedPredicate.test(ALICE));
+        assertFalse(savedPredicate.test(BENSON));
+        modelManager.updateFilteredPersonList(savedPredicate);
+        assertTrue(modelManager.getFilteredPersonListPredicate().test(ALICE));
+        assertFalse(modelManager.getFilteredPersonListPredicate().test(BENSON));
     }
 
     @Test

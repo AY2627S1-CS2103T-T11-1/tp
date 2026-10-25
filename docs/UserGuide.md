@@ -344,6 +344,8 @@ Format: `exit`
 
 TutorLah automatically saves data after each successful command. You do not need to save manually.
 
+If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry.
+
 ### Editing the data file
 
 TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
