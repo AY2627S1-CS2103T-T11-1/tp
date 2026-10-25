@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 25, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback) and #117 (unreadable-file recovery).
+Last updated: Oct 25, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery).
 
 ## What it is
 
@@ -97,7 +97,7 @@ Added after the MVP (v1.4):
 |---|---|---|
 | Edit a student | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
 | Delete a lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `deletelesson 2 1` |
-| Find students | `find KEYWORD [MORE_KEYWORDS]...` | `find tan wei` |
+| Find students | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `find sub/Physics l/Sec 3` |
 
 Added in v1.5:
 
@@ -126,9 +126,12 @@ Added in v1.5:
 
 `editlesson` corrects one lesson's content, date or both, using the lesson number shown by `view`. A content-only edit keeps the lesson's number. A new date moves the lesson into date order, so the confirmation gives its new number.
 
-`find` shows students whose names contain every search keyword, ignoring case
-and keyword order; partial names are accepted. It searches all students each
-time and uses literal keywords without field prefixes or spelling correction.
+`find` shows students whose name, subject and level contain every keyword
+given for that field, ignoring case and keyword order; partial words are
+accepted. Bare keywords and `n/` search names, `sub/` subjects and `l/`
+levels, and every given field must match, so a tutor can bring up all Sec 3
+Physics students at once. It searches all students each time and uses literal
+keywords without spelling correction.
 Results keep their original order and are renumbered from 1. Commands and
 card clicks use these displayed indexes. `list` restores the full list.
 Adding or editing also restores it; viewing, logging and deleting students
@@ -173,7 +176,7 @@ recent date first. Lessons saved before v1.4 have no date and show
 - **`edit`, `find` and `clear` are removed for the MVP** and can be restored
   from Git history later. Removed from the code in issue #72 (Oct 14).
   `edit` was restored in issue #100 (Oct 20) for v1.4.
-  `find` was restored in issue #101 (Oct 20), with all-keyword partial matching; `clear` remains removed.
+  `find` was restored in issue #101 (Oct 20), with all-keyword partial matching, and extended to subject and level in issue #143 (Oct 25); `clear` remains removed.
 - **`view` replaces `lessons`** as the command for viewing a student's lessons.
 - **`/` is allowed in names** so that s/o and d/o work. `a/l` and `a/p` still
   fail because ` a/` is the address prefix, a documented MVP limitation.

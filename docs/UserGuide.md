@@ -124,18 +124,23 @@ Format: `list`
 
 <a href="images/list-students.png"><img src="images/list-students.png" alt="Listed 6 students after list restores the full list following find TAN" width="726"></a>
 
-### Finding students by name: `find`
+### Finding students: `find`
 
-Shows students whose names contain all the search keywords. You can use part of a name instead of typing the full name.
+Shows students whose name, subject or level contain the search keywords, for example to bring up every Sec 3 Physics student before preparing material for them. You can use part of a word instead of typing it in full.
 
-Format: `find KEYWORD [MORE_KEYWORDS]...`
+Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 
-* At least one keyword is required. `find` without keywords shows the invalid command format message and usage; the displayed list is unchanged.
-* Matching ignores uppercase/lowercase. `find TAN` and `find tan` give the same results.
-* Every keyword must occur somewhere in the name, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`.
-* Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no field prefixes, wildcard matching or spelling correction. Punctuation and accented characters must match as entered in the name, ignoring case.
+* At least one keyword or field is required. `find` on its own shows the invalid command format message and usage; the displayed list is unchanged.
+* Keywords typed before any prefix search names, as do the keywords after `n/`. `sub/` searches subjects and `l/` searches levels. `find tan`, `find n/tan` and `find tan n/wei` all search names.
+* Matching ignores uppercase/lowercase. `find TAN` and `find sub/physics` match `Tan` and `Physics`.
+* Every keyword must occur somewhere in its field, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`. `l/Sec 3` needs both `Sec` and `3` in the level.
+* When several fields are given, a student must match all of them. `find sub/Physics l/Sec 3` shows only Sec 3 students taking Physics.
+* Each field can be given at most once. `find sub/Math sub/Physics` is rejected with `Multiple values specified for the following single-valued field(s): sub/`.
+* A field cannot be blank. `find sub/` is rejected with the same message as an invalid subject in `add`, and likewise for `n/` and `l/`.
+* Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no wildcard matching or spelling correction. Punctuation and accented characters must match as entered, ignoring case.
+* Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
 * Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
-* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.`
+* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels.
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
 * Adding or editing a student also restores the full list. Viewing, logging and deleting use the current filter.
@@ -143,7 +148,9 @@ Format: `find KEYWORD [MORE_KEYWORDS]...`
 Examples:
 * `find ali` matches `Alice Tan` and `Alicia Lim`.
 * `find tan ming` matches `Tan Wei Ming` and `Ming Tan`.
-* `find Muthu a/l Raju` matches a saved name of `Muthu A/L Raju`; unlike `add` and `edit`, `find` does not interpret `a/` as an address prefix.
+* `find sub/Physics l/Sec 3` matches Sec 3 students taking Physics.
+* `find tan sub/math` matches students named Tan whose subject contains `math`, such as `E-Math` or `H2 Math`.
+* `find Muthu a/l Raju` matches a saved name of `Muthu A/L Raju`; unlike `add` and `edit`, `find` does not interpret `a/` as a prefix.
 
 **Screenshot example:** after `find TAN`, only Alex Tan and Ethan Tan are displayed, numbered 1 and 2:
 
@@ -396,7 +403,7 @@ Action     | Format, Examples
 **Delete lesson** | `deletelesson STUDENT_INDEX LESSON_INDEX`<br> e.g., `view 2`, then `deletelesson 2 1`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
 **Edit lesson** | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`<br> e.g., `editlesson 2 1 c/Vectors date/21/10/2026`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei` (use `list` to show all students again)
+**Find**   | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`<br> e.g., `find tan wei`, `find sub/Physics l/Sec 3` (use `list` to show all students again)
 **Flag**   | `flag INDEX [r/REASON]`<br> e.g., `flag 2 r/Missed homework twice`
 **Flagged** | `flagged` (use `list` to show all students again)
 **List**   | `list`
