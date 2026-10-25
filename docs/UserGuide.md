@@ -357,7 +357,7 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, TutorLah starts with an empty student list at the next run. A successful command can overwrite the invalid file. Back up the file before editing it. If your saved students unexpectedly disappear, close the window without entering commands, preserve the file, and repair or restore it before restarting.<br>
+If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so ordinary commands cannot overwrite the original file. Close TutorLah using the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
 Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 

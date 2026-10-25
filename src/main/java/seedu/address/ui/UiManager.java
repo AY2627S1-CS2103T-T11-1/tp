@@ -1,6 +1,9 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Platform;
@@ -26,14 +29,21 @@ public class UiManager implements Ui {
     private Logic logic;
     private Path dataFilePath;
     private MainWindow mainWindow;
+    private final Optional<String> startupWarning;
 
     /**
      * Creates a {@code UiManager} with the given {@code Logic} and the data file path
      * to show in the status bar.
      */
     public UiManager(Logic logic, Path dataFilePath) {
+        this(logic, dataFilePath, Optional.empty());
+    }
+
+    /** Creates the UI with an optional warning to show after the main window is ready. */
+    public UiManager(Logic logic, Path dataFilePath, Optional<String> startupWarning) {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
+        this.startupWarning = requireNonNull(startupWarning);
     }
 
     @Override
@@ -47,6 +57,8 @@ public class UiManager implements Ui {
             mainWindow = new MainWindow(primaryStage, logic, dataFilePath);
             mainWindow.show(); //This should be called before creating other UI parts
             mainWindow.fillInnerParts();
+            startupWarning.ifPresent(message -> showAlertDialogAndWait(AlertType.WARNING,
+                    "Student data could not be loaded", "Saving is disabled for this session", message));
 
         } catch (Throwable e) {
             logger.severe(StringUtil.getDetails(e));

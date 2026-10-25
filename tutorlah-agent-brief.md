@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 25, 2026, for issues #142 (student follow-up flags) and #145 (editing a lesson record).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record) and #117 (unreadable-file recovery).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -243,6 +243,8 @@ accepted by the parser. Commands apply these errors consistently:
 ---
 
 ## 5. Agreed Java interfaces (as on `master`)
+
+- If reading a student data file fails, that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location. The original student file is preserved. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples.
 
 - `seedu.address.model.person.Level` and `Subject`: same shape as
   `Address` (public `value`, `isValidLevel` / `isValidSubject`,

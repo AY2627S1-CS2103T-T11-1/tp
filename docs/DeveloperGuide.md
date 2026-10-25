@@ -15,7 +15,7 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation and student follow-up flags, and with the Logic/parser diagrams and Developer Guide maintenance.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and unreadable-file recovery, and with the Logic/parser diagrams and Developer Guide maintenance.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
@@ -154,6 +154,8 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions; `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. A genuinely missing file still loads sample students, and a valid saved empty list remains empty.
 
 ### Common classes
 
@@ -647,11 +649,16 @@ Automated coverage is in `FlagTest`, the three flag command and parser test clas
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+Use a separate test folder and fictional data only. Keep a valid copy of the student file before changing it.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Launch with no `data/addressbook.json`. Expected: sample students, no recovery warning, and normal saving after `list`.
+1. Save a fictional Amy Tan with an Algebra record, exit, and keep an exact copy of the JSON file. Remove a closing brace from the working copy and restart. Expected: a warning with the file location and repair/restart instructions, an empty list and saving disabled.
+1. Dismiss the warning and try `list`, `find amy`, `help`, `exit` and adding a fictional student. Expected: the saving-disabled error; the unreadable file remains byte-for-byte unchanged. Close the app with the window's close button.
+1. Restore the valid file and restart. Expected: Amy and Algebra return, no recovery warning appears, and new changes save normally.
+1. Repeat with valid JSON containing Amy's phone as `12`. Expected: the same protection and warning, because stored field validation also failed.
+1. Prepare a valid `{"persons": []}` file and restart. Expected: an empty list with no warning and normal saving. Valid legacy lesson records without a date still load as undated.
 
-1. _{ more test cases … }_
+`MainAppTest` and `JsonAddressBookStorageTest` exercise startup and subsequent commands with malformed JSON and invalid values, exact byte preservation, missing/legacy data, repair and restart. `PersonListPanelTest` checks that the recovery warning is requested after the window is shown and is absent during a normal start.
 
 ### Deleting lesson records
 

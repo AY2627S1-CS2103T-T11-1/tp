@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 25, 2026, for issues #142 (student follow-up flags) and #145 (editing a lesson record).
+Last updated: Oct 25, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record) and #117 (unreadable-file recovery).
 
 ## What it is
 
@@ -47,6 +47,8 @@ recorded about them, not building a new kind of app.
 - **Command style:** a command word, an index, then `prefix/value` parameters
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
+
+If an existing student file cannot be loaded, the app shows recovery instructions and disables saving for that session. Commands cannot overwrite the unreadable file. The tutor closes the window, backs up and repairs or restores the file, then restarts to resume normal use. A genuinely missing file still loads sample students.
 
 ## Where the changes land in the code
 

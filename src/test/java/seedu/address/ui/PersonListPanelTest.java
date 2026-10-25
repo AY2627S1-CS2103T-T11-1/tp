@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,6 +29,7 @@ import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -84,6 +86,55 @@ public class PersonListPanelTest {
     @TempDir
     public Path temporaryFolder;
 
+    @Test
+    public void start_recoveryWarning_showsAfterWindowIsReady() throws Exception {
+        runOnJavaFxThread(() -> {
+            Path file = temporaryFolder.resolve("students.json");
+            Logic logic = new LogicManager(new ModelManager(), new StorageManager(new JsonAddressBookStorage(file),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Stage stage = new Stage();
+            List<String> shownWarning = new ArrayList<>();
+            UiManager ui = new UiManager(logic, file, Optional.of("Recovery instructions")) {
+                @Override
+                void showAlertDialogAndWait(AlertType type, String title, String header, String content) {
+                    shownWarning.addAll(List.of(type.name(), title, header, content,
+                            Boolean.toString(stage.isShowing())));
+                }
+            };
+            try {
+                ui.start(stage);
+                assertEquals(List.of("WARNING", "Student data could not be loaded",
+                        "Saving is disabled for this session", "Recovery instructions", "true"), shownWarning);
+            } finally {
+                stage.hide();
+            }
+        });
+    }
+
+    @Test
+    public void start_normalSession_doesNotShowRecoveryWarning() throws Exception {
+        runOnJavaFxThread(() -> {
+            Path file = temporaryFolder.resolve("students.json");
+            Logic logic = new LogicManager(new ModelManager(), new StorageManager(new JsonAddressBookStorage(file),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Stage stage = new Stage();
+            List<String> warnings = new ArrayList<>();
+            UiManager ui = new UiManager(logic, file) {
+                @Override
+                void showAlertDialogAndWait(AlertType type, String title, String header, String content) {
+                    warnings.add(content);
+                }
+            };
+            try {
+                ui.start(stage);
+                assertTrue(stage.isShowing());
+                assertTrue(warnings.isEmpty());
+            } finally {
+                stage.hide();
+            }
+        });
+    }
+
     /**
      * Starts JavaFX and waits until its application thread is ready.
      *
@@ -92,7 +143,10 @@ public class PersonListPanelTest {
     @BeforeAll
     static void initialiseJavaFxToolkit() throws InterruptedException {
         CountDownLatch started = new CountDownLatch(1);
-        Platform.startup(started::countDown);
+        Platform.startup(() -> {
+            Platform.setImplicitExit(false);
+            started.countDown();
+        });
         assertTrue(started.await(FX_THREAD_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "Timed out waiting for JavaFX startup to complete");
         isJavaFxStarted = true;

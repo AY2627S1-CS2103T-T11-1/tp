@@ -19,9 +19,13 @@ import seedu.address.model.ReadOnlyAddressBook;
  */
 public class JsonAddressBookStorage {
 
+    public static final String MESSAGE_SAVE_BLOCKED = "Saving is disabled because the student data file could not "
+            + "be loaded. Close TutorLah, repair or restore the file, then restart.";
+
     private static final Logger logger = LogsCenter.getLogger(JsonAddressBookStorage.class);
 
     private Path filePath;
+    private boolean isSaveBlocked;
 
     public JsonAddressBookStorage(Path filePath) {
         this.filePath = filePath;
@@ -50,24 +54,27 @@ public class JsonAddressBookStorage {
     public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath) throws DataLoadingException {
         requireNonNull(filePath);
 
-        Optional<JsonSerializableAddressBook> jsonAddressBook = JsonUtil.readJsonFile(
-                filePath, JsonSerializableAddressBook.class);
-        if (!jsonAddressBook.isPresent()) {
-            return Optional.empty();
-        }
-
         try {
+            Optional<JsonSerializableAddressBook> jsonAddressBook = JsonUtil.readJsonFile(
+                    filePath, JsonSerializableAddressBook.class);
+            if (jsonAddressBook.isEmpty()) {
+                return Optional.empty();
+            }
             return Optional.of(jsonAddressBook.get().toModelType());
         } catch (IllegalValueException ive) {
+            isSaveBlocked = true;
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive);
+        } catch (DataLoadingException e) {
+            isSaveBlocked = true;
+            throw e;
         }
     }
 
     /**
      * Saves the given {@link ReadOnlyAddressBook} to the storage.
      * @param addressBook cannot be null.
-     * @throws IOException if there was any problem writing to the file.
+     * @throws IOException if there was any problem writing to the file, or a previous read failed.
      */
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
         saveAddressBook(addressBook, filePath);
@@ -81,6 +88,10 @@ public class JsonAddressBookStorage {
     public void saveAddressBook(ReadOnlyAddressBook addressBook, Path filePath) throws IOException {
         requireNonNull(addressBook);
         requireNonNull(filePath);
+
+        if (isSaveBlocked) {
+            throw new IOException(MESSAGE_SAVE_BLOCKED);
+        }
 
         FileUtil.createIfMissing(filePath);
         JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);

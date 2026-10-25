@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -9,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -58,6 +60,49 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void saveAddressBook_afterFailedRead_blocksBothSaveOverloadsWithoutChangingFiles() throws Exception {
+        Path file = testFolder.resolve("invalid.json");
+        Files.writeString(file, "{broken student data}");
+        byte[] original = Files.readAllBytes(file);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        assertThrows(DataLoadingException.class, () -> storage.readAddressBook());
+
+        assertThrows(IOException.class, JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED, () ->
+                storage.saveAddressBook(new AddressBook()));
+        assertThrows(IOException.class, JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED, () ->
+                storage.saveAddressBook(getTypicalAddressBook(), file));
+        assertArrayEquals(original, Files.readAllBytes(file));
+    }
+
+    @Test
+    public void saveAddressBook_afterRepair_staysBlockedUntilNewStorageSession() throws Exception {
+        Path file = testFolder.resolve("repaired.json");
+        Files.writeString(file, "{broken student data}");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        assertThrows(DataLoadingException.class, () -> storage.readAddressBook());
+        Files.writeString(file, "{\"persons\":[]}");
+        assertEquals(new AddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
+        assertThrows(IOException.class, JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED, () ->
+                storage.saveAddressBook(getTypicalAddressBook()));
+        assertEquals("{\"persons\":[]}", Files.readString(file));
+
+        JsonAddressBookStorage restarted = new JsonAddressBookStorage(file);
+        restarted.readAddressBook();
+        restarted.saveAddressBook(getTypicalAddressBook());
+        assertEquals(getTypicalAddressBook(), new AddressBook(restarted.readAddressBook().orElseThrow()));
+    }
+
+    @Test
+    public void readAddressBook_ioFailure_blocksSaving() throws Exception {
+        Path directory = testFolder.resolve("students.json");
+        Files.createDirectory(directory);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(directory);
+        assertThrows(DataLoadingException.class, () -> storage.readAddressBook());
+        assertThrows(IOException.class, JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED, () ->
+                storage.saveAddressBook(getTypicalAddressBook()));
     }
 
     @Test
