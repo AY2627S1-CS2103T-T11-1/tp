@@ -110,6 +110,10 @@ The sequence diagram below follows the successful execution of `deletelesson 1 2
 
 <puml src="diagrams/DeleteLessonSequenceDiagram.puml" alt="Successful lesson-deletion sequence from command parsing through replacing the student in Model" width="950" />
 
+Student deletion follows a related but distinct path. For a successful `delete 1`, `DeleteCommand` resolves the index against the currently displayed filtered list, validates it, and passes the selected `Person` rather than the numeric index to `Model#deletePerson`. The local validation and selection steps are summarized in a note because they are not calls to another participant. Removing that student also removes their owned lesson history. Parser internals and the common persistence path are omitted for the same reasons as above.
+
+<puml src="diagrams/DeleteStudentSequenceDiagram.puml" alt="Successful student-deletion sequence using the displayed student index and the selected Person" width="950" />
+
 The following diagram focuses on parser selection and command creation:
 
 <a href="diagrams/ParserClasses.png" no-validation><puml src="diagrams/ParserClasses.puml" alt="Partial parser class diagram showing selection of lesson parsers and creation of their commands" width="520" /></a>
