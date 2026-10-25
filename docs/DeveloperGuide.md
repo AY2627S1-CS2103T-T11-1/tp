@@ -15,7 +15,7 @@
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `NameContainsKeywordsPredicate` are adapted from AB3's find feature, with all-keyword substring matching and student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation and student follow-up flags, and with the Logic/parser diagrams and Developer Guide maintenance.
+* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
@@ -104,7 +104,7 @@ How command execution works:
 
 `CommandResult` contains feedback and the help/exit flags. A successful `view` also supplies a displayed student `Index`, even for an empty history; other commands leave it absent (`0..1`). The UI uses it to highlight the student, as shown in [Viewing lesson history](#viewing-lesson-history).
 
-Invalid input raises `ParseException`; execution or save failures raise `CommandException`. A failed save prevents the normal result from reaching the UI, but does not roll back a change already made to the model.
+Invalid input raises `ParseException`; execution or save failures raise `CommandException`. Before executing a parsed command, `LogicManager` copies the address book and captures the current filter through `Model#getFilteredPersonListPredicate`. Student, lesson and flag values are immutable, so the copied list preserves the previous values. If saving throws `IOException`, including `AccessDeniedException`, the manager restores changed data through `Model#setAddressBook` and reapplies the captured predicate before reporting the existing save error. Capturing the predicate, rather than only the visible students, preserves its meaning for later updates. The existing observable list remains connected to the UI, and a retry uses the original displayed indexes.
 
 The sequence diagram below follows the successful execution of `deletelesson 1 2`. It shows how the command validates displayed indexes, converts the newest-first lesson number to the stored position, and replaces the student with an updated immutable value. Calls on the returned `Person` value are summarized in a note so that the diagram exposes only Logic internals and treats Model as a black box. Parser internals and persistence are omitted here; they are covered by the parser class diagram and architecture sequence diagram respectively.
 
@@ -510,7 +510,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 ### Non-Functional Requirements
 
-These are product requirements, not a claim that every target has been verified. The save-failure limitation under data integrity remains a gap in the intended guarantees.
+These are product requirements, not a claim that every target has been verified.
 
 1.  **Platform support:** TutorLah should work on Windows, Linux and macOS.
 2.  **Java version:** TutorLah should work with Java `25`.
@@ -521,7 +521,7 @@ These are product requirements, not a claim that every target has been verified.
 7.  **Data persistence:** After a successful command, TutorLah should save the complete student and lesson data locally before returning success feedback.
 8.  **Data integrity:** A failed command should not add, delete or modify student or lesson records.
 
-    **Known limitation:** `LogicManager` updates the model before saving. If saving fails, it reports an error but does not roll back the in-memory change.
+    If saving fails, `LogicManager` restores the preceding student data and active filter before reporting the error.
 
 9.  **Human-editable storage:** Data should be stored locally in human-editable JSON, without a database management system.
 10. **Offline operation:** Student and lesson management should work offline. Accessing the online User Guide requires an internet connection.
@@ -646,6 +646,19 @@ Use a separate test directory containing two fictional students. Enter the follo
 Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
 
 ### Saving data
+
+#### Recovering from a failed save
+
+Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim with different phone numbers, then enter `find amy`.
+
+1. Keep the app running. Move `data/addressbook.json` to `data/addressbook.saved.json`, then create an empty directory named `data/addressbook.json` at the old file location.
+1. Enter `delete 1`. Expected: a save error, with Amy still visible as student 1. The preserved JSON file still contains both students.
+1. Remove the empty directory and move `data/addressbook.saved.json` back to `data/addressbook.json`. Enter `list`. Expected: both students remain; the failed deletion was not saved by this later command.
+1. Enter `find amy`, then `delete 1`. Expected: Amy is deleted exactly once. `list` shows Ben, and a restart retains him.
+
+`SaveFailureRollbackTest` also covers IO and permission failures for add, edit, log, delete, deletelesson, editlesson, flag and unflag, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
+
+#### Missing or corrupted files
 
 1. Dealing with missing/corrupted data files
 
