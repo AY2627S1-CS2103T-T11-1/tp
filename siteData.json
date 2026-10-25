@@ -54,6 +54,7 @@
         "viewing-lesson-history": "Viewing lesson history",
         "rejecting-blank-unicode-fields": "Rejecting blank Unicode fields",
         "deleting-an-individual-lesson-record": "Deleting an individual lesson record",
+        "editing-a-lesson-record": "Editing a lesson record",
         "finding-students-by-name": "Finding students by name",
         "flagging-students-for-follow-up": "Flagging students for follow-up",
         "documentation-logging-testing-configuration-dev-ops": "Documentation, logging, testing, configuration, dev-ops",
@@ -71,6 +72,7 @@
         "flagging-students-for-follow-up-2": "Flagging students for follow-up",
         "saving-data": "Saving data",
         "deleting-lesson-records": "Deleting lesson records",
+        "editing-lesson-records": "Editing lesson records",
         "finding-students-and-restoring-the-full-list": "Finding students and restoring the full list",
         "lesson-history-command-sequences": "Lesson-history command sequences",
         "lesson-dates-and-data-saved-by-v1-3": "Lesson dates and data saved by v1.3"
@@ -132,6 +134,7 @@
         "reading-long-command-results": "Reading long command results",
         "logging-a-lesson-log": "Logging a lesson: log",
         "deleting-a-lesson-record-deletelesson": "Deleting a lesson record: deletelesson",
+        "editing-a-lesson-record-editlesson": "Editing a lesson record: editlesson",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
         "editing-the-data-file": "Editing the data file",
