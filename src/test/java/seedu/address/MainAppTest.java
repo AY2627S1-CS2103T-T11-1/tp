@@ -3,6 +3,7 @@ package seedu.address;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -35,6 +36,43 @@ import seedu.address.testutil.PersonBuilder;
 public class MainAppTest {
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void init_unreadableFile_initializesUiAndProtectedStorage() throws Exception {
+        Path file = temporaryFolder.resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        byte[] original = "{unreadable student data}".getBytes(StandardCharsets.UTF_8);
+        Files.write(file, original);
+        MainApp app = new MainApp(preferences, file);
+
+        app.init();
+        assertNotNull(app.ui);
+        assertTrue(app.getStartupWarning().isPresent());
+        assertEquals(file, app.storage.getAddressBookFilePath());
+        assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
+        assertThrows(CommandException.class, LogicManager.FILE_OPS_ERROR_FORMAT.formatted(
+                JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED), () -> app.logic.execute("list"));
+        app.stop();
+        assertArrayEquals(original, Files.readAllBytes(file));
+        assertTrue(Files.exists(preferences));
+    }
+
+    @Test
+    public void init_validFile_initializesUiAndNormalSaving() throws Exception {
+        Path file = temporaryFolder.resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Files.writeString(file, "{\"persons\":[]}");
+        MainApp app = new MainApp(preferences, file);
+
+        app.init();
+        assertNotNull(app.ui);
+        assertTrue(app.getStartupWarning().isEmpty());
+        app.logic.execute("add n/Amy Tan p/81230011 a/10 Example Street l/Sec 3 sub/E-Math");
+        app.stop();
+        assertEquals(app.model.getAddressBook(), new AddressBook(app.storage.readAddressBook().orElseThrow()));
+        assertEquals(1, app.model.getAddressBook().getPersonList().size());
+        assertTrue(Files.exists(preferences));
+    }
 
     @TestFactory
     public Stream<DynamicTest> initModelManager_unreadableFile_commandsPreserveOriginalBytes() {
