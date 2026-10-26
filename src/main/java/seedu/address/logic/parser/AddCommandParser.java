@@ -23,6 +23,12 @@ import seedu.address.model.person.Subject;
  */
 public class AddCommandParser implements Parser<AddCommand> {
 
+    /** Shown when the address is missing but the address prefix used before v1.5 was typed. */
+    public static final String MESSAGE_ADDRESS_PREFIX_HINT =
+            "The address prefix is " + PREFIX_ADDRESS + ", for example " + PREFIX_ADDRESS + "1 Example Street.";
+
+    private static final String OLD_ADDRESS_PREFIX = "a/";
+
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
@@ -34,7 +40,10 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PHONE, PREFIX_ADDRESS, PREFIX_LEVEL, PREFIX_SUBJECT)
                 || !argMultimap.getPreamble().isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+            String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+            boolean usesOldAddressPrefix = argMultimap.getValue(PREFIX_ADDRESS).isEmpty()
+                    && args.matches("(?s).*(^|\\s)" + OLD_ADDRESS_PREFIX + ".*");
+            throw new ParseException(usesOldAddressPrefix ? usage + "\n" + MESSAGE_ADDRESS_PREFIX_HINT : usage);
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(

@@ -70,7 +70,7 @@ public class MainAppTest {
         app.init();
         assertNotNull(app.ui);
         assertTrue(app.getStartupWarning().isEmpty());
-        app.logic.execute("add n/Amy Tan p/81230011 a/10 Example Street l/Sec 3 sub/E-Math");
+        app.logic.execute("add n/Amy Tan p/81230011 addr/10 Example Street l/Sec 3 sub/E-Math");
         app.stop();
         assertEquals(app.model.getAddressBook(), new AddressBook(app.storage.readAddressBook().orElseThrow()));
         assertEquals(1, app.model.getAddressBook().getPersonList().size());
@@ -135,7 +135,7 @@ public class MainAppTest {
             }
             assertThrows(CommandException.class, LogicManager.FILE_OPS_ERROR_FORMAT.formatted(
                     JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED), () -> logic.execute(
-                        "add n/Ben Lim p/81230012 a/20 Example Street l/JC1 sub/H2 Math"));
+                        "add n/Ben Lim p/81230012 addr/20 Example Street l/JC1 sub/H2 Math"));
             assertTrue(model.getAddressBook().getPersonList().isEmpty());
             assertArrayEquals(original, Files.readAllBytes(file));
         }));
@@ -189,7 +189,7 @@ public class MainAppTest {
         Model model = app.initModelManager(restartedStorage, new UserPrefs());
         assertTrue(app.getStartupWarning().isEmpty());
         new LogicManager(model, restartedStorage)
-                .execute("add n/Amy Tan p/81230011 a/10 Example Street l/Sec 3 sub/E-Math");
+                .execute("add n/Amy Tan p/81230011 addr/10 Example Street l/Sec 3 sub/E-Math");
         assertEquals(1, restartedStorage.readAddressBook().orElseThrow().getPersonList().size());
     }
 

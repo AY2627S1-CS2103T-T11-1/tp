@@ -84,7 +84,7 @@ public class SummaryCommandTest {
         Path file = temporaryFolder.resolve("students.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         Logic logic = logic(model, storage);
-        logic.execute("add n/Amy Tan p/81230001 a/10 Example Street l/Sec 3 sub/E-Math");
+        logic.execute("add n/Amy Tan p/81230001 addr/10 Example Street l/Sec 3 sub/E-Math");
         assertEquals("Summary:\n"
                 + "You have 1 student and 0 lesson records in total. 1 student has no lessons recorded.",
                 logic.execute("summary").getFeedbackToUser());

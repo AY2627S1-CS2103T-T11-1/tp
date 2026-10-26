@@ -61,7 +61,7 @@ public class UnicodeBlankInputIntegrationTest {
     @Test
     public void execute_addBlankAddress_keepsStudentsFilterAndSavedData() throws Exception {
         for (String blank : BLANK_VALUES) {
-            assertRejectedAndUnchanged("add n/Bea Tan p/81234569 a/" + blank + " l/Sec 2 sub/E-Math",
+            assertRejectedAndUnchanged("add n/Bea Tan p/81234569 addr/" + blank + " l/Sec 2 sub/E-Math",
                     Address.MESSAGE_CONSTRAINTS);
         }
     }
@@ -69,7 +69,7 @@ public class UnicodeBlankInputIntegrationTest {
     @Test
     public void execute_editBlankAddress_keepsStudentsFilterAndSavedData() throws Exception {
         for (String blank : BLANK_VALUES) {
-            assertRejectedAndUnchanged("edit 1 a/" + blank, Address.MESSAGE_CONSTRAINTS);
+            assertRejectedAndUnchanged("edit 1 addr/" + blank, Address.MESSAGE_CONSTRAINTS);
         }
     }
 
@@ -84,10 +84,10 @@ public class UnicodeBlankInputIntegrationTest {
     public void execute_visibleUnicodeFields_preservesTextAndFormattingAfterReload() throws Exception {
         String address = "碧山街\u3000十号\u00a0#01-23";
         String content = "代数\u2003复习\u00a0Q1-5   完成 👩\u200d🏫";
-        logic.execute("add n/小明 Tan p/81234569 a/" + address + " l/Sec 2 sub/E-Math");
+        logic.execute("add n/小明 Tan p/81234569 addr/" + address + " l/Sec 2 sub/E-Math");
         logic.execute("log 3 c/" + content);
         String editedAddress = "خیابان\u200cشمالی\u300012\u00a0#02-34";
-        logic.execute("edit 3 a/" + editedAddress);
+        logic.execute("edit 3 addr/" + editedAddress);
         List<Person> savedStudents = storage.readAddressBook().orElseThrow().getPersonList();
         assertEquals(model.getAddressBook().getPersonList(), savedStudents);
         assertEquals(List.of(AMY, BEN), savedStudents.subList(0, 2));

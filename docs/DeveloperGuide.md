@@ -678,12 +678,16 @@ on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` o
 
 Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start TutorLah with `java -jar /absolute/path/to/TutorLah.jar` so the test does not use real student data.
 
-1. Enter `add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math`.<br>
+1. Enter `add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math`.<br>
    Expected: `New student added: Amy Tan; Phone: 81230011; Address: 11 Example Street; Level: Sec 3; Subject: E-Math`, and Amy appears as student 1.
-1. Enter `add n/amy tan p/81230011 a/99 Other Street l/Sec 4 sub/A-Math`.<br>
+1. Enter `add n/amy tan p/81230011 addr/99 Other Street l/Sec 4 sub/A-Math`.<br>
    Expected: `This student already exists in the list.` because the phone is identical and the name differs only by case. Amy's existing details remain unchanged.
-1. Enter `add n/Amy Tan p/81230012 a/12 Example Street l/JC1 sub/H2 Math`.<br>
+1. Enter `add n/Amy Tan p/81230012 addr/12 Example Street l/JC1 sub/H2 Math`.<br>
    Expected: the second Amy is accepted because the phone differs, and both students remain visible.
+1. Enter `add n/Muthu a/l Raju p/81230013 addr/13 Example Street l/Sec 2 sub/E-Math`, then `edit 3 n/Siti a/p Ahmad`, then `delete 3`.<br>
+   Expected: the student is added with the full name `Muthu a/l Raju`; the edit changes only the name to `Siti a/p Ahmad`, and the address stays `13 Example Street`. `delete 3` then removes this student, so the two Amy Tan students remain for the following steps.
+1. Enter `add n/Ben Lim p/81230014 a/14 Example Street l/Sec 2 sub/E-Math`, using the old `a/` prefix.<br>
+   Expected: the add-command usage followed by `The address prefix is addr/, for example addr/1 Example Street.` No student is added.
 1. Try omitting each required prefix in turn. Also try `p/123`, `l/`, `sub/`, a 101-character name and an address containing only spaces.<br>
    Expected: each command is rejected with either the add-command usage or the relevant field constraint. Neither existing student changes.
 
@@ -703,8 +707,8 @@ Continue with the two fictional students created above.
 Use another isolated test folder. Before launching, create `data/addressbook.json` containing `{"persons": []}`; a missing file would load sample students. Launch with `java -jar /absolute/path/to/TutorLah.jar`, then enter these commands in order:
 
 ```text
-add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
-add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 log 1 c/Algebra
 log 2 c/Calculus
 ```
@@ -761,8 +765,8 @@ Use a separate test folder and fictional data only. Keep a valid copy of the stu
 Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start with `java -jar /absolute/path/to/TutorLah.jar`, then enter:
 
 ```text
-add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
-add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 log 1 c/Algebra
 log 1 c/Geometry
 log 1 c/Algebra
@@ -791,7 +795,7 @@ Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTe
 These steps need today's date to be 23/10/2026 or later. Use a separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching. Start with `java -jar /absolute/path/to/TutorLah.jar`, then enter:
 
 ```text
-add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
+add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
 log 1 c/Algebra date/19/10/2026
 log 1 c/Vectors date/21/10/2026
 log 1 c/Trigonometry date/23/10/2026
@@ -819,9 +823,9 @@ Automated coverage is in `EditLessonCommandParserTest`, `EditLessonCommandTest`,
 Use a separate test directory and fictional data only. Before launching, create `data/addressbook.json` inside that directory containing `{"persons": []}`. A missing file loads sample students, so this valid empty file is needed for the indexes below. Start with `java -jar /absolute/path/to/TutorLah.jar`, then add these students in order:
 
 ```text
-add n/Tan Wei Ming p/81230001 a/10 Example Street l/Sec 3 sub/E-Math
-add n/Tan Wei Jie p/81230002 a/20 Example Street l/Sec 4 sub/A-Math
-add n/Alicia Lim p/81230003 a/30 Example Street l/JC1 sub/H2 Math
+add n/Tan Wei Ming p/81230001 addr/10 Example Street l/Sec 3 sub/E-Math
+add n/Tan Wei Jie p/81230002 addr/20 Example Street l/Sec 4 sub/A-Math
+add n/Alicia Lim p/81230003 addr/30 Example Street l/JC1 sub/H2 Math
 ```
 
 1. Enter `find WEI`. Expected: only the two Wei students, numbered 1 and 2, with `Found 2 students.`.
@@ -840,8 +844,8 @@ add n/Alicia Lim p/81230003 a/30 Example Street l/JC1 sub/H2 Math
 Use another separate test directory with `data/addressbook.json` containing `{"persons": []}`, prepared before launching as above. Start with `java -jar /absolute/path/to/TutorLah.jar`. The app stores data in the working directory; keep real student data out of this directory. Add these fictional students in order:
 
 ```text
-add n/Amy Tan p/81230011 a/11 Example Street l/Sec 3 sub/E-Math
-add n/Ben Lim p/81230012 a/12 Example Street l/JC1 sub/H2 Math
+add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 ```
 
 1. Enter `view 1`. Expected: `No lessons logged yet for Amy Tan.` and Amy's card highlighted, even though her history is empty.

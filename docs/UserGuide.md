@@ -40,7 +40,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
    * `flagged` : Shows all students currently marked for follow-up.
 
-   * `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
+   * `add n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
 
    * `log 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
 
@@ -95,10 +95,11 @@ Format: `help`
 
 Adds a student to the end of the student list.
 
-Format: `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT`
+Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 
 * All five fields are required.
-* `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar` work, but see [Known issues](#known-issues) for names containing `a/l` or `a/p`.
+* `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar`, `Muthu a/l Raju` and `Siti a/p Ahmad` work.
+* The address prefix is `addr/`, not `a/`, so `a/l` and `a/p` in a name are kept as part of the name. If you type `a/` and leave out `addr/`, the error message reminds you to use `addr/`.
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 20 characters of letters, digits and spaces, such as `Sec 3` or `JC1`.
@@ -106,12 +107,12 @@ Format: `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT`
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
 
 Examples:
-* `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
-* `add n/Ramesh s/o Kumar p/9123 4567 a/12 Clementi Rd l/Sec 3 sub/Physics`
+* `add n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
+* `add n/Ramesh s/o Kumar p/9123 4567 addr/12 Clementi Rd l/Sec 3 sub/Physics`
 
-**Screenshot example:** `add n/Jamie Lee p/81230007 a/60 Example Street l/JC1 sub/H2 Math` adds a JC1 student taking H2 Math. The confirmation and Jamie's card show the saved details. The student list has been scrolled down to show the new card:
+**Screenshot example:** `add n/Jamie Lee p/81230007 addr/60 Example Street l/JC1 sub/H2 Math` adds a JC1 student taking H2 Math. The confirmation and Jamie's card show the saved details. The student list has been scrolled down to show the new card:
 
-<a href="images/add-student.png"><img src="images/add-student.png" alt="Add confirmation and Jamie Lee's new student card after add n/Jamie Lee p/81230007 a/60 Example Street l/JC1 sub/H2 Math" width="726"></a>
+<a href="images/add-student.png"><img src="images/add-student.png" alt="Add confirmation and Jamie Lee's new student card after add n/Jamie Lee p/81230007 addr/60 Example Street l/JC1 sub/H2 Math" width="726"></a>
 
 ### Listing all students: `list`
 
@@ -190,7 +191,7 @@ Examples:
 * `find tan ming` matches `Tan Wei Ming` and `Ming Tan`.
 * `find sub/Physics l/Sec 3` matches Sec 3 students taking Physics.
 * `find tan sub/math` matches students named Tan whose subject contains `math`, such as `E-Math` or `H2 Math`.
-* `find Muthu a/l Raju` matches a saved name of `Muthu A/L Raju`; unlike `add` and `edit`, `find` does not interpret `a/` as a prefix.
+* `find Muthu a/l Raju` matches a saved name of `Muthu A/L Raju`.
 
 **Screenshot example:** after `find TAN`, only Alex Tan and Ethan Tan are displayed, numbered 1 and 2:
 
@@ -235,7 +236,7 @@ Flags are saved automatically. Editing a student's details, logging a lesson or 
 
 Changes the details of an existing student. The student's lesson records and follow-up flag are kept.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
 
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
 * At least one field must be given. Fields can be given in any order, and each field can be given at most once.
@@ -243,7 +244,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`
 * Lesson records and the follow-up flag are not changed, and `view` shows the lessons as before.
 * Editing a student so that they have the same phone number and the same name as another student, ignoring case, is rejected with `This student already exists in the list.`
 * If no field is given, for example `edit 1`, the edit is rejected with `At least one field to edit must be provided.`
-* **Caution:** a new name containing ` a/` after a space, such as `Muthu a/l Raju`, is not rejected by `edit`. It changes the student's address instead. Type it in capitals, for example `n/Muthu A/L Raju`. See [Known issues](#known-issues).
+* A new name containing `a/l` or `a/p`, such as `edit 1 n/Muthu a/l Raju`, changes only the name; the address stays the same.
 
 Examples:
 * `edit 1 p/91234567` changes the phone number of the 1st student.
@@ -475,10 +476,6 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-3. **Names with `a/` after a space**, such as `Muthu a/l Raju` or `Siti a/p Ahmad`, are read as two fields, because ` a/` marks the start of the address:
-   * With `add`, the command is rejected, because the address is then given twice.
-   * With `edit`, the command succeeds but **changes the address**. For example, `edit 1 n/Muthu a/l Raju` sets the name to `Muthu` and replaces the student's address with `l Raju`.
-   * The remedy is to type it in capitals, for example `n/Muthu A/L Raju`, as prefixes are case-sensitive. This keeps the full name and leaves the address unchanged.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -486,10 +483,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` <br> e.g., `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
+**Add**    | `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT` <br> e.g., `add n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Delete lesson** | `deletelesson STUDENT_INDEX LESSON_INDEX`<br> e.g., `view 2`, then `deletelesson 2 1`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
 **Edit lesson** | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`<br> e.g., `editlesson 2 1 c/Vectors date/21/10/2026`
 **Find**   | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`<br> e.g., `find tan wei`, `find sub/Physics l/Sec 3` (use `list` to show all students again)
 **Find lesson** | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`<br> e.g., `findlesson 2 algebra from/01/10/2026`

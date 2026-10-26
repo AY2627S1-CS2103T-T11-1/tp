@@ -490,7 +490,7 @@ public class PersonListPanelTest {
                 assertTrue(model.getAddressBook().getPersonList().isEmpty());
                 assertTrue(emptyState.isVisible());
                 assertEmptyStateGuidance(emptyState);
-                enterClickTestCommand(root, "add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math");
+                enterClickTestCommand(root, "add n/Alice Tan p/81234567 addr/10 Short Street l/Sec 2 sub/E-Math");
                 assertEquals(1, model.getAddressBook().getPersonList().size());
                 assertFalse(emptyState.isVisible());
             } finally {
@@ -504,8 +504,8 @@ public class PersonListPanelTest {
                 .map(node -> ((Label) node).getText()).toList();
         assertTrue(instructions.contains("No students to display."));
         assertTrue(instructions.contains("Type list to show all students, or add one:"));
-        assertTrue(instructions.contains("add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT"));
-        assertTrue(instructions.contains("add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math"));
+        assertTrue(instructions.contains("add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT"));
+        assertTrue(instructions.contains("add n/Alice Tan p/81234567 addr/10 Short Street l/Sec 2 sub/E-Math"));
     }
 
     @Test
@@ -720,7 +720,7 @@ public class PersonListPanelTest {
                 assertTrue(result.getText().startsWith("Deleted student: Amy;"));
                 clickStudent(root, 0);
                 assertEquals("No lessons logged yet for Ben.", result.getText());
-                enterClickTestCommand(root, "add n/Carol p/81234569 a/Test Address l/JC1 sub/H2 Math");
+                enterClickTestCommand(root, "add n/Carol p/81234569 addr/Test Address l/JC1 sub/H2 Math");
                 assertTrue(result.getText().startsWith("New student added: Carol;"));
                 clickStudent(root, 1);
                 assertEquals("No lessons logged yet for Carol.", result.getText());
@@ -1062,9 +1062,9 @@ public class PersonListPanelTest {
                 String historyBefore = result.getText();
                 for (String blank : List.of("\u2003", "\u3000", "\u00a0", "\u200b", "\u2060", "\ufeff",
                         " \u2003\u200b\u2060 ")) {
-                    assertFeedback(root, "add n/Bea Tan p/81234569 a/" + blank + " l/Sec 2 sub/E-Math",
+                    assertFeedback(root, "add n/Bea Tan p/81234569 addr/" + blank + " l/Sec 2 sub/E-Math",
                             Address.MESSAGE_CONSTRAINTS, true);
-                    assertFeedback(root, "edit 1 a/" + blank, Address.MESSAGE_CONSTRAINTS, true);
+                    assertFeedback(root, "edit 1 addr/" + blank, Address.MESSAGE_CONSTRAINTS, true);
                     assertFeedback(root, "log 1 c/" + blank, Lesson.MESSAGE_CONSTRAINTS, true);
                     assertEquals(before, model.getAddressBook().getPersonList());
                 }
