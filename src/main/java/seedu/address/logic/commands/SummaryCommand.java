@@ -16,15 +16,12 @@ public class SummaryCommand extends Command {
             + ": Shows totals for all students and lesson records. Accepts no parameters.\n"
             + "Example: " + COMMAND_WORD;
 
-    public static final String MESSAGE_SUCCESS = "Summary:\nStudents: %1$d\nLesson records: %2$d"
-            + "\nStudents with no lessons: %3$d";
+    public static final String MESSAGE_SUCCESS = "Summary:\n%1$s";
 
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         StudentSummary summary = new StudentSummary(model.getAddressBook());
-        return new CommandResult(String.format(MESSAGE_SUCCESS, summary.getStudentCount(),
-                summary.getLessonCount(), summary.getStudentsWithoutLessons())
-                + "\n\n" + Messages.formatSummaryParagraph(summary));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.formatSummaryParagraph(summary)));
     }
 }

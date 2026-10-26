@@ -39,7 +39,7 @@ public class SummaryCommandTest {
     @Test
     public void execute_emptyModel_reportsZero() {
         CommandResult result = new SummaryCommand().execute(new ModelManager());
-        assertEquals(new CommandResult("Summary:\nStudents: 0\nLesson records: 0\nStudents with no lessons: 0\n\n"
+        assertEquals(new CommandResult("Summary:\n"
                 + "No students yet. Add a student to start recording lessons."),
                 result);
     }
@@ -59,7 +59,7 @@ public class SummaryCommandTest {
             logic.execute(filter);
             List<Person> visible = List.copyOf(logic.getFilteredPersonList());
             var liveList = logic.getFilteredPersonList();
-            assertEquals("Summary:\nStudents: 2\nLesson records: 2\nStudents with no lessons: 1\n\n"
+            assertEquals("Summary:\n"
                 + "You have 2 students and 2 lesson records in total. 1 student has no lessons recorded.",
                     logic.execute("summary").getFeedbackToUser());
             assertEquals(visible, logic.getFilteredPersonList());
@@ -72,7 +72,7 @@ public class SummaryCommandTest {
                 SummaryCommand.MESSAGE_USAGE), () -> logic.execute("summary 1"));
         assertEquals("Ben Lim", logic.getFilteredPersonList().getFirst().getName().fullName);
         logic.execute("delete 1");
-        assertEquals("Summary:\nStudents: 1\nLesson records: 2\nStudents with no lessons: 0\n\n"
+        assertEquals("Summary:\n"
                 + "You have 1 student and 2 lesson records in total. Every student has at least one lesson recorded.",
                 logic.execute("summary").getFeedbackToUser());
         assertTrue(logic.getFilteredPersonList().isEmpty());
@@ -85,18 +85,18 @@ public class SummaryCommandTest {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         Logic logic = logic(model, storage);
         logic.execute("add n/Amy Tan p/81230001 a/10 Example Street l/Sec 3 sub/E-Math");
-        assertEquals("Summary:\nStudents: 1\nLesson records: 0\nStudents with no lessons: 1\n\n"
+        assertEquals("Summary:\n"
                 + "You have 1 student and 0 lesson records in total. 1 student has no lessons recorded.",
                 logic.execute("summary").getFeedbackToUser());
         logic.execute("log 1 c/Algebra date/2/1/2020");
         logic.execute("editlesson 1 1 c/Vectors date/1/1/2020");
-        assertEquals("Summary:\nStudents: 1\nLesson records: 1\nStudents with no lessons: 0\n\n"
+        assertEquals("Summary:\n"
                 + "You have 1 student and 1 lesson record in total. Every student has at least one lesson recorded.",
                 logic.execute("summary").getFeedbackToUser());
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), model.getUserPrefs());
         assertEquals(new SummaryCommand().execute(model), new SummaryCommand().execute(reloaded));
         logic.execute("deletelesson 1 1");
-        assertEquals("Summary:\nStudents: 1\nLesson records: 0\nStudents with no lessons: 1\n\n"
+        assertEquals("Summary:\n"
                 + "You have 1 student and 0 lesson records in total. 1 student has no lessons recorded.",
                 logic.execute("summary").getFeedbackToUser());
     }

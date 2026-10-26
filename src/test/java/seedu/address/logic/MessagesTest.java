@@ -56,9 +56,9 @@ public class MessagesTest {
         Person student = new PersonBuilder().build();
         assertEquals("No lessons yet", Messages.formatLessonStatus(student));
         student = student.withLessonAdded(new Lesson("Algebra"));
-        assertEquals("1 lesson, last (undated)", Messages.formatLessonStatus(student));
+        assertEquals("1 lesson (undated)", Messages.formatLessonStatus(student));
         student = student.withLessonAdded(new Lesson("Geometry"));
-        assertEquals("2 lessons, last (undated)", Messages.formatLessonStatus(student));
+        assertEquals("2 lessons (undated)", Messages.formatLessonStatus(student));
         student = student.withLessonAdded(new Lesson("Vectors", LocalDate.of(2020, 3, 5)));
         assertEquals("3 lessons, last 05/03/2020", Messages.formatLessonStatus(student));
         Person dated = new PersonBuilder().build().withLessonAdded(new Lesson("Algebra", LocalDate.of(2020, 1, 2)));

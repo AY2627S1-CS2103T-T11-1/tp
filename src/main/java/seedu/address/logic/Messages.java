@@ -75,10 +75,10 @@ public class Messages {
         if (count == 0) {
             return "No lessons yet";
         }
-        String lastDate = person.getLatestLessonDate()
-                .map(date -> date.format(LESSON_DATE_FORMATTER))
-                .orElse(UNDATED_LESSON);
-        return count + (count == 1 ? " lesson, last " : " lessons, last ") + lastDate;
+        String lessonCount = count + (count == 1 ? " lesson" : " lessons");
+        return person.getLatestLessonDate()
+                .map(date -> lessonCount + ", last " + date.format(LESSON_DATE_FORMATTER))
+                .orElse(lessonCount + " " + UNDATED_LESSON);
     }
 
     /**

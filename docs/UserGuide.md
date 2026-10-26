@@ -32,7 +32,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
    * `list` : Lists all students.
 
-   * `summary` : Shows totals for all students and lesson records, followed by a short overview paragraph.
+   * `summary` : Shows a short paragraph summarising all students and lesson records.
 
    * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
 
@@ -138,14 +138,10 @@ Example output for three students with three lesson records between them, one of
 
 ```text
 Summary:
-Students: 3
-Lesson records: 3
-Students with no lessons: 1
-
 You have 3 students and 3 lesson records in total. 1 student has no lessons recorded.
 ```
 
-* A short paragraph below the totals describes the collection and highlights students without recorded lessons. With no students, it suggests adding a student.
+* A short paragraph describes the collection and highlights students without recorded lessons. With no students, it suggests adding a student.
 * Totals include **all saved students**, even after `find` or `flagged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
 * Every lesson record counts, including undated records saved before v1.4 and separate records with identical content. These totals describe recorded history, not scheduled lessons or teaching hours.
 * `summary` accepts no parameters. For example, `summary 1` shows the summary usage and keeps the current list.
@@ -162,7 +158,7 @@ Each student card also shows a lesson-status line below the subject:
 | No lessons | `No lessons yet` |
 | One dated lesson | `1 lesson, last 21/10/2026` |
 | Multiple dated lessons | `5 lessons, last 21/10/2026` |
-| Only undated lessons | `5 lessons, last (undated)` |
+| Only undated lessons | `5 lessons (undated)` |
 
 `last` means the most recent **recorded lesson date**, rather than when a command was typed. When dated and undated lessons coexist, all records count and the most recent dated lesson supplies the date. The line refreshes after `log`, `editlesson` and `deletelesson`, and a student's flag and reason remain visible.
 

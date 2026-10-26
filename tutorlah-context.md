@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 25, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback) and #143 (finding students by subject and level); #146 adds student and lesson summaries.
+Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback) and #143 (finding students by subject and level); #146 adds student and lesson summaries.
 
 ## What it is
 
@@ -109,7 +109,7 @@ Added in v1.5:
 | List flagged students | `flagged` | `flagged` |
 | Summarize students and lessons | `summary` | `summary` |
 
-`summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and adds a short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `(undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
+`summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
 
 Flags mark unresolved follow-up without changing student identity or lesson
 history. The reason is optional and can be replaced by flagging again with a

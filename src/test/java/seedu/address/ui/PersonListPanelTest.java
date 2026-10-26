@@ -96,11 +96,10 @@ public class PersonListPanelTest {
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
-                assertEquals("3 lessons, last (undated)", label(cellAt(list, 0), "lessonStatus").getText());
+                assertEquals("3 lessons (undated)", label(cellAt(list, 0), "lessonStatus").getText());
                 enterClickTestCommand(root, "flag 2 r/Call parent");
                 enterClickTestCommand(root, "flagged");
-                assertFeedback(root, "summary", "Summary:\nStudents: 2\nLesson records: 3"
-                        + "\nStudents with no lessons: 1\n\nYou have 2 students and 3 lesson records in total. "
+                assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
                         + "1 student has no lessons recorded.", false);
                 assertEquals(1, list.getItems().size());
                 assertEquals("Ben", label(cellAt(list, 0), "name").getText());
@@ -118,8 +117,7 @@ public class PersonListPanelTest {
                 assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
                 assertTrue(label(cellAt(list, 0), "flaggedBadge").isVisible());
                 assertEquals("Flag reason: Call parent", label(cellAt(list, 0), "flagReason").getText());
-                assertFeedback(root, "summary", "Summary:\nStudents: 2\nLesson records: 3"
-                        + "\nStudents with no lessons: 1\n\nYou have 2 students and 3 lesson records in total. "
+                assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
                         + "1 student has no lessons recorded.", false);
                 assertEquals(1, list.getItems().size());
             } finally {
@@ -141,7 +139,7 @@ public class PersonListPanelTest {
                 cell.pseudoClassStateChanged(PseudoClass.getPseudoClass("hover"), true);
                 list.applyCss();
                 list.layout();
-                assertEquals("2 lessons, last (undated)", label(cell, "lessonStatus").getText());
+                assertEquals("2 lessons (undated)", label(cell, "lessonStatus").getText());
                 assertTrue(label(cell, "lessonStatus").isWrapText());
                 assertTrue(label(cell, "flaggedBadge").isVisible());
                 Bounds reason = label(cell, "flagReason").localToScene(label(cell, "flagReason").getBoundsInLocal());

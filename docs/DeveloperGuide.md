@@ -210,7 +210,7 @@ The command keeps each student's lessons in date order with one of two operation
 
 ### Student and lesson summaries
 
-`AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns three labelled totals plus a short paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. The existing post-command saving and failed-save rollback still apply.
+`AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. The existing post-command saving and failed-save rollback still apply.
 
 `Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
 
@@ -613,12 +613,12 @@ Use Java `25` and a separate empty test folder. Copy `TutorLah.jar` there and op
 
 Use a separate test folder with an empty student file and fictional data only.
 
-1. Enter `summary`. Expected: all three totals are zero, followed by `No students yet. Add a student to start recording lessons.`.
-1. Add Amy Tan and Ben Lim, then log two dated lessons for Amy. Expected: Amy's card shows `2 lessons, last DATE` using the later date, and Ben's shows `No lessons yet`. `summary` reports 2 students, 2 lesson records and 1 student with no lessons, followed by `You have 2 students and 2 lesson records in total. 1 student has no lessons recorded.`.
+1. Enter `summary`. Expected: the summary says `No students yet. Add a student to start recording lessons.`.
+1. Add Amy Tan and Ben Lim, then log two dated lessons for Amy. Expected: Amy's card shows `2 lessons, last DATE` using the later date, and Ben's shows `No lessons yet`. `summary` reports 2 students, 2 lesson records and 1 student with no lessons: `You have 2 students and 2 lesson records in total. 1 student has no lessons recorded.`.
 1. Enter `find ben`, then `summary`. Expected: the same totals, with only Ben still displayed as student 1. Repeat after flagging Ben and entering `flagged`, and after a search that finds no students.
 1. Enter `summary 1`. Expected: the summary usage, with the preceding filter and student data unchanged.
 1. Enter `list`, edit Amy's latest lesson to an earlier date, then remove her lessons one at a time using `deletelesson`. Expected: the card immediately follows the most recent remaining date, the count decreases, and removing the last record shows `No lessons yet`. `summary` then reports 2 students, 0 lesson records and 2 students with no lessons.
-1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons, last (undated)` (or `1 lesson, last (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
+1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons (undated)` (or `1 lesson (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
 1. Check the status alongside a flag reason, selected and hovered cards, long student details and the supported display sizes/scales. Expected: the status and reason remain readable without overlapping other fields.
 
 ### Adding students
