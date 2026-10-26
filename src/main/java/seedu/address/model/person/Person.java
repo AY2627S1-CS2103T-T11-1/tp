@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -104,6 +105,21 @@ public class Person {
      */
     public List<Lesson> getLessons() {
         return lessons;
+    }
+
+    /** Returns the number of lesson records, including undated legacy records. */
+    public int getLessonCount() {
+        return lessons.size();
+    }
+
+    /**
+     * Returns the most recent recorded lesson date, or empty if no lesson has a date.
+     * Undated records are counted as lessons but do not supply a latest date.
+     */
+    public Optional<LocalDate> getLatestLessonDate() {
+        return lessons.stream()
+                .flatMap(lesson -> lesson.getDate().stream())
+                .max(LocalDate::compareTo);
     }
 
     /**

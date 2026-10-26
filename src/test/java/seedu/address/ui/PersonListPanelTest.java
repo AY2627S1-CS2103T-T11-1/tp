@@ -23,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
@@ -86,6 +87,83 @@ public class PersonListPanelTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void commandBox_summaryAndLessonChanges_refreshStatusWithoutChangingFilter(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                assertEquals("3 lessons (undated)", label(cellAt(list, 0), "lessonStatus").getText());
+                enterClickTestCommand(root, "flag 2 r/Call parent");
+                enterClickTestCommand(root, "flagged");
+                assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
+                        + "1 student has no lessons recorded.", false);
+                assertEquals(1, list.getItems().size());
+                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
+                assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
+
+                enterClickTestCommand(root, "log 1 c/Vectors date/2/1/2020");
+                assertEquals("1 lesson, last 02/01/2020", label(cellAt(list, 0), "lessonStatus").getText());
+                enterClickTestCommand(root, "log 1 c/Algebra date/1/1/2020");
+                assertEquals("2 lessons, last 02/01/2020", label(cellAt(list, 0), "lessonStatus").getText());
+                enterClickTestCommand(root, "editlesson 1 1 date/31/12/2019");
+                assertEquals("2 lessons, last 01/01/2020", label(cellAt(list, 0), "lessonStatus").getText());
+                enterClickTestCommand(root, "deletelesson 1 1");
+                assertEquals("1 lesson, last 31/12/2019", label(cellAt(list, 0), "lessonStatus").getText());
+                enterClickTestCommand(root, "deletelesson 1 1");
+                assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
+                assertTrue(label(cellAt(list, 0), "flaggedBadge").isVisible());
+                assertEquals("Flag reason: Call parent", label(cellAt(list, 0), "flagReason").getText());
+                assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
+                        + "1 student has no lessons recorded.", false);
+                assertEquals(1, list.getItems().size());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void studentCard_lessonStatusAndFlag_fitAtSupportedLogicalWidths() throws Exception {
+        runOnJavaFxThread(() -> {
+            Person student = new PersonBuilder(CHARLOTTE).withFlag("Follow up ".repeat(10))
+                    .withLessons("Algebra", "Geometry").build();
+            ListView<?> list = createList(FXCollections.observableArrayList(student, SHORT_PERSON));
+            for (double width : new double[] {400, 1280 / 1.5, 1920 / 1.25, 1920}) {
+                list.getSelectionModel().select(0);
+                layout(list, width);
+                ListCell<?> cell = cellAt(list, 0);
+                cell.pseudoClassStateChanged(PseudoClass.getPseudoClass("hover"), true);
+                list.applyCss();
+                list.layout();
+                assertEquals("2 lessons (undated)", label(cell, "lessonStatus").getText());
+                assertTrue(label(cell, "lessonStatus").isWrapText());
+                assertTrue(label(cell, "flaggedBadge").isVisible());
+                Bounds reason = label(cell, "flagReason").localToScene(label(cell, "flagReason").getBoundsInLocal());
+                Bounds phone = label(cell, "phone").localToScene(label(cell, "phone").getBoundsInLocal());
+                assertTrue(reason.getMaxY() <= phone.getMinY() + LAYOUT_TOLERANCE);
+                assertVisibleCardsFit(list);
+                cell.pseudoClassStateChanged(PseudoClass.getPseudoClass("hover"), false);
+            }
+        });
+    }
+
+    @Test
+    public void helpWindow_includesSummaryHint() throws Exception {
+        runOnJavaFxThread(() -> {
+            HelpWindow help = new HelpWindow();
+            Label message = (Label) help.getRoot().getScene().lookup("#helpMessage");
+            assertTrue(message.getText().contains("Use summary to see student and lesson totals."));
+            assertTrue(message.getText().contains(HelpWindow.USERGUIDE_URL));
+            help.hide();
+        });
+    }
 
     @Test
     public void commandBox_saveUnavailable_filterHelpAndExitStillWork(@TempDir Path directory) throws Exception {
@@ -1056,9 +1134,10 @@ public class PersonListPanelTest {
         for (ListCell<?> cell : cells) {
             Region card = (Region) cell.getGraphic();
             Person person = (Person) list.getItems().get(cell.getIndex());
-            String[] ids = {"id", "name", "phone", "address", "level", "subject"};
+            String[] ids = {"id", "name", "phone", "address", "level", "subject", "lessonStatus"};
             String[] expected = {cell.getIndex() + 1 + ". ", person.getName().fullName, person.getPhone().value,
-                person.getAddress().value, person.getLevel().value, person.getSubject().value};
+                person.getAddress().value, person.getLevel().value, person.getSubject().value,
+                Messages.formatLessonStatus(person)};
             double previousBottom = 0;
             for (int index = 0; index < ids.length; index++) {
                 Label field = label(cell, ids[index]);
@@ -1085,15 +1164,15 @@ public class PersonListPanelTest {
     }
 
     /**
-     * Verifies that the space below the subject contains only its container's intended bottom padding.
+     * Verifies that the space below the lesson status contains only its container's intended bottom padding.
      */
     private static void assertBottomPadding(ListCell<?> cell) {
         Region card = (Region) cell.getGraphic();
-        Label subject = label(cell, "subject");
-        Region content = (Region) subject.getParent();
-        double bottom = card.sceneToLocal(subject.localToScene(subject.getBoundsInLocal())).getMaxY();
+        Label status = label(cell, "lessonStatus");
+        Region content = (Region) status.getParent();
+        double bottom = card.sceneToLocal(status.localToScene(status.getBoundsInLocal())).getMaxY();
         assertEquals(content.getInsets().getBottom(), cell.getHeight() - bottom, LAYOUT_TOLERANCE,
-                "Space below the subject must be padding, not stale wrapping height");
+                "Space below the lesson status must be padding, not stale wrapping height");
     }
 
     /**

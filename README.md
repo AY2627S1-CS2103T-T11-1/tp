@@ -4,7 +4,7 @@
 
 TutorLah is a desktop application for freelance tutors in Singapore who teach secondary and junior college (JC) students one-to-one, usually at the students' homes. Tutors who prefer typing can keep each student's details and a dated record of every lesson in one place, making it easier to prepare for the next lesson.
 
-![TutorLah interface](docs/images/Ui.png)
+<img src="docs/images/Ui.png" alt="TutorLah showing dated lesson records and lesson counts on student cards" width="726">
 
 ## Features
 
@@ -12,6 +12,7 @@ TutorLah is a desktop application for freelance tutors in Singapore who teach se
 * Log a dated record of what each lesson covered, including lessons taught on an earlier date.
 * View a student's lesson records, most recent first, and edit or delete an incorrect record.
 * Flag students who need follow-up, with an optional reason, and list the flagged students.
+* See totals and a short summary of all students and lesson records, with lesson counts and latest dates on student cards.
 
 See the [User Guide](https://ay2627s1-cs2103t-t11-1.github.io/tp/UserGuide.html) for every command.
 

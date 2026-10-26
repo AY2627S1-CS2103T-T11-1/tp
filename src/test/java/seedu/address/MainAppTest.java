@@ -117,7 +117,7 @@ public class MainAppTest {
             assertArrayEquals(original, Files.readAllBytes(file));
 
             Logic logic = new LogicManager(model, storage);
-            for (String command : List.of("list", "find amy", "flagged", "help", "exit")) {
+            for (String command : List.of("list", "find amy", "flagged", "summary", "help", "exit")) {
                 var result = logic.execute(command);
                 if (command.equals("help")) {
                     assertTrue(result.isShowHelp());
@@ -125,6 +125,9 @@ public class MainAppTest {
                 } else if (command.equals("exit")) {
                     assertTrue(result.isExit());
                     assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
+                } else if (command.equals("summary")) {
+                    assertEquals("Summary:\nNo students yet. Add a student to start recording lessons.",
+                            result.getFeedbackToUser());
                 } else if (command.equals("find amy")) {
                     assertEquals(FindCommand.MESSAGE_NO_NAME_MATCHES, result.getFeedbackToUser());
                 }

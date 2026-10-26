@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery).
+Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries.
 
 ## What it is
 
@@ -63,7 +63,7 @@ If an existing student file cannot be loaded, including a null JSON root or null
   new `LogCommand` and `ViewCommand` classes with their parsers. `list` gets
   a check that rejects parameters.
 - **Storage:** `JsonAdaptedPerson` saves level, subject, lessons and optional flags.
-- **UI:** the person card shows level and subject. Flagged cards show an amber
+- **UI:** the person card shows level, subject and lesson count/latest date. Flagged cards show an amber
   `FLAGGED` badge and an optional `Flag reason:` row. Lessons appear in the result
   box. Tutors can type `view INDEX` or left-click a student card to view that
   student's history. Repeated clicks refresh it, while command text is preserved.
@@ -74,6 +74,9 @@ If an existing student file cannot be loaded, including a null JSON root or null
 
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.
+Main-window guide screenshots use a 1100 x 818 pixel canvas and a 726 pixel
+display width. The help dialog keeps its natural proportions. Captures show
+only application content, without mouse or assistant overlays.
 
 Addresses and lesson content cannot consist only of Unicode whitespace or
 formatting characters, such as non-breaking spaces and zero-width spaces.
@@ -106,6 +109,9 @@ Added in v1.5:
 | Flag a student | `flag INDEX [r/REASON]` | `flag 2 r/Missed homework twice` |
 | Remove a flag | `unflag INDEX` | `unflag 2` |
 | List flagged students | `flagged` | `flagged` |
+| Summarize students and lessons | `summary` | `summary` |
+
+`summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
 
 Flags mark unresolved follow-up without changing student identity or lesson
 history. The reason is optional and can be replaced by flagging again with a
@@ -156,7 +162,8 @@ recent date first. Lessons saved before v1.4 have no date and show
   students by partial name, delete individual lesson records, and date
   each logged lesson.
 - **Added in v1.5:** persistent follow-up flags with optional reasons and a
-  filtered flagged-student view, and editing a lesson record's content or date.
+  filtered flagged-student view, editing a lesson record's content or date, and
+  student/lesson totals with per-student lesson status.
 - **Planned next:** parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.

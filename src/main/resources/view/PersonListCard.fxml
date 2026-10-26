@@ -35,4 +35,6 @@
          wrapText="true" minWidth="0" maxWidth="Infinity" />
   <Label fx:id="subject" styleClass="cell_small_label" text="\$subject"
          wrapText="true" minWidth="0" maxWidth="Infinity" />
+  <Label fx:id="lessonStatus" styleClass="cell_small_label"
+         wrapText="true" minWidth="0" maxWidth="Infinity" />
 </VBox>

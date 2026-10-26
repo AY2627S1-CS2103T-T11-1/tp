@@ -14,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,40 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
+
+    @Test
+    public void lessonStatistics_emptyOrUndatedHistory_countsWithoutDate() {
+        Person student = new PersonBuilder().build();
+        assertEquals(0, student.getLessonCount());
+        assertTrue(student.getLatestLessonDate().isEmpty());
+        student = new PersonBuilder(student).withLessons("Algebra", "Algebra").build();
+        assertEquals(2, student.getLessonCount());
+        assertTrue(student.getLatestLessonDate().isEmpty());
+    }
+
+    @Test
+    public void getLatestLessonDate_mixedHistory_usesMaximumRecordedDate() {
+        LocalDate latest = LocalDate.of(2020, 3, 5);
+        Person student = new PersonBuilder().withLessons("Legacy record").build()
+                .withLessonAdded(new Lesson("Vectors", latest))
+                .withLessonAdded(new Lesson("Algebra", LocalDate.of(2020, 1, 2)))
+                .withLessonAdded(new Lesson("Geometry", latest));
+        assertEquals(4, student.getLessonCount());
+        assertEquals(Optional.of(latest), student.getLatestLessonDate());
+        Person withoutLatest = student.withLessonRemoved(3).withLessonRemoved(2);
+        assertEquals(Optional.of(LocalDate.of(2020, 1, 2)), withoutLatest.getLatestLessonDate());
+        assertEquals(Optional.of(latest), student.getLatestLessonDate());
+    }
+
+    @Test
+    public void getLatestLessonDate_unsortedConstructorHistory_doesNotAssumeListOrder() {
+        LocalDate latest = LocalDate.of(2020, 3, 5);
+        Person student = new PersonBuilder().build();
+        Person unsorted = new Person(student.getName(), student.getPhone(), student.getAddress(),
+                student.getLevel(), student.getSubject(), List.of(new Lesson("Vectors", latest),
+                    new Lesson("Legacy record"), new Lesson("Algebra", LocalDate.of(2020, 1, 2))));
+        assertEquals(Optional.of(latest), unsorted.getLatestLessonDate());
+    }
 
     @Test
     public void isSamePerson() {
