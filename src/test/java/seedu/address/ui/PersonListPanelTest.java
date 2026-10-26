@@ -123,6 +123,15 @@ public class PersonListPanelTest {
                         "No matching lesson records found for Amy.", false);
                 assertFeedback(root, "findlesson 1", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
                         FindLessonCommand.MESSAGE_USAGE), true);
+                assertFeedback(root, "findlesson 1 from/02/01/2020 algebra",
+                        FindLessonCommand.MESSAGE_KEYWORDS_AFTER_DATE, true);
+                assertFeedback(root, "findlesson 1 to/04/01/2020 algebra",
+                        FindLessonCommand.MESSAGE_KEYWORDS_AFTER_DATE, true);
+                assertFeedback(root, "findlesson 1 from/31/02/2020 algebra",
+                        Lesson.MESSAGE_DATE_CONSTRAINTS, true);
+                assertEquals(1, list.getItems().size());
+                assertFeedback(root, "findlesson 1 alg",
+                        "Matching lesson records for Amy (1):\n2. (undated): Algebra revised", false);
                 enterClickTestCommand(root, "list");
                 assertFeedback(root, "findlesson 2 alg", "No lessons logged yet for Ben.", false);
                 assertEquals(1, list.getSelectionModel().getSelectedIndex());
@@ -236,12 +245,12 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void helpWindow_includesSummaryHint() throws Exception {
+    public void helpWindow_pointsToUserGuide() throws Exception {
         runOnJavaFxThread(() -> {
             HelpWindow help = new HelpWindow();
             Label message = (Label) help.getRoot().getScene().lookup("#helpMessage");
-            assertTrue(message.getText().contains("Use summary to see student and lesson totals."));
-            assertTrue(message.getText().contains(HelpWindow.USERGUIDE_URL));
+            assertEquals("Refer to the user guide: " + HelpWindow.USERGUIDE_URL, message.getText());
+            assertNotNull(help.getRoot().getScene().lookup("#copyButton"));
             help.hide();
         });
     }

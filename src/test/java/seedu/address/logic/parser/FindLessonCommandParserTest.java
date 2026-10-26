@@ -60,6 +60,7 @@ public class FindLessonCommandParserTest {
     @Test
     public void parse_dateOnlyAndCombined_acceptsEitherPrefixOrder() {
         assertParseSuccess(parser, "1 from/2/1/2020", search(List.of(), START, null));
+        assertParseSuccess(parser, "1 from/ 2/1/2020 \t ", search(List.of(), START, null));
         assertParseSuccess(parser, "1 to/04/01/2020", search(List.of(), null, END));
         assertParseSuccess(parser, "1 from/2/1/2020 to/4/1/2020", search(List.of(), START, END));
         assertParseSuccess(parser, "1 alg revision to/4/1/2020 from/2/1/2020",
@@ -89,9 +90,20 @@ public class FindLessonCommandParserTest {
     @Test
     public void parse_invalidOrBlankDates_reportsDateConstraints() {
         for (String date : List.of("", "\u00a0", "\u200b", "31/2/2020", "29/2/2019", "1/1/1999",
-                "2020-01-02", "1/1/20", "+1/1/2020", "1/1/2020 algebra")) {
+                "2020-01-02", "1/1/20", "+1/1/2020", "31/2/2020 algebra", "1/1/1999 algebra")) {
             assertParseFailure(parser, "1 from/" + date, Lesson.MESSAGE_DATE_CONSTRAINTS);
             assertParseFailure(parser, "1 algebra to/" + date, Lesson.MESSAGE_DATE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_keywordsAfterValidDate_reportsKeywordOrder() {
+        for (String args : List.of("1 from/01/10/2026 algebra", "1 to/31/10/2026 algebra",
+                "1 from/2/1/2020 algebra", "1 to/4/1/2020 algebra revision",
+                "1 from/2/1/2020 algebra to/4/1/2020", "1 from/2/1/2020 to/4/1/2020 algebra",
+                "1 to/4/1/2020 algebra from/2/1/2020", "1 to/4/1/2020 from/2/1/2020 algebra",
+                "1 from/2/1/2020\u00a0algebra", "1 to/4/1/2020\talgebra")) {
+            assertParseFailure(parser, args, FindLessonCommand.MESSAGE_KEYWORDS_AFTER_DATE);
         }
     }
 

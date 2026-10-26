@@ -84,8 +84,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
 Shows a message explaining how to access the help page.
 
-The help window also reminds you to use `summary` for totals and `findlesson`
-to search lesson records.
+Use the **Copy URL** button to copy the User Guide link and open it in your browser.
 
 ![help message](images/helpMessage.png)
 
@@ -308,6 +307,8 @@ Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
   `find` or `flagged`.
 * Supply at least one keyword, `from/`, or `to/`. Put all keywords before the first
   date prefix. The two date prefixes may appear in either order, once each.
+  Keywords after a valid date give a message explaining the order, with a corrected
+  example. Invalid dates still give the date-constraint message.
 * Every keyword must occur somewhere in the lesson content, ignoring case and
   keyword order. Partial words match; punctuation is literal, not a wildcard or
   regular expression.

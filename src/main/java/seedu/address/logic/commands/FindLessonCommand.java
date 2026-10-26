@@ -30,6 +30,8 @@ public class FindLessonCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 algebra from/01/01/2020";
     public static final String MESSAGE_MATCHES_HEADER = "Matching lesson records for %1$s (%2$d):";
     public static final String MESSAGE_NO_MATCHES = "No matching lesson records found for %1$s.";
+    public static final String MESSAGE_KEYWORDS_AFTER_DATE = "Put keywords before from/ and to/. "
+            + "Example: findlesson 1 algebra from/01/10/2026";
 
     private static final Logger logger = LogsCenter.getLogger(FindLessonCommand.class);
 

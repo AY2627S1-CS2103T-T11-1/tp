@@ -13,6 +13,17 @@ import java.util.Arrays;
 public class StringUtil {
 
     /**
+     * Returns true if {@code text} is empty or contains only Unicode whitespace and format characters.
+     * Does not trim or modify the text.
+     *
+     * @throws NullPointerException if {@code text} is null.
+     */
+    public static boolean isBlankOrInvisible(String text) {
+        requireNonNull(text);
+        return text.matches("[\\p{IsWhite_Space}\\p{Cf}]*");
+    }
+
+    /**
      * Returns true if the {@code sentence} contains the {@code word}.
      *   Ignores case, but a full word match is required.
      *   <br>examples:<pre>

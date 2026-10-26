@@ -158,7 +158,8 @@ public class FindLessonCommandIntegrationTest {
     public void execute_invalidSearch_preservesFilterAndOriginalBytes() throws Exception {
         logic.execute("flagged");
         for (String command : List.of("findlesson 1", "findlesson 0 algebra", "findlesson 1 from/31/2/2020",
-                "findlesson 1 from/4/1/2020 to/2/1/2020", "findlesson 1 to/2/1/2020 to/3/1/2020")) {
+                "findlesson 1 from/4/1/2020 to/2/1/2020", "findlesson 1 to/2/1/2020 to/3/1/2020",
+                "findlesson 1 from/2/1/2020 algebra", "findlesson 1 to/4/1/2020 algebra")) {
             assertThrows(ParseException.class, () -> logic.execute(command));
             assertEquals(List.of(AMY), model.getFilteredPersonList());
             assertUnchanged();

@@ -39,7 +39,7 @@ public class LessonSearchPredicate implements Predicate<Lesson> {
         this.keywords = List.copyOf(keywords);
         checkArgument(!this.keywords.isEmpty() || fromDate != null || toDate != null,
                 "At least one lesson search criterion is required.");
-        checkArgument(this.keywords.stream().noneMatch(word -> word.matches("[\\p{IsWhite_Space}\\p{Cf}]*")),
+        checkArgument(this.keywords.stream().noneMatch(StringUtil::isBlankOrInvisible),
                 "Search keywords must not be blank.");
         checkArgument(fromDate == null || !fromDate.isBefore(Lesson.EARLIEST_DATE),
                 Lesson.MESSAGE_DATE_CONSTRAINTS);

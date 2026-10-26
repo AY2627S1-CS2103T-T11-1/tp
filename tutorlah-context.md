@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 26, 2026, for lesson search and the merged summary/recovery work.
+Last updated: Oct 26, 2026, for lesson search review fixes.
 
 ## What it is
 
@@ -75,7 +75,8 @@ If an existing student file cannot be loaded, including a null JSON root or null
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.
 Main-window guide screenshots use a 1100 x 818 pixel canvas and a 726 pixel
-display width. The help dialog keeps its natural proportions. Captures show
+display width. The help dialog links to the User Guide with a Copy URL button,
+without individual command hints, and keeps its natural proportions. Captures show
 only application content, without mouse or assistant overlays.
 
 Addresses and lesson content cannot consist only of Unicode whitespace or
@@ -114,6 +115,7 @@ Added in v1.5:
 
 `findlesson` searches one displayed student's lesson content, an inclusive date
 range or both. Every keyword must match; date searches exclude undated lessons.
+Keywords must precede date prefixes; extra words after a valid date get a correction example.
 Results keep their original `view` numbers for editing or deletion, but those
 numbers can change after a lesson mutation. The search is a one-off result and
 changes neither stored data nor the student filter.

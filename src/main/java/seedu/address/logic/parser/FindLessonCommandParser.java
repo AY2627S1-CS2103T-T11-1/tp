@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.FindLessonCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.LessonSearchPredicate;
@@ -18,7 +19,6 @@ import seedu.address.model.lesson.LessonSearchPredicate;
  * Parses a displayed student index and content keywords before optional {@code from/} and {@code to/} dates.
  */
 public class FindLessonCommandParser implements Parser<FindLessonCommand> {
-    private static final String BLANK_KEYWORD_REGEX = "[\\p{IsWhite_Space}\\p{Cf}]*";
 
     /**
      * Parses a one-off lesson search, allowing future date boundaries but rejecting reversed ranges.
@@ -39,7 +39,7 @@ public class FindLessonCommandParser implements Parser<FindLessonCommand> {
         LocalDate fromDate = parseBoundary(arguments, PREFIX_FROM);
         LocalDate toDate = parseBoundary(arguments, PREFIX_TO);
         if ((keywords.isEmpty() && fromDate == null && toDate == null)
-                || keywords.stream().anyMatch(word -> word.matches(BLANK_KEYWORD_REGEX))) {
+                || keywords.stream().anyMatch(StringUtil::isBlankOrInvisible)) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindLessonCommand.MESSAGE_USAGE));
         }
@@ -49,11 +49,16 @@ public class FindLessonCommandParser implements Parser<FindLessonCommand> {
         return new FindLessonCommand(studentIndex, new LessonSearchPredicate(keywords, fromDate, toDate));
     }
 
-    /** Returns a parsed date boundary, or null if its prefix was not supplied. */
+    /** Returns a parsed boundary, rejecting keywords after a valid date, or null if its prefix is absent. */
     private static LocalDate parseBoundary(ArgumentMultimap arguments, Prefix prefix) throws ParseException {
         if (arguments.getValue(prefix).isEmpty()) {
             return null;
         }
-        return ParserUtil.parseLessonDate(arguments.getValue(prefix).get());
+        String[] parts = arguments.getValue(prefix).get().split("\\s+", 2);
+        LocalDate boundary = ParserUtil.parseLessonDate(parts[0]);
+        if (parts.length > 1) {
+            throw new ParseException(FindLessonCommand.MESSAGE_KEYWORDS_AFTER_DATE);
+        }
+        return boundary;
     }
 }

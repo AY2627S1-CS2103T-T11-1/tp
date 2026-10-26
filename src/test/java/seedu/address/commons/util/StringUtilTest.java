@@ -5,10 +5,32 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 public class StringUtilTest {
+
+    @Test
+    public void isBlankOrInvisible_nullText_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StringUtil.isBlankOrInvisible(null));
+    }
+
+    @Test
+    public void isBlankOrInvisible_blankOrFormattingOnly_returnsTrue() {
+        for (String text : List.of("", " \t\r\n", "\u00a0\u2003\u3000", "\u200b", "\u2060", "\ufeff",
+                " \u00a0\u200b\u200d\u2060\ufeff")) {
+            assertTrue(StringUtil.isBlankOrInvisible(text));
+        }
+    }
+
+    @Test
+    public void isBlankOrInvisible_visibleText_returnsFalse() {
+        for (String text : List.of("Algebra", "0", ".", "中文", " \u200bAlgebra\u2060 ",
+                "क्\u200dष", "👩\u200d🏫")) {
+            assertFalse(StringUtil.isBlankOrInvisible(text));
+        }
+    }
 
     //---------------- Tests for isNonZeroUnsignedInteger --------------------------------------
 

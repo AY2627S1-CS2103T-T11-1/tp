@@ -217,10 +217,13 @@ The command keeps each student's lessons in date order with one of two operation
 
 `FindLessonCommandParser` tokenizes `from/` and `to/` after normalizing Unicode whitespace.
 The preamble holds the displayed student index and content keywords. Indexes and dates reuse
-`ParserUtil`; duplicate prefixes use `ArgumentMultimap`. Future query boundaries are valid,
-but reversed ranges are rejected. `LessonSearchPredicate` copies the keywords and combines
-literal, case-insensitive matching through `StringUtil#containsIgnoreCase` with inclusive
-date boundaries. An undated lesson matches only when neither boundary is supplied.
+`ParserUtil`; duplicate prefixes use `ArgumentMultimap`. A valid date followed by extra
+keywords gives an ordering hint; invalid dates keep the date-constraint message.
+Future query boundaries are valid, but reversed ranges are rejected. Blank/invisible
+checks share `StringUtil#isBlankOrInvisible` with student searches and field validators.
+`LessonSearchPredicate` copies the keywords and combines literal, case-insensitive matching
+through `StringUtil#containsIgnoreCase` with inclusive date boundaries. An undated lesson
+matches only when neither boundary is supplied.
 
 `FindLessonCommand` reads the selected student's complete history from the filtered student
 list and iterates backwards. It derives each view number from the original stored position
@@ -663,6 +666,9 @@ on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` o
    distinct no-match and no-lessons messages. Try missing criteria, reversed ranges,
    invalid dates and repeated date prefixes; each reports an error without changing
    data or the student filter.
+1. Enter `findlesson 1 from/02/01/2020 algebra`, then repeat with `to/04/01/2020`.
+   Expected: a message to put keywords before date prefixes, with a corrected example.
+   `findlesson 1 from/31/02/2020 algebra` still reports an invalid date.
 1. Repeat a content-only search with valid undated legacy records, then supply a date
    boundary. Expected: undated matches appear only in the content-only search.
    Check a long search result by resizing the result area and scrolling; another

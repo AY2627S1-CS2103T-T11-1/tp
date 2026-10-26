@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.commons.util.StringUtil;
+
 /**
  * Represents a Person's address in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidAddress(String)}
@@ -38,7 +40,7 @@ public class Address {
      * Values composed entirely of Unicode whitespace or format characters are invalid.
      */
     public static boolean isValidAddress(String test) {
-        return test.length() <= MAX_LENGTH && !test.matches("[\\p{IsWhite_Space}\\p{Cf}]*")
+        return test.length() <= MAX_LENGTH && !StringUtil.isBlankOrInvisible(test)
                 && test.matches(VALIDATION_REGEX);
     }
 
