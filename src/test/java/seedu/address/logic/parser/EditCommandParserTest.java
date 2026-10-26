@@ -49,6 +49,16 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_nameWithAlOrAp_editsNameOnly() {
+        // a/l and a/p are kept in the name and must not change the address
+        for (String name : new String[]{"Muthu a/l Raju", "Siti a/p Ahmad"}) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
+            assertParseSuccess(parser, "1 n/" + name,
+                    new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
     public void parse_missingParts_failure() {
         // no index specified
         assertParseFailure(parser, NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);

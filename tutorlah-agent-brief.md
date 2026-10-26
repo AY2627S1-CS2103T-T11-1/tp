@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 26, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries.
+Last updated: Oct 26, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries; #109 changes the address prefix to `addr/`.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -97,12 +97,12 @@ ask the team. Do not guess.
 
 | Command | Format | Success message |
 |---|---|---|
-| Add | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
+| Add | `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME}: {CONTENT}` |
 | Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
-| Edit | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
+| Edit | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given |
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
@@ -164,7 +164,7 @@ Every whitespace-separated keyword must occur somewhere in its field, ignoring
 case and keyword order, and every given field must match. Partial words are
 supported. Each prefix may appear once and must not be blank. Leading,
 trailing and repeated whitespace is ignored. Keywords are literal text, not
-wildcards or spelling corrections; other prefixes such as `a/` stay part of
+wildcards or spelling corrections; other prefixes such as `p/` stay part of
 the name keywords.
 Each find searches the full address book and keeps the original list order.
 Displayed indexes restart at 1 and are used by commands and card clicks.
@@ -201,7 +201,7 @@ student.
 |---|---|---|---|
 | Name | `n/` | 1 to 100 characters after collapsing repeated spaces. Unicode letters, spaces, `'`, `-`, `.` and `/`. No digits. | `Names should contain only letters, spaces, apostrophes, hyphens, periods and slashes, and must not be blank.` |
 | Phone | `p/` | Exactly 8 digits. Spaces inside are removed first. No `+` or country code. | `Phone numbers should be exactly 8 digits.` |
-| Address | `a/` | 1 to 200 printable characters | `Addresses must not be blank and must be at most 200 characters.` |
+| Address | `addr/` | 1 to 200 printable characters | `Addresses must not be blank and must be at most 200 characters.` |
 | Level | `l/` | 1 to 20 characters: letters, digits, spaces | `Levels should contain only letters, digits and spaces, and must not be blank.` |
 | Subject | `sub/` | 1 to 50 characters: letters, digits, spaces, hyphens | `Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.` |
 | Lesson content | `c/` | 1 to 300 printable characters, internal spaces kept | `Lesson content must not be blank and must be at most 300 characters.` |
@@ -216,10 +216,8 @@ student.
   written languages and emoji sequences.
 - `/` is allowed in names so that `s/o` and `d/o` work. No prefix starts
   with `s/`, `o/` or `d/`. `date/` is used only by `log`, so lesson content
-  such as `d/dx` and names such as `d/o` are unaffected. Names containing `a/l` or `a/p` still fail,
-  because ` a/` is the address prefix. This is a known MVP limitation and
-  must be stated in the User Guide.
-- **`a/` in names with `edit`:** because every `edit` field is optional, `edit 1 n/Muthu a/l Raju` is accepted and changes both the name (`Muthu`) and the address (`l Raju`), instead of being rejected as with `add`. Typing `A/L` in capitals avoids it. The User Guide warns about this in the `edit` section and Known issue 3. A parser fix belongs in its own issue.
+  such as `d/dx` and names such as `d/o` are unaffected.
+- **Address prefix `addr/` (#109):** the address prefix is `addr/`, not `a/`, so names containing `a/l` or `a/p` (e.g. `Muthu a/l Raju`) are kept in full by `add` and `edit`, and `edit` never changes the address through a name. Old `a/` input is not reinterpreted: it joins the previous field, whose validation rejects it, or stays in the name. When `addr/` is missing and ` a/` appears, `add` appends `The address prefix is addr/, for example addr/1 Example Street.` to its usage message.
 - **Duplicate student:** same phone, and names equal when case is ignored
   (`Person#isSamePerson`).
 
@@ -319,7 +317,7 @@ accepted by the parser. Commands apply these errors consistently:
   Other commands leave it empty. `MainWindow` passes successful view indexes to
   `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
   executing another command or taking focus from the command box.
-- Prefixes in `CliSyntax`: `n/`, `p/`, `a/`, `l/`, `sub/`, `c/`, `date/`.
+- Prefixes in `CliSyntax`: `n/`, `p/`, `addr/`, `l/`, `sub/`, `c/`, `date/`, `r/`.
 - `ParserUtil#parseCommandIndex(text, usage, invalidIndexMessage)` shares
   student and lesson index validation. `parseStudentIndex` delegates to it
   with the student-index error message.
@@ -381,8 +379,7 @@ tutor expects, not by what was easy to parse.
 - Plan for likely mistakes, not only the normal case. A typo must not crash
   the app, corrupt the data file or leave the app unusable.
 - Do not restrict input just to make parsing easier. Real names, addresses
-  and levels must be possible to enter. Known gap: names with `a/l` or
-  `a/p` (UG Known issue 3).
+  and levels must be possible to enter. Names with `a/l` or `a/p` work since #109.
 - Prefer a warning to a rejection for unusual but harmless input. Reject
   only when accepting would make the data ambiguous or wrong.
 - Error messages name the field that is wrong and say why.

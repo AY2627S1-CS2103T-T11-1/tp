@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries.
+Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries; #109 changes the address prefix to `addr/`.
 
 ## What it is
 
@@ -88,7 +88,7 @@ and emoji sequences.
 
 | Command | Format | Example |
 |---|---|---|
-| Add a student | `add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT` | `add n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22 #05-13 l/JC1 sub/H2 Math` |
+| Add a student | `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT` | `add n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22 #05-13 l/JC1 sub/H2 Math` |
 | Delete a student | `delete INDEX` | `delete 3` |
 | List students | `list` | `list` |
 | Log a lesson | `log INDEX c/CONTENT [date/DATE]` | `log 3 c/Quadratic inequalities date/21/10/2026` |
@@ -98,7 +98,7 @@ Added after the MVP (v1.4):
 
 | Command | Format | Example |
 |---|---|---|
-| Edit a student | `edit INDEX [n/NAME] [p/PHONE] [a/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
+| Edit a student | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `edit 2 l/Sec 4 sub/A-Math` |
 | Delete a lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `deletelesson 2 1` |
 | Find students | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `find sub/Physics l/Sec 3` |
 
@@ -185,10 +185,9 @@ recent date first. Lessons saved before v1.4 have no date and show
   `edit` was restored in issue #100 (Oct 20) for v1.4.
   `find` was restored in issue #101 (Oct 20), with all-keyword partial matching, and extended to subject and level in issue #143 (Oct 25); `clear` remains removed.
 - **`view` replaces `lessons`** as the command for viewing a student's lessons.
-- **`/` is allowed in names** so that s/o and d/o work. `a/l` and `a/p` still
-  fail because ` a/` is the address prefix, a documented MVP limitation.
-  With `edit`, such a name is accepted but changes the address (see the
-  User Guide's Known issue 3); typing `A/L` in capitals avoids it.
+- **`/` is allowed in names** so that s/o and d/o work. Since #109 (Oct 26)
+  the address prefix is `addr/`, so `a/l` and `a/p` names such as
+  `Muthu a/l Raju` also work in `add` and `edit`.
 - **Duplicates** are the same phone with the same name ignoring case.
 
 ## Shared index policy

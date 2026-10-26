@@ -46,7 +46,7 @@ public class SaveFailureRollbackTest {
     @TestFactory
     public Stream<DynamicTest> execute_mutationSaveFails_restoresDataFilterAndRetryTarget() {
         List<String> mutations = List.of(
-                "add n/Cara Lee p/81230013 a/30 Example Street l/Sec 3 sub/E-Math",
+                "add n/Cara Lee p/81230013 addr/30 Example Street l/Sec 3 sub/E-Math",
                 "edit 1 n/Amy Updated",
                 "log 1 c/Trigonometry",
                 "delete 1",

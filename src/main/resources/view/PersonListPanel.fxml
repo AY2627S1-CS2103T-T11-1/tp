@@ -11,11 +11,11 @@
     <Label styleClass="empty-state-title" text="No students to display." />
     <Label styleClass="empty-state-text" text="Type list to show all students, or add one:" wrapText="true" />
     <Label styleClass="empty-state-command"
-           text="add n/NAME p/PHONE a/ADDRESS l/LEVEL sub/SUBJECT"
+           text="add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT"
            wrapText="true" />
     <Label styleClass="empty-state-text" text="Example:" />
     <Label styleClass="empty-state-command"
-           text="add n/Alice Tan p/81234567 a/10 Short Street l/Sec 2 sub/E-Math"
+           text="add n/Alice Tan p/81234567 addr/10 Short Street l/Sec 2 sub/E-Math"
            wrapText="true" />
   </VBox>
 </StackPane>

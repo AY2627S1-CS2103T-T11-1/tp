@@ -83,8 +83,8 @@ public class FindCommandIntegrationTest {
 
     @Test
     public void execute_findBySubjectAndLevel_filtersDisplayedStudentsWithoutChangingSavedData() throws Exception {
-        logic.execute("add n/Priya Ramesh p/81230004 a/12 Clementi Rd l/Sec 3 sub/Physics");
-        logic.execute("add n/Marcus Lim p/81230005 a/3 Tampines Ave l/Sec 4 sub/Physics");
+        logic.execute("add n/Priya Ramesh p/81230004 addr/12 Clementi Rd l/Sec 3 sub/Physics");
+        logic.execute("add n/Marcus Lim p/81230005 addr/3 Tampines Ave l/Sec 4 sub/Physics");
         Person priya = model.getAddressBook().getPersonList().get(3);
         Person marcus = model.getAddressBook().getPersonList().get(4);
         String savedData = Files.readString(dataFile);
@@ -103,7 +103,7 @@ public class FindCommandIntegrationTest {
 
     @Test
     public void execute_greekNameSearch_matchesUppercaseAndLowercasePrefixes() throws Exception {
-        logic.execute("add n/ΚΟΣΜΑΣ p/81234567 a/10 Short Street l/Sec 2 sub/E-Math");
+        logic.execute("add n/ΚΟΣΜΑΣ p/81234567 addr/10 Short Street l/Sec 2 sub/E-Math");
         Person student = model.getAddressBook().getPersonList().get(3);
         String savedData = Files.readString(dataFile);
         for (String keyword : List.of("ΚΟΣ", "κοσ", "κος")) {

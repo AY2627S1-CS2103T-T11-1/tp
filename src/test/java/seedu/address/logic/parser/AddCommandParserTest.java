@@ -64,13 +64,41 @@ public class AddCommandParserTest {
     public void parse_specExamples_success() {
         Person tanWeiMing = new PersonBuilder().withName("Tan Wei Ming").withPhone("87654321")
                 .withAddress("Blk 8 Bishan St 22 #05-13").withLevel("JC1").withSubject("H2 Math").build();
-        assertParseSuccess(parser, " n/Tan Wei Ming p/87654321 a/Blk 8 Bishan St 22 #05-13 l/JC1 sub/H2 Math",
+        assertParseSuccess(parser, " n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22 #05-13 l/JC1 sub/H2 Math",
                 new AddCommand(tanWeiMing));
 
         Person maryAnneLim = new PersonBuilder().withName("Mary-Anne Lim").withPhone("91234567")
                 .withAddress("12 Clementi Rd").withLevel("Sec 4").withSubject("E-Math").build();
-        assertParseSuccess(parser, " n/Mary-Anne Lim p/91234567 a/12 Clementi Rd l/Sec 4 sub/E-Math",
+        assertParseSuccess(parser, " n/Mary-Anne Lim p/91234567 addr/12 Clementi Rd l/Sec 4 sub/E-Math",
                 new AddCommand(maryAnneLim));
+    }
+
+    @Test
+    public void parse_nameWithAlOrAp_keepsFullName() {
+        // a/l and a/p are part of Malay and Indian names, not an address prefix
+        Person muthu = new PersonBuilder().withName("Muthu a/l Raju").withPhone("81234567")
+                .withAddress("1 Example Street").withLevel("Sec 3").withSubject("E-Math").build();
+        assertParseSuccess(parser, " n/Muthu a/l Raju p/81234567 addr/1 Example Street l/Sec 3 sub/E-Math",
+                new AddCommand(muthu));
+
+        Person siti = new PersonBuilder().withName("Siti a/p Ahmad").withPhone("81234568")
+                .withAddress("2 Example Street").withLevel("JC1").withSubject("H2 Math").build();
+        assertParseSuccess(parser, " addr/2 Example Street n/Siti a/p Ahmad p/81234568 l/JC1 sub/H2 Math",
+                new AddCommand(siti));
+    }
+
+    @Test
+    public void parse_oldAddressPrefixWithoutAddr_showsUsageWithHint() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE)
+                + "\n" + AddCommandParser.MESSAGE_ADDRESS_PREFIX_HINT;
+        assertParseFailure(parser, " n/Amy Tan p/81234567 a/1 Example Street l/Sec 3 sub/E-Math", expectedMessage);
+        assertParseFailure(parser, " a/1 Example Street n/Amy Tan p/81234567 l/Sec 3 sub/E-Math", expectedMessage);
+    }
+
+    @Test
+    public void parse_missingAddressWithoutOldPrefix_showsUsageOnly() {
+        assertParseFailure(parser, " n/Amy Tan p/81234567 l/Sec 3 sub/E-Math",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
     }
 
     @Test
