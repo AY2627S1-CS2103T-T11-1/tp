@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,10 +42,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -87,6 +88,38 @@ public class PersonListPanelTest {
     public Path temporaryFolder;
 
     @Test
+    public void commandBox_saveUnavailable_filterHelpAndExitStillWork(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) {
+                    throw new AssertionError("Read-only commands must not attempt a save");
+                }
+            };
+            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), storage, directory), directory);
+            Stage stage = window.getPrimaryStage();
+            stage.show();
+            try {
+                Region root = (Region) stage.getScene().getRoot();
+                assertFeedback(root, "find ben", "Found 1 student.", false);
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                assertEquals(1, list.getItems().size());
+                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
+                assertFeedback(root, "help", HelpCommand.SHOWING_HELP_MESSAGE, false);
+                assertTrue(Window.getWindows().stream().anyMatch(candidate -> candidate instanceof Stage help
+                        && help.getTitle().equals("Help") && help.isShowing()));
+                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
+                enterClickTestCommand(root, "exit");
+                assertFalse(stage.isShowing());
+                assertFalse(Window.getWindows().stream().anyMatch(candidate -> candidate instanceof Stage help
+                        && help.getTitle().equals("Help") && help.isShowing()));
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
     public void start_recoveryWarning_showsAfterWindowIsReady() throws Exception {
         runOnJavaFxThread(() -> {
             Path file = temporaryFolder.resolve("students.json");
@@ -94,7 +127,7 @@ public class PersonListPanelTest {
                     new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
             Stage stage = new Stage();
             List<String> shownWarning = new ArrayList<>();
-            UiManager ui = new UiManager(logic, file, Optional.of("Recovery instructions")) {
+            UiManager ui = new UiManager(logic, file, "Recovery instructions") {
                 @Override
                 void showAlertDialogAndWait(AlertType type, String title, String header, String content) {
                     shownWarning.addAll(List.of(type.name(), title, header, content,
@@ -530,7 +563,7 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void studentCard_commandFailure_displaysErrorWithoutThrowing(@TempDir Path directory) throws Exception {
+    public void studentCard_saveUnavailable_viewsHistoryButRejectsMutation(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(directory.resolve("students.json")) {
                 @Override
@@ -544,7 +577,11 @@ public class PersonListPanelTest {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 clickStudent(root, 0);
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
-                assertEquals(String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable"), result.getText());
+                assertEquals(AMY_FIXTURE_HISTORY, result.getText());
+                assertFeedback(root, "log 1 c/Trigonometry",
+                        String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable"), true);
+                clickStudent(root, 0);
+                assertEquals(AMY_FIXTURE_HISTORY, result.getText());
             } finally {
                 window.getPrimaryStage().close();
             }

@@ -175,6 +175,22 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_unchangedEdit_doesNotAttemptSaving() throws Exception {
+        model.addPerson(AMY);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("students.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) {
+                throw new AssertionError("Unchanged student data must not be saved");
+            }
+        };
+        Logic readOnlyLogic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        assertEquals("Edited student: " + Messages.format(AMY),
+                readOnlyLogic.execute("edit 1 n/" + AMY.getName().fullName).getFeedbackToUser());
+        assertEquals(AMY, model.getAddressBook().getPersonList().getFirst());
+    }
+
+    @Test
     public void execute_listAfterAddingAndDeleting_updatesCount() throws Exception {
         logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + ADDRESS_DESC_AMY + LEVEL_DESC_AMY + SUBJECT_DESC_AMY);

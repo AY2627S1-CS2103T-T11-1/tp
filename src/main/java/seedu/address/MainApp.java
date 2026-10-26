@@ -46,7 +46,7 @@ public class MainApp extends Application {
     protected Model model;
     private final Path userPrefsFilePath;
     private final Path addressBookFilePath;
-    private Optional<String> startupWarning = Optional.empty();
+    private String startupWarning;
 
     /** Creates the application with its normal preference and student data paths. */
     public MainApp() {
@@ -83,7 +83,7 @@ public class MainApp extends Application {
      */
     protected Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
-        startupWarning = Optional.empty();
+        startupWarning = null;
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
         ReadOnlyAddressBook initialData;
@@ -97,10 +97,11 @@ public class MainApp extends Application {
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Saving is disabled for this session.");
-            startupWarning = Optional.of("The student data file could not be loaded:\n"
+            startupWarning = "The student data file could not be loaded:\n"
                     + storage.getAddressBookFilePath().toAbsolutePath().normalize()
                     + "\n\nThe original file has not been changed. No students were loaded, and changes in this "
-                    + "session cannot be saved.\n\n" + JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED);
+                    + "session cannot be saved. You can still use help and exit normally.\n\n"
+                    + JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED;
             initialData = new AddressBook();
         }
 
@@ -109,7 +110,7 @@ public class MainApp extends Application {
 
     /** Returns the recovery warning prepared during model initialization, if loading failed. */
     Optional<String> getStartupWarning() {
-        return startupWarning;
+        return Optional.ofNullable(startupWarning);
     }
 
     /**

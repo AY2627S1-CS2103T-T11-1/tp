@@ -20,6 +20,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -50,8 +54,7 @@ public class MainAppTest {
         assertTrue(app.getStartupWarning().isPresent());
         assertEquals(file, app.storage.getAddressBookFilePath());
         assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
-        assertThrows(CommandException.class, LogicManager.FILE_OPS_ERROR_FORMAT.formatted(
-                JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED), () -> app.logic.execute("list"));
+        assertEquals(ListCommand.MESSAGE_EMPTY, app.logic.execute("list").getFeedbackToUser());
         app.stop();
         assertArrayEquals(original, Files.readAllBytes(file));
         assertTrue(Files.exists(preferences));
@@ -74,12 +77,32 @@ public class MainAppTest {
         assertTrue(Files.exists(preferences));
     }
 
+    @Test
+    public void init_nullJson_initializesUiAndProtectedStorage() throws Exception {
+        for (String contents : List.of("null", "{\"persons\":[null]}")) {
+            Path folder = Files.createTempDirectory(temporaryFolder, "null-startup-");
+            Path file = folder.resolve("students.json");
+            Files.writeString(file, contents);
+            MainApp app = new MainApp(folder.resolve("preferences.json"), file);
+            app.init();
+            assertNotNull(app.ui);
+            assertTrue(app.getStartupWarning().isPresent());
+            assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
+            assertTrue(app.logic.execute("help").isShowHelp());
+            assertTrue(app.logic.execute("exit").isExit());
+            app.stop();
+            assertEquals(contents, Files.readString(file));
+        }
+    }
+
     @TestFactory
     public Stream<DynamicTest> initModelManager_unreadableFile_commandsPreserveOriginalBytes() {
         String malformed = "{\"persons\": [\n  {\"name\": \"Amy Tan\"";
         String invalidPhone = "{\"persons\":[{\"name\":\"Amy Tan\",\"phone\":\"12\","
                 + "\"address\":\"10 Example Street\",\"level\":\"Sec 3\",\"subject\":\"E-Math\"}]}";
-        return Stream.of(malformed, invalidPhone).map(contents -> DynamicTest.dynamicTest(contents, () -> {
+        Stream<String> invalidFiles = Stream.of(malformed, invalidPhone, "null", "{\"persons\":[null]}",
+                "{\"persons\":null}", "{}");
+        return invalidFiles.map(contents -> DynamicTest.dynamicTest(contents, () -> {
             Path folder = Files.createTempDirectory(temporaryFolder, "recovery-");
             Path file = folder.resolve("students.json");
             byte[] original = contents.getBytes(StandardCharsets.UTF_8);
@@ -94,12 +117,24 @@ public class MainAppTest {
             assertArrayEquals(original, Files.readAllBytes(file));
 
             Logic logic = new LogicManager(model, storage);
-            for (String command : List.of("list", "find amy", "help", "exit",
-                    "add n/Ben Lim p/81230012 a/20 Example Street l/JC1 sub/H2 Math")) {
-                assertThrows(CommandException.class, LogicManager.FILE_OPS_ERROR_FORMAT.formatted(
-                        JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED), () -> logic.execute(command));
+            for (String command : List.of("list", "find amy", "flagged", "help", "exit")) {
+                var result = logic.execute(command);
+                if (command.equals("help")) {
+                    assertTrue(result.isShowHelp());
+                    assertEquals(HelpCommand.SHOWING_HELP_MESSAGE, result.getFeedbackToUser());
+                } else if (command.equals("exit")) {
+                    assertTrue(result.isExit());
+                    assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
+                } else if (command.equals("find amy")) {
+                    assertEquals(FindCommand.MESSAGE_NO_NAME_MATCHES, result.getFeedbackToUser());
+                }
                 assertArrayEquals(original, Files.readAllBytes(file));
             }
+            assertThrows(CommandException.class, LogicManager.FILE_OPS_ERROR_FORMAT.formatted(
+                    JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED), () -> logic.execute(
+                        "add n/Ben Lim p/81230012 a/20 Example Street l/JC1 sub/H2 Math"));
+            assertTrue(model.getAddressBook().getPersonList().isEmpty());
+            assertArrayEquals(original, Files.readAllBytes(file));
         }));
     }
 
@@ -111,7 +146,10 @@ public class MainAppTest {
         Model model = app.initModelManager(storage, new UserPrefs());
         assertFalse(model.getAddressBook().getPersonList().isEmpty());
         assertTrue(app.getStartupWarning().isEmpty());
-        new LogicManager(model, storage).execute("list");
+        Logic logic = new LogicManager(model, storage);
+        logic.execute("list");
+        assertFalse(Files.exists(file));
+        logic.execute("log 1 c/Algebra");
         assertEquals(model.getAddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
     }
 

@@ -13,8 +13,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -93,6 +96,24 @@ public class JsonAddressBookStorageTest {
         restarted.readAddressBook();
         restarted.saveAddressBook(getTypicalAddressBook());
         assertEquals(getTypicalAddressBook(), new AddressBook(restarted.readAddressBook().orElseThrow()));
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> readAddressBook_nullJson_blocksBothSaveOverloads() {
+        return Stream.of("null", "{\"persons\":[null]}").map(contents -> DynamicTest.dynamicTest(contents, () -> {
+            Path file = Files.createTempFile(testFolder, "null-data-", ".json");
+            Files.writeString(file, contents);
+            byte[] original = Files.readAllBytes(file);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+            assertThrows(DataLoadingException.class, () -> storage.readAddressBook());
+            assertThrows(IOException.class, JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED, () ->
+                    storage.saveAddressBook(new AddressBook()));
+            Path otherFile = file.resolveSibling("other.json");
+            assertThrows(IOException.class, JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED, () ->
+                    storage.saveAddressBook(new AddressBook(), otherFile));
+            assertFalse(Files.exists(otherFile));
+            assertArrayEquals(original, Files.readAllBytes(file));
+        }));
     }
 
     @Test
