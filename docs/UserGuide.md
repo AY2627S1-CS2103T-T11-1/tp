@@ -320,6 +320,10 @@ Examples:
 * `findlesson 2 from/01/10/2026 to/31/10/2026` searches their dated October records.
 * `findlesson 2 revision from/01/10/2026` requires both the topic and the lower date boundary to match.
 
+**Screenshot example:** `findlesson 1 algebra from/01/10/2026 to/31/10/2026` finds two records for Amy Tan. The original lesson numbers 2 and 4 are kept, and all three student cards remain visible:
+
+<a href="images/find-lessons.png"><img src="images/find-lessons.png" alt="Two matching Algebra lessons for Amy Tan, retaining full-history lesson numbers 2 and 4" width="726"></a>
+
 ### Reading long command results
 
 Drag the horizontal divider below the result box to give lesson histories more

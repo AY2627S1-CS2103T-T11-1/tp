@@ -20,7 +20,7 @@
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, its review fixes, tests and documentation.
-* OpenAI Codex, used by cibichandar, assisted with the implementation, tests and documentation for searching lesson histories.
+* OpenAI Codex, used by cibichandar, assisted with the implementation, tests, documentation and screenshots for searching lesson histories.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -640,6 +640,20 @@ Use a separate test folder with an empty student file and fictional data only.
 1. Enter `list`, edit Amy's latest lesson to an earlier date, then remove her lessons one at a time using `deletelesson`. Expected: the card immediately follows the most recent remaining date, the count decreases, and removing the last record shows `No lessons yet`. `summary` then reports 2 students, 0 lesson records and 2 students with no lessons.
 1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons (undated)` (or `1 lesson (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
 1. Check the status alongside a flag reason, selected and hovered cards, long student details and the supported display sizes/scales. Expected: the status and reason remain readable without overlapping other fields.
+
+### Searching lesson histories
+
+Before launching, prepare an isolated test folder with `data/addressbook.json`
+containing `{"persons": []}`. Add Amy Tan and Ben Lim, then log `Algebra` for Amy
+on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` on
+05/01/2020. Amy is student 1 and Ben is student 2.
+
+1. Enter `findlesson 1 algebra`. Expected: two matches numbered 2 and 4, newest first; Amy is highlighted. `view 1` and a card click still show all four lessons.
+1. Enter `findlesson 1 from/02/01/2020 to/02/01/2020`. Expected: only lesson 4. Repeat with just `from/04/01/2020`, just `to/03/01/2020`, and an upper boundary of `31/12/9999`; endpoints are inclusive and future query limits are accepted.
+1. Enter `find amy`, then `findlesson 1 algebra`. Expected: the same matches and only Amy remains in the student list. Repeat with a flagged Amy and `flagged`.
+1. Enter `editlesson 1 4 c/Algebra corrected`, then `deletelesson 1 2`. Expected: the selected original records change; a new search shows one match, now numbered 3. Restart and check the saved history.
+1. Enter `findlesson 1 missing`, then `list` and `findlesson 2 algebra`. Expected: distinct no-match and no-lessons messages. Try missing criteria, reversed ranges, invalid dates and repeated date prefixes; each reports an error without changing data or the student filter.
+1. Repeat a content-only search with valid undated legacy records, then supply a date boundary. Expected: undated matches appear only in the content-only search. Check a long search result by resizing the result area and scrolling; another command starts its feedback at the top.
 
 ### Adding students
 
