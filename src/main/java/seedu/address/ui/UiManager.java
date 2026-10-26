@@ -26,14 +26,25 @@ public class UiManager implements Ui {
     private Logic logic;
     private Path dataFilePath;
     private MainWindow mainWindow;
+    private final String startupWarning;
 
     /**
      * Creates a {@code UiManager} with the given {@code Logic} and the data file path
      * to show in the status bar.
      */
     public UiManager(Logic logic, Path dataFilePath) {
+        this(logic, dataFilePath, null);
+    }
+
+    /**
+     * Creates the UI with a warning to show after the main window is ready.
+     *
+     * @param startupWarning The recovery instructions, or null when no warning is needed.
+     */
+    public UiManager(Logic logic, Path dataFilePath, String startupWarning) {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
+        this.startupWarning = startupWarning;
     }
 
     @Override
@@ -47,6 +58,10 @@ public class UiManager implements Ui {
             mainWindow = new MainWindow(primaryStage, logic, dataFilePath);
             mainWindow.show(); //This should be called before creating other UI parts
             mainWindow.fillInnerParts();
+            if (startupWarning != null) {
+                showAlertDialogAndWait(AlertType.WARNING, "Student data could not be loaded",
+                        "Saving is disabled for this session", startupWarning);
+            }
 
         } catch (Throwable e) {
             logger.severe(StringUtil.getDetails(e));

@@ -48,13 +48,14 @@ public class FindCommandIntegrationTest {
     private Path dataFile;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
         model = new ModelManager();
         model.addPerson(WEI_MING);
         model.addPerson(WEI_JIE);
         model.addPerson(ALICIA);
         dataFile = temporaryFolder.resolve("students.json");
         storage = new JsonAddressBookStorage(dataFile);
+        storage.saveAddressBook(model.getAddressBook());
         logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
     }

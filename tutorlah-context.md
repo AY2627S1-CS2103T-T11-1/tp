@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback) and #143 (finding students by subject and level); #146 adds student and lesson summaries.
+Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries.
 
 ## What it is
 
@@ -51,6 +51,8 @@ recorded about them, not building a new kind of app.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
 
 If a command cannot be saved, TutorLah restores its preceding in-memory student data and active filter, then reports the save error. Retrying uses the original displayed indexes; a later command cannot silently persist a failed mutation.
+
+If an existing student file cannot be loaded, including a null JSON root or null student entry, the app shows recovery instructions and disables saving for that session. Commands cannot overwrite the unreadable file. Read-only commands, help and exit still work; a data-changing command is rejected and rolled back. The tutor exits, backs up and repairs or restores the file, then restarts to resume normal use. A genuinely missing file still loads sample students. Student data is saved only when a command changes it, so read-only commands do not rewrite the file.
 
 ## Where the changes land in the code
 

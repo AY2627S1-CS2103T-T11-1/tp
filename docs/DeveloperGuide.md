@@ -19,6 +19,7 @@
 * OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries and per-student lesson counts.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
+* OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, its review fixes, tests and documentation.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -102,7 +103,7 @@ How command execution works:
 
 1. `AddressBookParser#parseCommand` returns a concrete `Command` for the input.
 1. `LogicManager` calls `Command#execute(Model)`, which reads or updates the model and returns a `CommandResult`.
-1. `LogicManager` saves the complete address book through `Storage`, then returns the result to the UI. This save also runs for non-mutating commands such as `list` and `view`.
+1. `LogicManager` compares the complete address book with its snapshot from before execution. If student data changed, it saves through `Storage` before returning the result. Otherwise it returns without saving, so `list`, `view`, `find`, `flagged`, `help` and `exit` work even when saving is unavailable. An edit that leaves the stored values unchanged also skips saving.
 
 `CommandResult` contains feedback and the help/exit flags. A successful `view` also supplies a displayed student `Index`, even for an empty history; other commands leave it absent (`0..1`). The UI uses it to highlight the student, as shown in [Viewing lesson history](#viewing-lesson-history).
 
@@ -157,6 +158,8 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions; `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
@@ -179,7 +182,7 @@ The sequence shows a successful view of displayed student 1. The `User` actor re
 
 `ViewCommand` reads the student from `Model#getFilteredPersonList`, leaving the current filter and student data unchanged. It traverses the stored lessons backwards: the most recent lesson date appears first, with the most recently logged record first among equal dates. Existing undated records appear at the oldest end when lessons have been added in date order. Each row shows its displayed lesson number, formatted date and content; undated records use `(undated)`. An empty history returns `No lessons logged yet for NAME.`.
 
-If parsing or execution fails, `MainWindow` displays the error instead of the history and does not apply a viewed-student selection. For typed input, `CommandBox` keeps the failed command and marks it as an error. Card-click failures are displayed through the same execution path without clearing typed text. Although viewing does not modify students or lessons, it still goes through `LogicManager`'s existing save-after-success path.
+If parsing or execution fails, `MainWindow` displays the error instead of the history and does not apply a viewed-student selection. For typed input, `CommandBox` keeps the failed command and marks it as an error. Card-click failures are displayed through the same execution path without clearing typed text. Viewing changes no student or lesson data, so `LogicManager` returns its result without attempting to save.
 
 ### Rejecting blank Unicode fields
 
@@ -210,11 +213,11 @@ The command keeps each student's lessons in date order with one of two operation
 
 ### Student and lesson summaries
 
-`AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. The existing post-command saving and failed-save rollback still apply.
+`AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. Because the command changes no stored data, `LogicManager` returns its result without attempting to save, including during recovery.
 
 `Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
 
-`StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, failed saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
+`StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, unavailable saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
 
 ### Finding students by name, subject and level
 
@@ -224,7 +227,7 @@ The command keeps each student's lessons in date order with one of two operation
 
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
-`view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; the existing storage path saves the complete address book.
+`view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; read-only searches do not rewrite the student data file.
 
 ### Flagging students for follow-up
 
@@ -533,7 +536,7 @@ These are product requirements, not a claim that every target has been verified.
 4.  **Single-file distribution:** TutorLah should be packaged in one JAR file that does not exceed `100 MB`.
 5.  **Typing-first interaction:** Student and lesson management should be possible using typed commands. Adding a student and logging a lesson should each take one command.
 6.  **Error feedback:** Rejected input should receive field- or command-specific feedback. Missing or malformed command parts should also show usage.
-7.  **Data persistence:** After a successful command, TutorLah should save the complete student and lesson data locally before returning success feedback.
+7.  **Data persistence:** After a successful data-changing command, TutorLah should save the complete student and lesson data locally before returning success feedback.
 8.  **Data integrity:** A failed command should not add, delete or modify student or lesson records.
 
     If saving fails, `LogicManager` restores the preceding student data and active filter before reporting the error.
@@ -691,11 +694,17 @@ Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim 
 
 #### Missing or corrupted files
 
-1. Dealing with missing/corrupted data files
+Use a separate test folder and fictional data only. Keep a valid copy of the student file before changing it.
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Launch with no `data/addressbook.json`. Expected: sample students and no recovery warning. `list` works without creating the student file; logging a lesson creates it and saves the complete collection.
+1. Save a fictional Amy Tan with an Algebra record, exit, and keep an exact copy of the JSON file. Remove a closing brace from the working copy and restart. Expected: a warning with the file location and repair/restart instructions, an empty list and saving disabled.
+1. Dismiss the warning and try `list`, `find amy`, `flagged` and `help`. Expected: normal feedback for the empty collection, with the help window opening normally and the original file remaining byte-for-byte unchanged.
+1. Try adding a fictional student. Expected: the saving-disabled error, with the model still empty and the original file unchanged. Enter `exit`. Expected: the app closes normally without overwriting that file.
+1. Restore the valid file and restart. Expected: Amy and Algebra return, no recovery warning appears, and new changes save normally.
+1. Repeat with valid JSON containing Amy's phone as `12`. Expected: the same protection and warning, because stored field validation also failed.
+1. Prepare a valid `{"persons": []}` file and restart. Expected: an empty list with no warning and normal saving. Valid legacy lesson records without a date still load as undated.
 
-1. _{ more test cases … }_
+`MainAppTest` and `JsonAddressBookStorageTest` exercise startup and subsequent commands with malformed JSON, a null root, null student entries and invalid values, exact byte preservation, missing/legacy data, repair and restart. `PersonListPanelTest` checks that the recovery warning is requested after the window is shown and is absent during a normal start.
 
 ### Deleting lesson records
 

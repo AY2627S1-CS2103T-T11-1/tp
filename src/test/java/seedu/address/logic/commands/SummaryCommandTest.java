@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
-import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -51,7 +49,9 @@ public class SummaryCommandTest {
                 .withLessons("Algebra", "Algebra").build());
         model.addPerson(new PersonBuilder().withName("Ben Lim").withFlag("Call parent").build());
         Path file = temporaryFolder.resolve("students.json");
-        Logic logic = logic(model, new JsonAddressBookStorage(file));
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(model.getAddressBook());
+        Logic logic = logic(model, storage);
         logic.execute("list");
         String savedData = Files.readString(file);
         AddressBook before = new AddressBook(model.getAddressBook());
@@ -102,19 +102,20 @@ public class SummaryCommandTest {
     }
 
     @Test
-    public void execute_failedSave_reportsErrorAndRetainsFilter() throws Exception {
+    public void execute_saveUnavailable_reportsSummaryAndRetainsFilter() throws Exception {
         ModelManager model = new ModelManager();
         model.addPerson(new PersonBuilder().withLessons("Algebra").build());
         model.updateFilteredPersonList(person -> false);
         AddressBook before = new AddressBook(model.getAddressBook());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("students.json")) {
             @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                throw new IOException("disk unavailable");
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) {
+                throw new AssertionError("Summary must not attempt a save");
             }
         };
-        String error = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable");
-        assertThrows(CommandException.class, error, () -> logic(model, storage).execute("summary"));
+        assertEquals("Summary:\nYou have 1 student and 1 lesson record in total. "
+                + "Every student has at least one lesson recorded.",
+                logic(model, storage).execute("summary").getFeedbackToUser());
         assertEquals(before, model.getAddressBook());
         assertTrue(model.getFilteredPersonList().isEmpty());
     }

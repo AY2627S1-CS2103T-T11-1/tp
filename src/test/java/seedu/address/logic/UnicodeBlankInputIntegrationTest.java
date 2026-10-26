@@ -52,6 +52,7 @@ public class UnicodeBlankInputIntegrationTest {
         model.addPerson(BEN);
         dataFile = directory.resolve("students.json");
         storage = new JsonAddressBookStorage(dataFile);
+        storage.saveAddressBook(model.getAddressBook());
         logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(directory.resolve("preferences.json"))));
         logic.execute("find amy");

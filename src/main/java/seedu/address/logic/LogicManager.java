@@ -52,6 +52,10 @@ public class LogicManager implements Logic {
         Predicate<Person> previousFilter = model.getFilteredPersonListPredicate();
         commandResult = command.execute(model);
 
+        if (previousData.equals(model.getAddressBook())) {
+            return commandResult;
+        }
+
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -67,9 +71,7 @@ public class LogicManager implements Logic {
 
     /** Restores data and filter semantics so a failed command cannot be saved or retried against changed indexes. */
     private void restoreModel(AddressBook previousData, Predicate<Person> previousFilter) {
-        if (!previousData.equals(model.getAddressBook())) {
-            model.setAddressBook(previousData);
-        }
+        model.setAddressBook(previousData);
         model.updateFilteredPersonList(previousFilter);
     }
 

@@ -145,7 +145,7 @@ You have 3 students and 3 lesson records in total. 1 student has no lessons reco
 * Totals include **all saved students**, even after `find` or `flagged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
 * Every lesson record counts, including undated records saved before v1.4 and separate records with identical content. These totals describe recorded history, not scheduled lessons or teaching hours.
 * `summary` accepts no parameters. For example, `summary 1` shows the summary usage and keeps the current list.
-* The command introduces no new saved fields and does not change students or lessons. Like other commands, it still uses the normal saving path and can report a file or permission error.
+* The command introduces no new saved fields and does not change students or lessons. It does not attempt to save, so it also works while saving is unavailable.
 
 **Screenshot example:** after `summary`, the complete collection contains three students and three lesson records. Ben has no lessons; Amy has two dated records and Chloe has one undated record:
 
@@ -387,7 +387,7 @@ Format: `exit`
 
 ### Saving the data
 
-TutorLah automatically saves data after each successful command. You do not need to save manually.
+TutorLah automatically saves after a successful command changes student or lesson data. Commands that only display or filter data, open help or exit do not rewrite the student data file. You do not need to save manually.
 
 If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry.
 
@@ -404,7 +404,7 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, TutorLah starts with an empty student list at the next run. A successful command can overwrite the invalid file. Back up the file before editing it. If your saved students unexpectedly disappear, close the window without entering commands, preserve the file, and repair or restore it before restarting.<br>
+If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
 Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 

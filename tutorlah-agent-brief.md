@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 26, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record) and #116 (save-failure rollback); #146 adds student and lesson summaries.
+Last updated: Oct 26, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -113,7 +113,7 @@ ask the team. Do not guess.
 
 **Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
 
-**Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the normal post-command saving path still runs.
+**Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the command changes no student data and does not attempt to save.
 
 **Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep flag badge/reason visibility independent. The help window includes `Use summary to see student and lesson totals.`.
 
@@ -255,7 +255,11 @@ accepted by the parser. Commands apply these errors consistently:
 
 ## 5. Agreed Java interfaces (as on `master`)
 
+- `LogicManager` saves student data only when it differs from the snapshot taken before command execution. Read-only commands and edits that leave stored values unchanged skip saving, so help, exit and filters still work during recovery or write failures. First-run sample data is saved by the first data-changing command.
+
 - `Model#getFilteredPersonListPredicate()` captures the active student filter as a non-null predicate. `LogicManager` snapshots the address book and filter before command execution. If saving fails, it restores changed student data and the captured filter before throwing the existing save-error `CommandException`. Lesson records and flags are preserved, and later commands cannot silently save the failed mutation.
+
+- If reading a student data file fails (including a null JSON root or null student entry), that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location. The original student file is preserved. Read-only commands still work; changed student data is rejected by the guard and rolled back. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples. `MainApp` and `UiManager` store the warning as a nullable string; `MainApp#getStartupWarning()` returns an `Optional<String>`.
 
 - `seedu.address.model.person.Level` and `Subject`: same shape as
   `Address` (public `value`, `isValidLevel` / `isValidSubject`,
