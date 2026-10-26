@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.FindLessonCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.ModelManager;
@@ -87,6 +89,94 @@ public class PersonListPanelTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void commandBox_findLesson_keepsNumbersAndSupportsEditing(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "find amy");
+                assertFeedback(root, "findlesson 1 alg", "Matching lesson records for Amy (2):"
+                        + "\n1. (undated): Algebra\n3. (undated): Algebra", false);
+                assertEquals(1, list.getItems().size());
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                assertFeedback(root, "editlesson 1 3 c/Algebra revised",
+                        "Edited lesson 3 for Amy (now lesson 3). (undated): Algebra revised", false);
+                assertFeedback(root, "deletelesson 1 1", "Deleted lesson 1 for Amy: Algebra", false);
+                assertFeedback(root, "findlesson 1 alg",
+                        "Matching lesson records for Amy (1):\n2. (undated): Algebra revised", false);
+                assertFeedback(root, "view 1",
+                        "Lesson records for Amy (2):\n1. (undated): Geometry"
+                                + "\n2. (undated): Algebra revised", false);
+                clickStudent(root, 0);
+                assertEquals("Lesson records for Amy (2):\n1. (undated): Geometry"
+                        + "\n2. (undated): Algebra revised",
+                        result.getText());
+                assertFeedback(root, "findlesson 1 missing",
+                        "No matching lesson records found for Amy.", false);
+                assertFeedback(root, "findlesson 1", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
+                        FindLessonCommand.MESSAGE_USAGE), true);
+                assertFeedback(root, "findlesson 1 from/02/01/2020 algebra",
+                        FindLessonCommand.MESSAGE_KEYWORDS_AFTER_DATE, true);
+                assertFeedback(root, "findlesson 1 to/04/01/2020 algebra",
+                        FindLessonCommand.MESSAGE_KEYWORDS_AFTER_DATE, true);
+                assertFeedback(root, "findlesson 1 from/31/02/2020 algebra",
+                        Lesson.MESSAGE_DATE_CONSTRAINTS, true);
+                assertEquals(1, list.getItems().size());
+                assertFeedback(root, "findlesson 1 alg",
+                        "Matching lesson records for Amy (1):\n2. (undated): Algebra revised", false);
+                enterClickTestCommand(root, "list");
+                assertFeedback(root, "findlesson 2 alg", "No lessons logged yet for Ben.", false);
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_longLessonSearch_wrapsAndResetsScroll(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Person amy = model.getFilteredPersonList().getFirst();
+            String content = "Algebra revision ".repeat(15).trim();
+            String[] records = new String[40];
+            Arrays.fill(records, content);
+            model.setPerson(amy, new PersonBuilder(amy).withLessons(records).build());
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextArea result = (TextArea) root.lookup("#resultDisplay");
+                StringBuilder expected = new StringBuilder("Matching lesson records for Amy (40):");
+                for (int number = 1; number <= 40; number++) {
+                    expected.append("\n").append(number).append(". (undated): ").append(content);
+                }
+                for (double width : new double[] {450, 900}) {
+                    root.resize(width, 560);
+                    root.layout();
+                    assertFeedback(root, "findlesson 1 alg", expected.toString(), false);
+                    assertTrue(result.isWrapText());
+                    result.positionCaret(result.getLength());
+                    result.setScrollTop(Double.MAX_VALUE);
+                    root.layout();
+                    assertTrue(result.getScrollTop() > 0);
+                    assertFeedback(root, "findlesson 1 alg", expected.toString(), false);
+                    assertEquals(0, result.getScrollTop());
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
 
     @Test
     public void commandBox_summaryAndLessonChanges_refreshStatusWithoutChangingFilter(@TempDir Path directory)
@@ -155,12 +245,12 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void helpWindow_includesSummaryHint() throws Exception {
+    public void helpWindow_pointsToUserGuide() throws Exception {
         runOnJavaFxThread(() -> {
             HelpWindow help = new HelpWindow();
             Label message = (Label) help.getRoot().getScene().lookup("#helpMessage");
-            assertTrue(message.getText().contains("Use summary to see student and lesson totals."));
-            assertTrue(message.getText().contains(HelpWindow.USERGUIDE_URL));
+            assertEquals("Refer to the user guide: " + HelpWindow.USERGUIDE_URL, message.getText());
+            assertNotNull(help.getRoot().getScene().lookup("#copyButton"));
             help.hide();
         });
     }

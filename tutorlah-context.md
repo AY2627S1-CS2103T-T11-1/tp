@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 26, 2026, for issues #111 (target user), #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries; #109 changes the address prefix to `addr/`.
+Last updated: Oct 26, 2026, for lesson search and the `addr/` address prefix.
 
 ## What it is
 
@@ -75,7 +75,8 @@ If an existing student file cannot be loaded, including a null JSON root or null
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.
 Main-window guide screenshots use a 1100 x 818 pixel canvas and a 726 pixel
-display width. The help dialog keeps its natural proportions. Captures show
+display width. The help dialog links to the User Guide with a Copy URL button,
+without individual command hints, and keeps its natural proportions. Captures show
 only application content, without mouse or assistant overlays.
 
 Addresses and lesson content cannot consist only of Unicode whitespace or
@@ -110,6 +111,14 @@ Added in v1.5:
 | Remove a flag | `unflag INDEX` | `unflag 2` |
 | List flagged students | `flagged` | `flagged` |
 | Summarize students and lessons | `summary` | `summary` |
+| Search a student's lessons | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | `findlesson 2 algebra from/01/10/2026` |
+
+`findlesson` searches one displayed student's lesson content, an inclusive date
+range or both. Every keyword must match; date searches exclude undated lessons.
+Keywords must precede date prefixes; extra words after a valid date get a correction example.
+Results keep their original `view` numbers for editing or deletion, but those
+numbers can change after a lesson mutation. The search is a one-off result and
+changes neither stored data nor the student filter.
 
 `summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
 
@@ -163,7 +172,7 @@ recent date first. Lessons saved before v1.4 have no date and show
   each logged lesson.
 - **Added in v1.5:** persistent follow-up flags with optional reasons and a
   filtered flagged-student view, editing a lesson record's content or date, and
-  student/lesson totals with per-student lesson status.
+  student/lesson totals with per-student lesson status, and lesson-history search.
 - **Planned next:** parent or guardian contact,
   weekly slots, homework tracking, rescheduling, monthly lesson counts,
   archiving.

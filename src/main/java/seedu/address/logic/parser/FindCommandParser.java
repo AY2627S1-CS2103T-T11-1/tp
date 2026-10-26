@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Level;
@@ -25,8 +26,6 @@ import seedu.address.model.person.Subject;
  */
 public class FindCommandParser implements Parser<FindCommand> {
 
-    /** Unicode whitespace and invisible formatting characters, which do not count as a search value. */
-    private static final String BLANK_VALUE_REGEX = "[\\p{IsWhite_Space}\\p{Cf}]*";
     /** Any single Unicode whitespace character, such as a non-breaking space, EM SPACE or tab. */
     private static final String UNICODE_WHITESPACE_REGEX = "(?U)\\s";
 
@@ -65,7 +64,7 @@ public class FindCommandParser implements Parser<FindCommand> {
             return List.of();
         }
         String value = argMultimap.getValue(prefix).get();
-        if (value.matches(BLANK_VALUE_REGEX)) {
+        if (StringUtil.isBlankOrInvisible(value)) {
             throw new ParseException(constraintsMessage);
         }
         return splitKeywords(value);

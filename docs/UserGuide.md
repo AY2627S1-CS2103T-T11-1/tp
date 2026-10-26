@@ -46,6 +46,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
    * `view 1` : Shows the lesson records of the 1st student in the list, most recent first.
 
+   * `findlesson 1 algebra` : Searches the 1st student's lesson content for `algebra`.
+
    * `delete 3` : Deletes the 3rd student shown in the current list, together with their lesson records.
 
    * `exit` : Exits the app.
@@ -82,7 +84,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
 Shows a message explaining how to access the help page.
 
-The help window also reminds you to use `summary` for student and lesson totals.
+Use the **Copy URL** button to copy the User Guide link and open it in your browser.
 
 ![help message](images/helpMessage.png)
 
@@ -296,6 +298,54 @@ Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays 
 
 <a href="images/Ui.png"><img src="images/Ui.png" alt="Three dated lesson records for Alex Tan after view 1, with his student card highlighted" width="726"></a>
 
+### Searching a student's lessons: `findlesson`
+
+Finds when a topic was covered or what was recorded over a period for one student.
+
+Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
+
+* `INDEX` is the student's number in the currently displayed list, including after
+  `find` or `flagged`.
+* Supply at least one keyword, `from/`, or `to/`. Put all keywords before the first
+  date prefix. The two date prefixes may appear in either order, once each.
+  Keywords after a valid date give a message explaining the order, with a corrected
+  example. Invalid dates still give the date-constraint message.
+* Every keyword must occur somewhere in the lesson content, ignoring case and
+  keyword order. Partial words match; punctuation is literal, not a wildcard or
+  regular expression.
+* Dates use the same `DD/MM/YYYY` rules as `log`, including single-digit days/months
+  and the earliest date 01/01/2000. Unlike logging, future search boundaries are allowed.
+* Both boundaries are inclusive. One boundary leaves the other end open. Equal
+  boundaries search one day; a `from/` date after `to/` gives
+  `The from date must be on or before the to date.`.
+* Content and date criteria must all match. With no dates, undated legacy lessons
+  can match by content. Supplying either date boundary excludes undated lessons.
+* Results are newest-first and keep the lesson numbers from the complete
+  `view INDEX` history. Gaps are intentional: matching lessons 2 and 4 stay numbered
+  2 and 4, so you can use those numbers directly with `editlesson` or `deletelesson`.
+* Numbers are positions, not permanent IDs. Logging, deleting or changing a lesson's
+  date can change them; run the search or `view` again before acting on an older result.
+* An empty history gives `No lessons logged yet for NAME.`. If records exist but
+  none match, the message is `No matching lesson records found for NAME.`.
+* This is a one-off result, not a saved lesson filter. It highlights the student
+  without changing the student list or stored data. `view INDEX` or a card click
+  shows their complete history again.
+
+Examples:
+
+* `findlesson 2 algebra` searches the 2nd displayed student's lesson content.
+* `findlesson 2 from/01/10/2026 to/31/10/2026` searches their dated October records.
+* `findlesson 2 revision from/01/10/2026` requires both the topic and the lower date
+  boundary to match.
+
+**Screenshot example:** `findlesson 1 algebra from/01/10/2026 to/31/10/2026` finds two
+records for Amy Tan. The original lesson numbers 2 and 4 are kept, and all three
+student cards remain visible:
+
+<a href="images/find-lessons.png"><img src="images/find-lessons.png"
+  alt="Two matching Algebra lessons for Amy Tan, retaining full-history lesson numbers 2 and 4"
+  width="726"></a>
+
 ### Reading long command results
 
 Drag the horizontal divider below the result box to give lesson histories more
@@ -439,6 +489,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]`<br> e.g., `edit 2 l/Sec 4 sub/A-Math`
 **Edit lesson** | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`<br> e.g., `editlesson 2 1 c/Vectors date/21/10/2026`
 **Find**   | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`<br> e.g., `find tan wei`, `find sub/Physics l/Sec 3` (use `list` to show all students again)
+**Find lesson** | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`<br> e.g., `findlesson 2 algebra from/01/10/2026`
 **Flag**   | `flag INDEX [r/REASON]`<br> e.g., `flag 2 r/Missed homework twice`
 **Flagged** | `flagged` (use `list` to show all students again)
 **List**   | `list`

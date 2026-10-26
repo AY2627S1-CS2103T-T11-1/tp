@@ -6,6 +6,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import java.util.Objects;
 import java.util.Optional;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
@@ -47,7 +48,7 @@ public class Flag {
     public static boolean isValidReason(String test) {
         return test != null
                 && test.length() <= MAX_REASON_LENGTH
-                && !test.matches("[\\p{IsWhite_Space}\\p{Cf}]*")
+                && !StringUtil.isBlankOrInvisible(test)
                 && test.codePoints().noneMatch(Character::isISOControl);
     }
 

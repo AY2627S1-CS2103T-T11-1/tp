@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
 
+import seedu.address.commons.util.StringUtil;
+
 /**
  * Represents a record of a lesson taught to a student in the address book.
  * A lesson records the date it was logged. Lessons saved before dates were recorded have no date.
@@ -67,7 +69,7 @@ public class Lesson {
      * Values composed entirely of Unicode whitespace or format characters are invalid.
      */
     public static boolean isValidContent(String test) {
-        return test.length() <= MAX_LENGTH && !test.matches("[\\p{IsWhite_Space}\\p{Cf}]*")
+        return test.length() <= MAX_LENGTH && !StringUtil.isBlankOrInvisible(test)
                 && test.matches(VALIDATION_REGEX);
     }
 

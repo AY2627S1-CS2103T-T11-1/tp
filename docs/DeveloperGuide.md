@@ -20,6 +20,8 @@
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, its review fixes, tests and documentation.
+* OpenAI Codex, used by cibichandar, assisted with the implementation, tests,
+  documentation and screenshots for searching lesson histories.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -211,6 +213,24 @@ The command keeps each student's lessons in date order with one of two operation
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
+### Searching lesson histories
+
+`FindLessonCommandParser` tokenizes `from/` and `to/` after normalizing Unicode whitespace.
+The preamble holds the displayed student index and content keywords. Indexes and dates reuse
+`ParserUtil`; duplicate prefixes use `ArgumentMultimap`. A valid date followed by extra
+keywords gives an ordering hint; invalid dates keep the date-constraint message.
+Future query boundaries are valid, but reversed ranges are rejected. Blank/invisible
+checks share `StringUtil#isBlankOrInvisible` with student searches and field validators.
+`LessonSearchPredicate` copies the keywords and combines literal, case-insensitive matching
+through `StringUtil#containsIgnoreCase` with inclusive date boundaries. An undated lesson
+matches only when neither boundary is supplied.
+
+`FindLessonCommand` reads the selected student's complete history from the filtered student
+list and iterates backwards. It derives each view number from the original stored position
+before collecting matches, so gaps remain and repeated content is not merged. The result
+identifies the student for the existing highlight/scroll path. No lesson filter, model update
+or storage field is introduced; `LogicManager` skips saving unchanged data.
+
 ### Student and lesson summaries
 
 `AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. Because the command changes no stored data, `LogicManager` returns its result without attempting to save, including during recovery.
@@ -286,6 +306,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
 | `* *` | No | Implemented (v1.5) | tutor | correct the content or date of a lesson record | fix a mistake without deleting the record and logging it again |
+| `* *` | No | Implemented (v1.5) | tutor | search a student's lessons by topic or date range | find when a topic was covered and review work over a period |
 | `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
 | `* *` | No | Implemented (v1.5) | tutor | see total students and lesson records and each student's lesson count | review my recorded workload and spot students without lessons |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
@@ -623,6 +644,35 @@ Use a separate test folder with an empty student file and fictional data only.
 1. Enter `list`, edit Amy's latest lesson to an earlier date, then remove her lessons one at a time using `deletelesson`. Expected: the card immediately follows the most recent remaining date, the count decreases, and removing the last record shows `No lessons yet`. `summary` then reports 2 students, 0 lesson records and 2 students with no lessons.
 1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons (undated)` (or `1 lesson (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
 1. Check the status alongside a flag reason, selected and hovered cards, long student details and the supported display sizes/scales. Expected: the status and reason remain readable without overlapping other fields.
+
+### Searching lesson histories
+
+Before launching, prepare an isolated test folder with `data/addressbook.json`
+containing `{"persons": []}`. Add Amy Tan and Ben Lim, then log `Algebra` for Amy
+on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` on
+05/01/2020. Amy is student 1 and Ben is student 2.
+
+1. Enter `findlesson 1 algebra`. Expected: two matches numbered 2 and 4, newest first;
+   Amy is highlighted. `view 1` and a card click still show all four lessons.
+1. Enter `findlesson 1 from/02/01/2020 to/02/01/2020`. Expected: only lesson 4.
+   Repeat with just `from/04/01/2020`, just `to/03/01/2020`, and an upper boundary
+   of `31/12/9999`; endpoints are inclusive and future query limits are accepted.
+1. Enter `find amy`, then `findlesson 1 algebra`. Expected: the same matches and only
+   Amy remains in the student list. Repeat with a flagged Amy and `flagged`.
+1. Enter `editlesson 1 4 c/Algebra corrected`, then `deletelesson 1 2`. Expected:
+   the selected original records change; a new search shows one match, now numbered 3.
+   Restart and check the saved history.
+1. Enter `findlesson 1 missing`, then `list` and `findlesson 2 algebra`. Expected:
+   distinct no-match and no-lessons messages. Try missing criteria, reversed ranges,
+   invalid dates and repeated date prefixes; each reports an error without changing
+   data or the student filter.
+1. Enter `findlesson 1 from/02/01/2020 algebra`, then repeat with `to/04/01/2020`.
+   Expected: a message to put keywords before date prefixes, with a corrected example.
+   `findlesson 1 from/31/02/2020 algebra` still reports an invalid date.
+1. Repeat a content-only search with valid undated legacy records, then supply a date
+   boundary. Expected: undated matches appear only in the content-only search.
+   Check a long search result by resizing the result area and scrolling; another
+   command starts its feedback at the top.
 
 ### Adding students
 

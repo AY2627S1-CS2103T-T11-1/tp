@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 26, 2026, for issues #142 (student follow-up flags), #145 (editing a lesson record), #116 (save-failure rollback), #143 (finding students by subject and level) and #117 (unreadable-file recovery); #146 adds student and lesson summaries; #109 changes the address prefix to `addr/`.
+Last updated: Oct 26, 2026, for lesson search and the `addr/` address prefix.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -104,6 +104,7 @@ ask the team. Do not guess.
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given |
+| Find lesson | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | Header `Matching lesson records for {NAME} ({COUNT}):` then matching `view` lines, or `No matching lesson records found for {NAME}.` |
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
@@ -115,7 +116,10 @@ ask the team. Do not guess.
 
 **Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the command changes no student data and does not attempt to save.
 
-**Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep flag badge/reason visibility independent. The help window includes `Use summary to see student and lesson totals.`.
+**Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep flag badge/reason visibility independent.
+
+**Help:** show the TutorLah User Guide URL and a Copy URL button, without
+individual command hints.
 
 **Lesson dates (#98, #120):** `log` dates each lesson with `date/DATE` if
 given, otherwise today's date from the system clock. `{DATE}` is
@@ -174,6 +178,18 @@ student or lesson data, and filters are not persisted. The empty-list panel says
 `No students to display.` and `Type list to show all students, or add one:`,
 followed by the add-command format and example. This offers useful guidance
 both when a search hides saved students and when no students are saved.
+
+**Lesson search:** `findlesson` needs keywords or a date boundary. Keywords precede
+date prefixes and all match literal content substrings using the same case rules as
+`find`. Dates reuse the strict lesson-date parser, but future query limits are valid.
+A valid date followed by extra words gives `Put keywords before from/ and to/.`
+followed by `Example: findlesson 1 algebra from/01/10/2026`.
+Ranges are inclusive, may have one open end and reject a lower bound after the upper
+bound with `The from date must be on or before the to date.`. Duplicate prefixes use
+the shared error. Date criteria exclude undated lessons; content-only searches do not.
+Results retain full-history `view` numbers and order, with the same empty-history
+message as `view`. No student filter or saved data changes. Lesson mutations can
+change later numbers, so search again before reusing an old result.
 
 **Follow-up flags (#142):** `flag` and `unflag` use the current displayed index
 and retain the active filter. A flag may omit its reason. Flagging an already
@@ -317,7 +333,13 @@ accepted by the parser. Commands apply these errors consistently:
   Other commands leave it empty. `MainWindow` passes successful view indexes to
   `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
   executing another command or taking focus from the command box.
-- Prefixes in `CliSyntax`: `n/`, `p/`, `addr/`, `l/`, `sub/`, `c/`, `date/`, `r/`.
+- Prefixes in `CliSyntax`: `n/`, `p/`, `addr/`, `l/`, `sub/`, `c/`, `date/`,
+  `r/`, `from/`, `to/`.
+- `LessonSearchPredicate(List<String>, LocalDate, LocalDate)` copies keywords and
+  accepts null for an absent date boundary. `FindLessonCommand(Index, predicate)`
+  returns a one-off history result with the displayed student index to highlight.
+- `StringUtil#isBlankOrInvisible(String)` checks for empty text or only Unicode
+  whitespace/format characters without altering meaningful text.
 - `ParserUtil#parseCommandIndex(text, usage, invalidIndexMessage)` shares
   student and lesson index validation. `parseStudentIndex` delegates to it
   with the student-index error message.
