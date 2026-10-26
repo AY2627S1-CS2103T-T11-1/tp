@@ -98,7 +98,8 @@ public class LessonSearchPredicateTest {
         assertTrue(sameDay.test(new Lesson("Revision", START)));
         assertFalse(sameDay.test(new Lesson("Revision", START.minusDays(1))));
         assertFalse(sameDay.test(new Lesson("Revision", START.plusDays(1))));
-        LessonSearchPredicate futureEnd = new LessonSearchPredicate(List.of(), null, LocalDate.of(9999, 12, 31));
+        LessonSearchPredicate futureEnd = new LessonSearchPredicate(
+                List.of(), null, LocalDate.of(9999, 12, 31));
         assertTrue(futureEnd.test(new Lesson("Revision", START)));
     }
 

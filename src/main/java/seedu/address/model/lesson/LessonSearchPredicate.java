@@ -25,13 +25,15 @@ public class LessonSearchPredicate implements Predicate<Lesson> {
     private final LocalDate toDate;
 
     /**
-     * Creates immutable search criteria. Future boundaries are allowed because this is a query, not a new lesson.
+     * Creates immutable search criteria. Future boundaries are allowed because this is a query,
+     * not a new lesson.
      *
      * @param keywords Content keywords; an empty list means content is not restricted.
      * @param fromDate Inclusive lower boundary, or null if absent.
      * @param toDate Inclusive upper boundary, or null if absent.
      * @throws NullPointerException if the keyword list or a keyword is null.
-     * @throws IllegalArgumentException if there are no criteria, a keyword is blank, or a date range is invalid.
+     * @throws IllegalArgumentException if there are no criteria, a keyword is blank,
+     *     or a date range is invalid.
      */
     public LessonSearchPredicate(List<String> keywords, LocalDate fromDate, LocalDate toDate) {
         this.keywords = List.copyOf(keywords);
@@ -39,9 +41,12 @@ public class LessonSearchPredicate implements Predicate<Lesson> {
                 "At least one lesson search criterion is required.");
         checkArgument(this.keywords.stream().noneMatch(word -> word.matches("[\\p{IsWhite_Space}\\p{Cf}]*")),
                 "Search keywords must not be blank.");
-        checkArgument(fromDate == null || !fromDate.isBefore(Lesson.EARLIEST_DATE), Lesson.MESSAGE_DATE_CONSTRAINTS);
-        checkArgument(toDate == null || !toDate.isBefore(Lesson.EARLIEST_DATE), Lesson.MESSAGE_DATE_CONSTRAINTS);
-        checkArgument(fromDate == null || toDate == null || !fromDate.isAfter(toDate), MESSAGE_REVERSED_RANGE);
+        checkArgument(fromDate == null || !fromDate.isBefore(Lesson.EARLIEST_DATE),
+                Lesson.MESSAGE_DATE_CONSTRAINTS);
+        checkArgument(toDate == null || !toDate.isBefore(Lesson.EARLIEST_DATE),
+                Lesson.MESSAGE_DATE_CONSTRAINTS);
+        checkArgument(fromDate == null || toDate == null || !fromDate.isAfter(toDate),
+                MESSAGE_REVERSED_RANGE);
         this.fromDate = fromDate;
         this.toDate = toDate;
     }

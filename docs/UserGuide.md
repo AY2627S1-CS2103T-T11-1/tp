@@ -84,7 +84,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
 Shows a message explaining how to access the help page.
 
-The help window also reminds you to use `summary` for totals and `findlesson` to search lesson records.
+The help window also reminds you to use `summary` for totals and `findlesson`
+to search lesson records.
 
 ![help message](images/helpMessage.png)
 
@@ -303,26 +304,45 @@ Finds when a topic was covered or what was recorded over a period for one studen
 
 Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
 
-* `INDEX` is the student's number in the currently displayed list, including after `find` or `flagged`.
-* Supply at least one keyword, `from/`, or `to/`. Put all keywords before the first date prefix. The two date prefixes may appear in either order, once each.
-* Every keyword must occur somewhere in the lesson content, ignoring case and keyword order. Partial words match; punctuation is literal, not a wildcard or regular expression.
-* Dates use the same `DD/MM/YYYY` rules as `log`, including single-digit days/months and the earliest date 01/01/2000. Unlike logging, future search boundaries are allowed.
-* Both boundaries are inclusive. One boundary leaves the other end open. Equal boundaries search one day; a `from/` date after `to/` gives `The from date must be on or before the to date.`.
-* Content and date criteria must all match. With no dates, undated legacy lessons can match by content. Supplying either date boundary excludes undated lessons.
-* Results are newest-first and keep the lesson numbers from the complete `view INDEX` history. Gaps are intentional: matching lessons 2 and 4 stay numbered 2 and 4, so you can use those numbers directly with `editlesson` or `deletelesson`.
-* Numbers are positions, not permanent IDs. Logging, deleting or changing a lesson's date can change them; run the search or `view` again before acting on an older result.
-* An empty history gives `No lessons logged yet for NAME.`. If records exist but none match, the message is `No matching lesson records found for NAME.`.
-* This is a one-off result, not a saved lesson filter. It highlights the student without changing the student list or stored data. `view INDEX` or a card click shows their complete history again.
+* `INDEX` is the student's number in the currently displayed list, including after
+  `find` or `flagged`.
+* Supply at least one keyword, `from/`, or `to/`. Put all keywords before the first
+  date prefix. The two date prefixes may appear in either order, once each.
+* Every keyword must occur somewhere in the lesson content, ignoring case and
+  keyword order. Partial words match; punctuation is literal, not a wildcard or
+  regular expression.
+* Dates use the same `DD/MM/YYYY` rules as `log`, including single-digit days/months
+  and the earliest date 01/01/2000. Unlike logging, future search boundaries are allowed.
+* Both boundaries are inclusive. One boundary leaves the other end open. Equal
+  boundaries search one day; a `from/` date after `to/` gives
+  `The from date must be on or before the to date.`.
+* Content and date criteria must all match. With no dates, undated legacy lessons
+  can match by content. Supplying either date boundary excludes undated lessons.
+* Results are newest-first and keep the lesson numbers from the complete
+  `view INDEX` history. Gaps are intentional: matching lessons 2 and 4 stay numbered
+  2 and 4, so you can use those numbers directly with `editlesson` or `deletelesson`.
+* Numbers are positions, not permanent IDs. Logging, deleting or changing a lesson's
+  date can change them; run the search or `view` again before acting on an older result.
+* An empty history gives `No lessons logged yet for NAME.`. If records exist but
+  none match, the message is `No matching lesson records found for NAME.`.
+* This is a one-off result, not a saved lesson filter. It highlights the student
+  without changing the student list or stored data. `view INDEX` or a card click
+  shows their complete history again.
 
 Examples:
 
 * `findlesson 2 algebra` searches the 2nd displayed student's lesson content.
 * `findlesson 2 from/01/10/2026 to/31/10/2026` searches their dated October records.
-* `findlesson 2 revision from/01/10/2026` requires both the topic and the lower date boundary to match.
+* `findlesson 2 revision from/01/10/2026` requires both the topic and the lower date
+  boundary to match.
 
-**Screenshot example:** `findlesson 1 algebra from/01/10/2026 to/31/10/2026` finds two records for Amy Tan. The original lesson numbers 2 and 4 are kept, and all three student cards remain visible:
+**Screenshot example:** `findlesson 1 algebra from/01/10/2026 to/31/10/2026` finds two
+records for Amy Tan. The original lesson numbers 2 and 4 are kept, and all three
+student cards remain visible:
 
-<a href="images/find-lessons.png"><img src="images/find-lessons.png" alt="Two matching Algebra lessons for Amy Tan, retaining full-history lesson numbers 2 and 4" width="726"></a>
+<a href="images/find-lessons.png"><img src="images/find-lessons.png"
+  alt="Two matching Algebra lessons for Amy Tan, retaining full-history lesson numbers 2 and 4"
+  width="726"></a>
 
 ### Reading long command results
 

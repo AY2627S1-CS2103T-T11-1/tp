@@ -86,8 +86,10 @@ public class FindLessonCommandIntegrationTest {
         assertEquals("Matching lesson records for Amy Tan (2):"
                 + "\n3. 03/01/2020: Geometry\n4. 02/01/2020: Algebra", feedback("findlesson 2 to/3/1/2020"));
         assertEquals("Matching lesson records for Amy Tan (2):"
-                + "\n1. 05/01/2020: Vectors\n2. 04/01/2020: Algebra", feedback("findlesson 2 from/4/1/2020"));
-        assertEquals("No matching lesson records found for Amy Tan.", feedback("findlesson 2 from/31/12/9999"));
+                + "\n1. 05/01/2020: Vectors\n2. 04/01/2020: Algebra",
+                feedback("findlesson 2 from/4/1/2020"));
+        assertEquals("No matching lesson records found for Amy Tan.",
+                feedback("findlesson 2 from/31/12/9999"));
         assertEquals("No lessons logged yet for Ben Lim.", feedback("findlesson 1 algebra"));
         assertUnchanged();
     }
@@ -115,7 +117,8 @@ public class FindLessonCommandIntegrationTest {
                 model.getFilteredPersonList().getFirst().getLessons().get(3));
         assertEquals("Deleted lesson 2 for Amy Tan: Algebra", feedback("deletelesson 1 2"));
         assertEquals("Matching lesson records for Amy Tan (2):"
-                + "\n3. 02/01/2020: Algebra corrected\n4. (undated): Algebra legacy", feedback("findlesson 1 algebra"));
+                + "\n3. 02/01/2020: Algebra corrected\n4. (undated): Algebra legacy",
+                feedback("findlesson 1 algebra"));
         Person saved = storage.readAddressBook().orElseThrow().getPersonList().get(1);
         assertEquals(4, saved.getLessonCount());
         assertEquals(AMY.getFlag(), saved.getFlag());
@@ -126,7 +129,8 @@ public class FindLessonCommandIntegrationTest {
     @Test
     public void execute_identicalRecords_deletesOnlySelectedOccurrence() throws Exception {
         logic.execute("log 2 c/Algebra date/2/1/2020");
-        assertEquals("Matching lesson records for Amy Tan (2):\n4. 02/01/2020: Algebra\n5. 02/01/2020: Algebra",
+        assertEquals("Matching lesson records for Amy Tan (2):"
+                + "\n4. 02/01/2020: Algebra\n5. 02/01/2020: Algebra",
                 feedback("findlesson 2 algebra from/2/1/2020 to/2/1/2020"));
         logic.execute("deletelesson 2 5");
         Person saved = storage.readAddressBook().orElseThrow().getPersonList().get(1);
@@ -169,7 +173,8 @@ public class FindLessonCommandIntegrationTest {
                 throw new AssertionError("Lesson searches must not save student data");
             }
         };
-        assertEquals(ALGEBRA_MATCHES, logic(unavailable).execute("findlesson 2 algebra").getFeedbackToUser());
+        assertEquals(ALGEBRA_MATCHES,
+                logic(unavailable).execute("findlesson 2 algebra").getFeedbackToUser());
         assertUnchanged();
         Path absent = temporaryFolder.resolve("not-created.json");
         assertFalse(Files.exists(absent));

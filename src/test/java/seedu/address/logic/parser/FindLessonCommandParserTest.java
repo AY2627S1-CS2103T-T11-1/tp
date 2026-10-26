@@ -22,7 +22,8 @@ import seedu.address.model.lesson.LessonSearchPredicate;
 public class FindLessonCommandParserTest {
     private static final LocalDate START = LocalDate.of(2020, 1, 2);
     private static final LocalDate END = LocalDate.of(2020, 1, 4);
-    private static final String USAGE = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindLessonCommand.MESSAGE_USAGE);
+    private static final String USAGE =
+            String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindLessonCommand.MESSAGE_USAGE);
     private final FindLessonCommandParser parser = new FindLessonCommandParser();
 
     @Test
@@ -42,8 +43,9 @@ public class FindLessonCommandParserTest {
         for (String index : List.of("+1", "1.0", "one")) {
             assertParseFailure(parser, index + " algebra", USAGE);
         }
-        assertParseSuccess(parser, "2147483647 algebra", new FindLessonCommand(Index.fromOneBased(Integer.MAX_VALUE),
-                new LessonSearchPredicate(List.of("algebra"), null, null)));
+        assertParseSuccess(parser, "2147483647 algebra",
+                new FindLessonCommand(Index.fromOneBased(Integer.MAX_VALUE),
+                        new LessonSearchPredicate(List.of("algebra"), null, null)));
     }
 
     @Test
@@ -95,7 +97,8 @@ public class FindLessonCommandParserTest {
 
     @Test
     public void parse_reversedRange_reportsRangeError() {
-        assertParseFailure(parser, "1 from/4/1/2020 to/2/1/2020", LessonSearchPredicate.MESSAGE_REVERSED_RANGE);
+        assertParseFailure(parser, "1 from/4/1/2020 to/2/1/2020",
+                LessonSearchPredicate.MESSAGE_REVERSED_RANGE);
     }
 
     private static FindLessonCommand search(List<String> keywords, LocalDate from, LocalDate to) {

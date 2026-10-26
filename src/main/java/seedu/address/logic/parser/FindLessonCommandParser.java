@@ -40,7 +40,8 @@ public class FindLessonCommandParser implements Parser<FindLessonCommand> {
         LocalDate toDate = parseBoundary(arguments, PREFIX_TO);
         if ((keywords.isEmpty() && fromDate == null && toDate == null)
                 || keywords.stream().anyMatch(word -> word.matches(BLANK_KEYWORD_REGEX))) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindLessonCommand.MESSAGE_USAGE));
+            throw new ParseException(
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindLessonCommand.MESSAGE_USAGE));
         }
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ParseException(LessonSearchPredicate.MESSAGE_REVERSED_RANGE);

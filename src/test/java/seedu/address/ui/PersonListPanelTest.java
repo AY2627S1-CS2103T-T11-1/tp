@@ -91,7 +91,8 @@ public class PersonListPanelTest {
     public Path temporaryFolder;
 
     @Test
-    public void commandBox_findLesson_keepsNumbersAndSupportsEditing(@TempDir Path directory) throws Exception {
+    public void commandBox_findLesson_keepsNumbersAndSupportsEditing(@TempDir Path directory)
+            throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
             Logic logic = clickTestLogic(model,
@@ -112,11 +113,14 @@ public class PersonListPanelTest {
                 assertFeedback(root, "findlesson 1 alg",
                         "Matching lesson records for Amy (1):\n2. (undated): Algebra revised", false);
                 assertFeedback(root, "view 1",
-                        "Lesson records for Amy (2):\n1. (undated): Geometry\n2. (undated): Algebra revised", false);
+                        "Lesson records for Amy (2):\n1. (undated): Geometry"
+                                + "\n2. (undated): Algebra revised", false);
                 clickStudent(root, 0);
-                assertEquals("Lesson records for Amy (2):\n1. (undated): Geometry\n2. (undated): Algebra revised",
+                assertEquals("Lesson records for Amy (2):\n1. (undated): Geometry"
+                        + "\n2. (undated): Algebra revised",
                         result.getText());
-                assertFeedback(root, "findlesson 1 missing", "No matching lesson records found for Amy.", false);
+                assertFeedback(root, "findlesson 1 missing",
+                        "No matching lesson records found for Amy.", false);
                 assertFeedback(root, "findlesson 1", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
                         FindLessonCommand.MESSAGE_USAGE), true);
                 enterClickTestCommand(root, "list");

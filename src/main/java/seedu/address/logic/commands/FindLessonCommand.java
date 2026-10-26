@@ -18,7 +18,8 @@ import seedu.address.model.lesson.LessonSearchPredicate;
 import seedu.address.model.person.Person;
 
 /**
- * Searches one displayed student's lessons, keeping their complete-history view numbers and the student filter.
+ * Searches one displayed student's lessons, keeping their complete-history view numbers
+ * and the student filter.
  */
 public class FindLessonCommand extends Command {
     public static final String COMMAND_WORD = "findlesson";
@@ -56,7 +57,8 @@ public class FindLessonCommand extends Command {
         Person student = students.get(studentIndex.getZeroBased());
         List<Lesson> lessons = student.getLessons();
         if (lessons.isEmpty()) {
-            return new CommandResult(String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()), studentIndex);
+            return new CommandResult(
+                    String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()), studentIndex);
         }
 
         List<String> matches = formatMatchingLines(lessons);
@@ -102,6 +104,7 @@ public class FindLessonCommand extends Command {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).add("studentIndex", studentIndex).add("predicate", predicate).toString();
+        return new ToStringBuilder(this)
+                .add("studentIndex", studentIndex).add("predicate", predicate).toString();
     }
 }

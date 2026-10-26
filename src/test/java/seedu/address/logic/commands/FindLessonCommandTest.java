@@ -48,7 +48,8 @@ public class FindLessonCommandTest {
     public void execute_dateSearch_excludesUndatedAndRetainsSameDateOrder() throws Exception {
         ModelManager model = new ModelManager();
         model.addPerson(AMY);
-        FindLessonCommand command = new FindLessonCommand(FIRST, new LessonSearchPredicate(List.of(), DAY, DAY));
+        FindLessonCommand command = new FindLessonCommand(
+                FIRST, new LessonSearchPredicate(List.of(), DAY, DAY));
         assertEquals(new CommandResult("Matching lesson records for Amy Tan (2):"
                 + "\n3. 02/01/2020: Geometry\n4. 02/01/2020: Algebra", FIRST), command.execute(model));
     }
@@ -58,7 +59,8 @@ public class FindLessonCommandTest {
         ModelManager model = new ModelManager();
         Person student = new PersonBuilder().withName("Ben Lim").build();
         model.addPerson(student);
-        assertEquals(new CommandResult("No lessons logged yet for Ben Lim.", FIRST), search("alg").execute(model));
+        assertEquals(new CommandResult("No lessons logged yet for Ben Lim.", FIRST),
+                search("alg").execute(model));
         model.setPerson(student, student.withLessonAdded(new Lesson("Geometry")));
         assertEquals(new CommandResult("No matching lesson records found for Ben Lim.", FIRST),
                 search("alg").execute(model));
