@@ -20,6 +20,7 @@
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, its review fixes, tests and documentation.
+* OpenAI Codex, used by cibichandar, assisted with the implementation, tests and documentation for searching lesson histories.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -211,6 +212,21 @@ The command keeps each student's lessons in date order with one of two operation
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
+### Searching lesson histories
+
+`FindLessonCommandParser` tokenizes `from/` and `to/` after normalizing Unicode whitespace.
+The preamble holds the displayed student index and content keywords. Indexes and dates reuse
+`ParserUtil`; duplicate prefixes use `ArgumentMultimap`. Future query boundaries are valid,
+but reversed ranges are rejected. `LessonSearchPredicate` copies the keywords and combines
+literal, case-insensitive matching through `StringUtil#containsIgnoreCase` with inclusive
+date boundaries. An undated lesson matches only when neither boundary is supplied.
+
+`FindLessonCommand` reads the selected student's complete history from the filtered student
+list and iterates backwards. It derives each view number from the original stored position
+before collecting matches, so gaps remain and repeated content is not merged. The result
+identifies the student for the existing highlight/scroll path. No lesson filter, model update
+or storage field is introduced; `LogicManager` skips saving unchanged data.
+
 ### Student and lesson summaries
 
 `AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. Because the command changes no stored data, `LogicManager` returns its result without attempting to save, including during recovery.
@@ -286,6 +302,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Proposed | tutor | record a student's regular weekly lesson slot | remember the schedule and identify clashes |
 | `* *` | No | Implemented (v1.4) | tutor | delete an incorrect lesson record | keep the student's lesson history accurate |
 | `* *` | No | Implemented (v1.5) | tutor | correct the content or date of a lesson record | fix a mistake without deleting the record and logging it again |
+| `* *` | No | Implemented (v1.5) | tutor | search a student's lessons by topic or date range | find when a topic was covered and review work over a period |
 | `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
 | `* *` | No | Implemented (v1.5) | tutor | see total students and lesson records and each student's lesson count | review my recorded workload and spot students without lessons |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |

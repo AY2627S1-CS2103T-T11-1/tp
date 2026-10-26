@@ -17,7 +17,8 @@ public class HelpWindow extends UiPart<Stage> {
 
     public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-t11-1.github.io/tp/UserGuide.html";
     public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL
-            + "\nUse summary to see student and lesson totals.";
+            + "\nUse summary to see student and lesson totals."
+            + "\nUse findlesson INDEX KEYWORDS to search a student's lessons.";
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";

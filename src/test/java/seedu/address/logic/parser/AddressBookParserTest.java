@@ -21,6 +21,7 @@ import seedu.address.logic.commands.EditLessonCommand;
 import seedu.address.logic.commands.EditLessonCommand.EditLessonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.FindLessonCommand;
 import seedu.address.logic.commands.FlagCommand;
 import seedu.address.logic.commands.FlaggedCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -31,6 +32,7 @@ import seedu.address.logic.commands.UnflagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonSearchPredicate;
 import seedu.address.model.person.Flag;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentContainsKeywordsPredicate;
@@ -41,6 +43,16 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_findLesson() throws Exception {
+        FindLessonCommand expected = new FindLessonCommand(INDEX_FIRST_PERSON,
+                new LessonSearchPredicate(List.of("algebra"), null, null));
+        assertEquals(expected, parser.parseCommand("findlesson 1 algebra"));
+        assertEquals(expected, parser.parseCommand("findlesson 1\u00a0algebra"));
+        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindLessonCommand.MESSAGE_USAGE), () -> parser.parseCommand("findlesson 1"));
+    }
 
     @Test
     public void parseCommand_summary() throws Exception {
