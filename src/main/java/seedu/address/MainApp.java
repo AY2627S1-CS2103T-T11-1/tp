@@ -1,5 +1,7 @@
 package seedu.address;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,31 +44,46 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private final Path userPrefsFilePath;
+    private final Path addressBookFilePath;
+    private String startupWarning;
+
+    /** Creates the application with its normal preference and student data paths. */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
+    }
+
+    /** Creates the application with explicit storage paths for isolated startup checks. */
+    MainApp(Path userPrefsFilePath, Path addressBookFilePath) {
+        this.userPrefsFilePath = requireNonNull(userPrefsFilePath);
+        this.addressBookFilePath = requireNonNull(addressBookFilePath);
+    }
 
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing TutorLah ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
+        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(ADDRESS_BOOK_FILE_PATH);
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
         model = initModelManager(storage, userPrefs);
 
         logic = new LogicManager(model, storage);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+        ui = new UiManager(logic, storage.getAddressBookFilePath(), startupWarning);
     }
 
     /**
      * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}. <br>
      * The data from the sample address book will be used instead if {@code storage}'s address book is not found,
-     * or an empty address book will be used instead if errors occur when reading {@code storage}'s address book.
+     * or an empty address book with a recovery warning is used if loading fails. Storage blocks saving after failure.
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    protected Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
+        startupWarning = null;
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
         ReadOnlyAddressBook initialData;
@@ -79,11 +96,21 @@ public class MainApp extends Application {
             initialData = addressBookOptional.orElseGet(SampleDataUtil::getSampleAddressBook);
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Will be starting with an empty AddressBook.");
+                    + " Saving is disabled for this session.");
+            startupWarning = "The student data file could not be loaded:\n"
+                    + storage.getAddressBookFilePath().toAbsolutePath().normalize()
+                    + "\n\nThe original file has not been changed. No students were loaded, and changes in this "
+                    + "session cannot be saved. You can still use help and exit normally.\n\n"
+                    + JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED;
             initialData = new AddressBook();
         }
 
         return new ModelManager(initialData, userPrefs);
+    }
+
+    /** Returns the recovery warning prepared during model initialization, if loading failed. */
+    Optional<String> getStartupWarning() {
+        return Optional.ofNullable(startupWarning);
     }
 
     /**

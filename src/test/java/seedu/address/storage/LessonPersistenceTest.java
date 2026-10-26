@@ -59,14 +59,16 @@ public class LessonPersistenceTest {
     /**
      * Starts the app logic with {@code students} and a data file in a temporary folder.
      */
-    private void startWith(Person... students) {
+    private void startWith(Person... students) throws IOException {
         AddressBook addressBook = new AddressBook();
         for (Person student : students) {
             addressBook.addPerson(student);
         }
         dataFile = testFolder.resolve("addressbook.json");
         model = new ModelManager(addressBook, new UserPrefs());
-        logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataFile),
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        storage.saveAddressBook(addressBook);
+        logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
     }
 

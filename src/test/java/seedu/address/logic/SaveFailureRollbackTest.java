@@ -65,6 +65,7 @@ public class SaveFailureRollbackTest {
         model.addPerson(AMY);
         model.addPerson(BEN);
         FailOnceStorage storage = new FailOnceStorage(folder.resolve("students.json"));
+        storage.saveAddressBook(model.getAddressBook());
         Logic logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(folder.resolve("preferences.json"))));
         logic.execute("find amy");
@@ -121,6 +122,7 @@ public class SaveFailureRollbackTest {
         model.addPerson(AMY);
         model.addPerson(BEN);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(model.getAddressBook());
         Logic logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
         logic.execute("find amy");
@@ -141,20 +143,26 @@ public class SaveFailureRollbackTest {
     }
 
     @TestFactory
-    public Stream<DynamicTest> execute_filterCommandSaveFails_restoresPreviousFilter() {
+    public Stream<DynamicTest> execute_filterCommands_skipSavingAndKeepRequestedFilter() {
         return Stream.of("list", "find ben", "flagged").map(command -> DynamicTest.dynamicTest(command, () -> {
             Path folder = Files.createTempDirectory(temporaryFolder, "filter-");
             Model model = new ModelManager();
             model.addPerson(AMY);
             model.addPerson(BEN);
             FailOnceStorage storage = new FailOnceStorage(folder.resolve("students.json"));
+            storage.saveAddressBook(model.getAddressBook());
             Logic logic = new LogicManager(model, new StorageManager(storage,
                     new JsonUserPrefsStorage(folder.resolve("preferences.json"))));
             logic.execute("find ben");
             String savedData = Files.readString(storage.getAddressBookFilePath());
             storage.failNextSave(new IOException("simulated failure"));
-            assertThrows(CommandException.class, () -> logic.execute(command));
-            assertEquals(List.of(BEN), model.getFilteredPersonList());
+            logic.execute(command);
+            List<Person> expected = command.equals("list") ? List.of(AMY, BEN)
+                    : command.equals("flagged") ? List.of(AMY) : List.of(BEN);
+            assertEquals(expected, model.getFilteredPersonList());
+            assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
+            assertThrows(CommandException.class, () -> logic.execute("log 1 c/New lesson"));
+            assertEquals(expected, model.getFilteredPersonList());
             assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
         }));
     }
