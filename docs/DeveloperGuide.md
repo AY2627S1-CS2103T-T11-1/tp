@@ -634,8 +634,8 @@ Use a separate test directory with `data/addressbook.json` containing `{"persons
    Expected: `This student already exists in the list.` because the phone is identical and the name differs only by case. Amy's existing details remain unchanged.
 1. Enter `add n/Amy Tan p/81230012 addr/12 Example Street l/JC1 sub/H2 Math`.<br>
    Expected: the second Amy is accepted because the phone differs, and both students remain visible.
-1. Enter `add n/Muthu a/l Raju p/81230013 addr/13 Example Street l/Sec 2 sub/E-Math`, then `edit 3 n/Siti a/p Ahmad`.<br>
-   Expected: the student is added with the full name `Muthu a/l Raju`; the edit changes only the name to `Siti a/p Ahmad`, and the address stays `13 Example Street`.
+1. Enter `add n/Muthu a/l Raju p/81230013 addr/13 Example Street l/Sec 2 sub/E-Math`, then `edit 3 n/Siti a/p Ahmad`, then `delete 3`.<br>
+   Expected: the student is added with the full name `Muthu a/l Raju`; the edit changes only the name to `Siti a/p Ahmad`, and the address stays `13 Example Street`. `delete 3` then removes this student, so the two Amy Tan students remain for the following steps.
 1. Enter `add n/Ben Lim p/81230014 a/14 Example Street l/Sec 2 sub/E-Math`, using the old `a/` prefix.<br>
    Expected: the add-command usage followed by `The address prefix is addr/, for example addr/1 Example Street.` No student is added.
 1. Try omitting each required prefix in turn. Also try `p/123`, `l/`, `sub/`, a 101-character name and an address containing only spaces.<br>
