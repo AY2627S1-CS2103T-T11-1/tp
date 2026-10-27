@@ -52,6 +52,7 @@
         "common-classes": "Common classes",
         "implementation": "Implementation",
         "viewing-lesson-history": "Viewing lesson history",
+        "keeping-the-details-panel-in-sync": "Keeping the details panel in sync",
         "rejecting-blank-unicode-fields": "Rejecting blank Unicode fields",
         "deleting-an-individual-lesson-record": "Deleting an individual lesson record",
         "editing-a-lesson-record": "Editing a lesson record",
@@ -79,6 +80,7 @@
         "editing-lesson-records": "Editing lesson records",
         "finding-students-and-restoring-the-full-list": "Finding students and restoring the full list",
         "lesson-history-command-sequences": "Lesson-history command sequences",
+        "student-details-panel": "Student details panel",
         "lesson-dates-and-data-saved-by-v1-3": "Lesson dates and data saved by v1.3"
       },
       "headingKeywords": {}

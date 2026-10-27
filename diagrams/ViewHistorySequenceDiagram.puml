@@ -11,6 +11,7 @@ box UI #F3F8F1
     participant ":PersonListPanel" as personListPanel UI_COLOR
     participant ":MainWindow" as mainWindow UI_COLOR
     participant ":ResultDisplay" as resultDisplay UI_COLOR
+    participant ":StudentDetailPanel" as detailPanel UI_COLOR
 end box
 box Logic #F2F2FC
     participant ":Logic" as logic LOGIC_COLOR
@@ -28,6 +29,10 @@ mainWindow -> logic : execute("view 1")
 logic --> mainWindow : result
 mainWindow -> resultDisplay : setFeedbackToUser(feedback)
 resultDisplay --> mainWindow : return
+mainWindow -> logic : getFilteredPersonList()
+logic --> mainWindow : students
+mainWindow -> detailPanel : show(student, 1)
+detailPanel --> mainWindow : return
 mainWindow -> personListPanel : selectPerson(index)
 personListPanel --> mainWindow : return
 
