@@ -39,7 +39,7 @@ public class ViewCommandTest {
                 + "\n2. 15/10/2026: Algebra\n3. 08/10/2026: Geometry\n4. 01/10/2026: Algebra";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
-                new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
+                new CommandResult(expected, model.getFilteredPersonList().get(0)), expectedModel);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ViewCommandTest {
                 + " (2):\n1. 18/10/2026: Geometry\n2. (undated): Algebra";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
-                new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
+                new CommandResult(expected, model.getFilteredPersonList().get(0)), expectedModel);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ViewCommandTest {
         Person student = model.getFilteredPersonList().get(0);
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
-                new CommandResult("No lessons logged yet for " + student.getName() + ".", INDEX_FIRST_PERSON),
+                new CommandResult("No lessons logged yet for " + student.getName() + ".", student),
                 expectedModel);
     }
 
@@ -70,7 +70,7 @@ public class ViewCommandTest {
         Person student = model.getFilteredPersonList().get(1);
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         assertCommandSuccess(new ViewCommand(INDEX_SECOND_PERSON), model,
-                new CommandResult("No lessons logged yet for " + student.getName() + ".", INDEX_SECOND_PERSON),
+                new CommandResult("No lessons logged yet for " + student.getName() + ".", student),
                 expectedModel);
     }
 
@@ -85,7 +85,7 @@ public class ViewCommandTest {
                 + " (1):\n1. (undated): Only this student's lesson";
 
         assertCommandSuccess(new ViewCommand(INDEX_FIRST_PERSON), model,
-                new CommandResult(expected, INDEX_FIRST_PERSON), expectedModel);
+                new CommandResult(expected, model.getFilteredPersonList().get(0)), expectedModel);
         assertCommandFailure(new ViewCommand(INDEX_SECOND_PERSON), model,
                 Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }

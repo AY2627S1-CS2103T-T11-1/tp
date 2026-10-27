@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
-import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
-import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -15,7 +15,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.commons.core.index.Index;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 public class CommandResultTest {
     @Test
@@ -44,11 +45,11 @@ public class CommandResultTest {
         // different exit value -> returns false
         assertFalse(commandResult.equals(new CommandResult("feedback", false, true)));
 
-        // different viewed student -> returns false
-        assertFalse(commandResult.equals(new CommandResult("feedback", INDEX_FIRST_PERSON)));
-        CommandResult viewResult = new CommandResult("feedback", INDEX_FIRST_PERSON);
-        assertTrue(viewResult.equals(new CommandResult("feedback", INDEX_FIRST_PERSON)));
-        assertFalse(viewResult.equals(new CommandResult("feedback", INDEX_SECOND_PERSON)));
+        // different student -> returns false
+        assertFalse(commandResult.equals(new CommandResult("feedback", ALICE)));
+        CommandResult viewResult = new CommandResult("feedback", ALICE);
+        assertTrue(viewResult.equals(new CommandResult("feedback", ALICE)));
+        assertFalse(viewResult.equals(new CommandResult("feedback", BENSON)));
         assertFalse(viewResult.equals(commandResult));
     }
 
@@ -68,54 +69,49 @@ public class CommandResultTest {
         // different exit value -> returns different hashcode
         assertNotEquals(commandResult.hashCode(), new CommandResult("feedback", false, true).hashCode());
 
-        CommandResult viewResult = new CommandResult("feedback", INDEX_FIRST_PERSON);
-        assertEquals(viewResult.hashCode(), new CommandResult("feedback", INDEX_FIRST_PERSON).hashCode());
-        assertNotEquals(viewResult.hashCode(), new CommandResult("feedback", INDEX_SECOND_PERSON).hashCode());
+        CommandResult viewResult = new CommandResult("feedback", ALICE);
+        assertEquals(viewResult.hashCode(), new CommandResult("feedback", ALICE).hashCode());
+        assertNotEquals(viewResult.hashCode(), new CommandResult("feedback", BENSON).hashCode());
         assertNotEquals(commandResult.hashCode(), viewResult.hashCode());
     }
 
     @Test
-    public void hashCode_equalDistinctIndexes_worksInHashSet() {
-        for (int oneBasedIndex : new int[] {1, 2, 1001, Integer.MAX_VALUE}) {
-            Index firstIndex = Index.fromOneBased(oneBasedIndex);
-            Index equalIndex = Index.fromOneBased(oneBasedIndex);
-            assertNotSame(firstIndex, equalIndex);
-            CommandResult firstResult = new CommandResult("feedback", firstIndex);
-            CommandResult equalResult = new CommandResult("feedback", equalIndex);
-            assertEquals(firstResult, equalResult);
-            assertEquals(firstResult.hashCode(), equalResult.hashCode());
+    public void hashCode_equalDistinctStudents_worksInHashSet() {
+        Person equalStudent = new PersonBuilder(ALICE).build();
+        assertNotSame(ALICE, equalStudent);
+        CommandResult firstResult = new CommandResult("feedback", ALICE);
+        CommandResult equalResult = new CommandResult("feedback", equalStudent);
+        assertEquals(firstResult, equalResult);
+        assertEquals(firstResult.hashCode(), equalResult.hashCode());
 
-            Set<CommandResult> results = new HashSet<>();
-            results.add(firstResult);
-            assertTrue(results.contains(equalResult));
-            assertFalse(results.add(equalResult));
-            assertEquals(1, results.size());
-            assertTrue(results.remove(equalResult));
-            assertTrue(results.isEmpty());
-        }
+        Set<CommandResult> results = new HashSet<>();
+        results.add(firstResult);
+        assertTrue(results.contains(equalResult));
+        assertFalse(results.add(equalResult));
+        assertEquals(1, results.size());
     }
 
     @Test
-    public void getViewedStudentIndex_returnsOptionalIndex() {
-        assertEquals(Optional.empty(), new CommandResult("feedback").getViewedStudentIndex());
-        CommandResult result = new CommandResult("feedback", INDEX_FIRST_PERSON);
-        assertEquals(Optional.of(INDEX_FIRST_PERSON), result.getViewedStudentIndex());
+    public void getStudent_returnsOptionalStudent() {
+        assertEquals(Optional.empty(), new CommandResult("feedback").getStudent());
+        CommandResult result = new CommandResult("feedback", ALICE);
+        assertEquals(Optional.of(ALICE), result.getStudent());
         assertFalse(result.isShowHelp());
         assertFalse(result.isExit());
     }
 
     @Test
-    public void viewResult_nullArguments_throwsNullPointerException() {
+    public void studentResult_nullArguments_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new CommandResult("feedback", null));
-        assertThrows(NullPointerException.class, () -> new CommandResult(null, INDEX_FIRST_PERSON));
+        assertThrows(NullPointerException.class, () -> new CommandResult(null, ALICE));
     }
 
     @Test
-    public void viewResult_toString_includesStudentIndex() {
-        CommandResult result = new CommandResult("feedback", INDEX_FIRST_PERSON);
+    public void studentResult_toString_includesStudent() {
+        CommandResult result = new CommandResult("feedback", ALICE);
         assertEquals(CommandResult.class.getCanonicalName()
-                + "{feedbackToUser=feedback, showHelp=false, exit=false, viewedStudentIndex="
-                + INDEX_FIRST_PERSON + "}", result.toString());
+                + "{feedbackToUser=feedback, showHelp=false, exit=false, student="
+                + ALICE + "}", result.toString());
     }
 
     @Test
@@ -123,7 +119,7 @@ public class CommandResultTest {
         CommandResult commandResult = new CommandResult("feedback");
         String expected = CommandResult.class.getCanonicalName() + "{feedbackToUser="
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
-                + ", exit=" + commandResult.isExit() + ", viewedStudentIndex=null}";
+                + ", exit=" + commandResult.isExit() + ", student=null}";
         assertEquals(expected, commandResult.toString());
     }
 }

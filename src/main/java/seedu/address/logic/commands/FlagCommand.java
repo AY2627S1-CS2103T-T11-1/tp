@@ -68,12 +68,13 @@ public class FlagCommand extends Command {
             return updateExistingFlag(model, student);
         }
 
-        model.setPerson(student, student.withFlag(requestedFlag));
+        Person flaggedStudent = student.withFlag(requestedFlag);
+        model.setPerson(student, flaggedStudent);
         logger.fine("Flagged displayed student " + targetIndex.getOneBased());
-        return requestedFlag.getReason()
-                .map(reason -> new CommandResult(String.format(MESSAGE_FLAGGED_WITH_REASON_SUCCESS,
-                        student.getName(), reason)))
-                .orElseGet(() -> new CommandResult(String.format(MESSAGE_FLAGGED_SUCCESS, student.getName())));
+        String feedback = requestedFlag.getReason()
+                .map(reason -> String.format(MESSAGE_FLAGGED_WITH_REASON_SUCCESS, student.getName(), reason))
+                .orElseGet(() -> String.format(MESSAGE_FLAGGED_SUCCESS, student.getName()));
+        return new CommandResult(feedback, flaggedStudent);
     }
 
     /**
@@ -88,10 +89,11 @@ public class FlagCommand extends Command {
             throw new CommandException(String.format(MESSAGE_ALREADY_FLAGGED_WITH_REASON, student.getName()));
         }
 
-        model.setPerson(student, student.withFlag(requestedFlag));
+        Person reflaggedStudent = student.withFlag(requestedFlag);
+        model.setPerson(student, reflaggedStudent);
         String reason = requestedFlag.getReason().orElseThrow();
         logger.fine("Updated flag for displayed student " + targetIndex.getOneBased());
-        return new CommandResult(String.format(MESSAGE_UPDATED_SUCCESS, student.getName(), reason));
+        return new CommandResult(String.format(MESSAGE_UPDATED_SUCCESS, student.getName(), reason), reflaggedStudent);
     }
 
     @Override

@@ -46,7 +46,7 @@ public class FlagCommandTest {
         Model expectedModel = copyModel();
         expectedModel.setPerson(ALICE, expectedStudent);
         assertCommandSuccess(new FlagCommand(INDEX_FIRST_PERSON), model,
-                "Flagged student: Alice Pauline.", expectedModel);
+                new CommandResult("Flagged student: Alice Pauline.", expectedStudent), expectedModel);
     }
 
     @Test
@@ -55,16 +55,18 @@ public class FlagCommandTest {
         Model expectedModel = copyModel();
         expectedModel.setPerson(ALICE, ALICE.withFlag(flag));
         assertCommandSuccess(new FlagCommand(INDEX_FIRST_PERSON, flag), model,
-                "Flagged student: Alice Pauline. Reason: Missed homework twice", expectedModel);
+                new CommandResult("Flagged student: Alice Pauline. Reason: Missed homework twice",
+                        ALICE.withFlag(flag)), expectedModel);
     }
 
     @Test
     public void execute_existingDifferentReason_replacesReason() throws Exception {
         model.setPerson(ALICE, ALICE.withFlag(new Flag("Missed homework")));
         Flag replacement = new Flag("Call parent");
-        assertEquals("Updated flag for Alice Pauline. Reason: Call parent",
-                new FlagCommand(INDEX_FIRST_PERSON, replacement).execute(model).getFeedbackToUser());
+        CommandResult result = new FlagCommand(INDEX_FIRST_PERSON, replacement).execute(model);
+        assertEquals("Updated flag for Alice Pauline. Reason: Call parent", result.getFeedbackToUser());
         assertEquals(replacement, model.getFilteredPersonList().get(0).getFlag().orElseThrow());
+        assertEquals(model.getFilteredPersonList().get(0), result.getStudent().orElseThrow());
     }
 
     @Test
@@ -92,7 +94,7 @@ public class FlagCommandTest {
         expectedModel.setPerson(BENSON, flaggedBenson);
         expectedModel.updateFilteredPersonList(flaggedBenson::isSamePerson);
         assertCommandSuccess(new FlagCommand(INDEX_FIRST_PERSON), model,
-                "Flagged student: Benson Meier.", expectedModel);
+                new CommandResult("Flagged student: Benson Meier.", flaggedBenson), expectedModel);
     }
 
     @Test

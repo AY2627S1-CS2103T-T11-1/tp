@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -11,6 +12,8 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
@@ -24,6 +27,9 @@ import seedu.address.model.person.Person;
  */
 public class PersonListPanel extends UiPart<Region> {
     private static final String FXML = "PersonListPanel.fxml";
+    /** Keys with which the list itself moves the selection to another student. */
+    private static final Set<KeyCode> NAVIGATION_KEYS = Set.of(KeyCode.UP, KeyCode.DOWN,
+            KeyCode.PAGE_UP, KeyCode.PAGE_DOWN, KeyCode.HOME, KeyCode.END);
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
     private final Consumer<Index> onPersonClick;
 
@@ -34,13 +40,17 @@ public class PersonListPanel extends UiPart<Region> {
     private VBox emptyState;
 
     /**
-     * Creates a panel that passes a clicked student's displayed index to {@code onPersonClick}.
+     * Creates a panel that passes the displayed index of a student chosen by a click or by keyboard
+     * navigation to {@code onPersonClick}.
      */
     public PersonListPanel(ObservableList<Person> personList, Consumer<Index> onPersonClick) {
         super(FXML);
         this.onPersonClick = requireNonNull(onPersonClick);
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
+        // Selection moves on key press; reporting on release views the student it settled on.
+        // Programmatic selection and list changes fire no key events, so they never run a command.
+        personListView.addEventHandler(KeyEvent.KEY_RELEASED, this::handleNavigationKey);
 
         BooleanBinding isEmpty = Bindings.isEmpty(personList);
         emptyState.visibleProperty().bind(isEmpty);
@@ -56,6 +66,32 @@ public class PersonListPanel extends UiPart<Region> {
         requireNonNull(index);
         personListView.getSelectionModel().clearAndSelect(index.getZeroBased());
         personListView.scrollTo(index.getZeroBased());
+    }
+
+    /**
+     * Highlights the displayed student again if the highlight has moved or been cleared, for example
+     * after a failed save restored the list. Unlike {@link #selectPerson}, an unchanged highlight is
+     * left alone, so the list does not scroll.
+     */
+    public void restoreSelection(Index index) {
+        requireNonNull(index);
+        if (personListView.getSelectionModel().getSelectedIndex() != index.getZeroBased()) {
+            selectPerson(index);
+        }
+    }
+
+    private void handleNavigationKey(KeyEvent event) {
+        int selectedIndex = personListView.getSelectionModel().getSelectedIndex();
+        if (NAVIGATION_KEYS.contains(event.getCode()) && selectedIndex >= 0) {
+            onPersonClick.accept(Index.fromZeroBased(selectedIndex));
+        }
+    }
+
+    /**
+     * Removes the highlight, for when the student shown in the detail panel is not in the displayed list.
+     */
+    public void clearSelection() {
+        personListView.getSelectionModel().clearSelection();
     }
 
     /**

@@ -5,8 +5,8 @@ import static java.util.Objects.requireNonNull;
 import java.util.Objects;
 import java.util.Optional;
 
-import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.person.Person;
 
 /**
  * Represents the result of a command execution.
@@ -21,8 +21,8 @@ public class CommandResult {
     /** The application should exit. */
     private final boolean exit;
 
-    /** The displayed student whose history was viewed, if applicable. */
-    private final Index viewedStudentIndex;
+    /** The student this command viewed or changed, if it acted on one student. */
+    private final Person student;
 
     /**
      * Constructs a {@code CommandResult} with the specified fields.
@@ -31,18 +31,19 @@ public class CommandResult {
         this(feedbackToUser, showHelp, exit, null);
     }
 
-    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, Index viewedStudentIndex) {
+    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, Person student) {
         this.feedbackToUser = requireNonNull(feedbackToUser);
         this.showHelp = showHelp;
         this.exit = exit;
-        this.viewedStudentIndex = viewedStudentIndex;
+        this.student = student;
     }
 
     /**
-     * Constructs feedback that identifies the displayed student whose lessons were viewed.
+     * Constructs feedback that identifies the student the command viewed or changed,
+     * as that student is after the command.
      */
-    public CommandResult(String feedbackToUser, Index viewedStudentIndex) {
-        this(feedbackToUser, false, false, requireNonNull(viewedStudentIndex));
+    public CommandResult(String feedbackToUser, Person student) {
+        this(feedbackToUser, false, false, requireNonNull(student));
     }
 
     /**
@@ -66,10 +67,10 @@ public class CommandResult {
     }
 
     /**
-     * Returns the displayed student index to highlight after a successful view.
+     * Returns the student to show in the detail panel after this command.
      */
-    public Optional<Index> getViewedStudentIndex() {
-        return Optional.ofNullable(viewedStudentIndex);
+    public Optional<Person> getStudent() {
+        return Optional.ofNullable(student);
     }
 
     @Override
@@ -86,13 +87,12 @@ public class CommandResult {
         return feedbackToUser.equals(otherCommandResult.feedbackToUser)
                 && showHelp == otherCommandResult.showHelp
                 && exit == otherCommandResult.exit
-                && Objects.equals(viewedStudentIndex, otherCommandResult.viewedStudentIndex);
+                && Objects.equals(student, otherCommandResult.student);
     }
 
     @Override
     public int hashCode() {
-        Integer indexValue = viewedStudentIndex == null ? null : viewedStudentIndex.getOneBased();
-        return Objects.hash(feedbackToUser, showHelp, exit, indexValue);
+        return Objects.hash(feedbackToUser, showHelp, exit, student);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class CommandResult {
                 .add("feedbackToUser", feedbackToUser)
                 .add("showHelp", showHelp)
                 .add("exit", exit)
-                .add("viewedStudentIndex", viewedStudentIndex)
+                .add("student", student)
                 .toString();
     }
 

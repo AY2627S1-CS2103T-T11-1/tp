@@ -9,9 +9,11 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,8 +39,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -208,8 +213,8 @@ public class PersonListPanelTest {
                 assertEquals("1 lesson, last 31/12/2019", label(cellAt(list, 0), "lessonStatus").getText());
                 enterClickTestCommand(root, "deletelesson 1 1");
                 assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
-                assertTrue(label(cellAt(list, 0), "flaggedBadge").isVisible());
-                assertEquals("Flag reason: Call parent", label(cellAt(list, 0), "flagReason").getText());
+                assertTrue(flagIcon(cellAt(list, 0)).isVisible());
+                assertEquals("Call parent", ((Label) root.lookup("#flagBanner")).getText());
                 assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
                         + "1 student has no lessons recorded.", false);
                 assertEquals(1, list.getItems().size());
@@ -234,10 +239,15 @@ public class PersonListPanelTest {
                 list.layout();
                 assertEquals("2 lessons (undated)", label(cell, "lessonStatus").getText());
                 assertTrue(label(cell, "lessonStatus").isWrapText());
-                assertTrue(label(cell, "flaggedBadge").isVisible());
-                Bounds reason = label(cell, "flagReason").localToScene(label(cell, "flagReason").getBoundsInLocal());
-                Bounds phone = label(cell, "phone").localToScene(label(cell, "phone").getBoundsInLocal());
-                assertTrue(reason.getMaxY() <= phone.getMinY() + LAYOUT_TOLERANCE);
+                Node flag = flagIcon(cell);
+                assertTrue(flag.isVisible());
+                Region card = (Region) cell.getGraphic();
+                Bounds flagBounds = card.sceneToLocal(flag.localToScene(flag.getBoundsInLocal()));
+                Label nameLabel = label(cell, "name");
+                Bounds name = card.sceneToLocal(nameLabel.localToScene(nameLabel.getBoundsInLocal()));
+                assertTrue(name.getMaxX() <= flagBounds.getMinX() + LAYOUT_TOLERANCE,
+                        "The flag must not cover the name");
+                assertTrue(flagBounds.getMaxX() <= card.getWidth() + LAYOUT_TOLERANCE);
                 assertVisibleCardsFit(list);
                 cell.pseudoClassStateChanged(PseudoClass.getPseudoClass("hover"), false);
             }
@@ -364,6 +374,146 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void detailPanel_showAndClear_displaysStudentFlagAndNumberedLessons() throws Exception {
+        runOnJavaFxThread(() -> {
+            StudentDetailPanel panel = new StudentDetailPanel();
+            Region root = panel.getRoot();
+            new Scene(new StackPane(root), 500, 500);
+            // the scroll pane only exposes its content to lookups once its skin exists
+            root.applyCss();
+            assertTrue(panel.getStudent().isEmpty());
+            assertTrue(root.lookup("#noStudentState").isVisible());
+            assertFalse(root.lookup("#detailScrollPane").isVisible());
+
+            Person student = new PersonBuilder(SHORT_PERSON).withFlag("Call parent").build()
+                    .withLessonAdded(new Lesson("Algebra", LocalDate.of(2026, 10, 1)))
+                    .withLessonAdded(new Lesson("Vectors", LocalDate.of(2026, 10, 8)));
+            panel.show(student, 3);
+            assertEquals(Optional.of(student), panel.getStudent());
+            assertFalse(root.lookup("#noStudentState").isVisible());
+            assertEquals("Alicia Tan", text(root, "#name"));
+            assertEquals("AT", text(root, "#avatar"));
+            assertEquals("Sec 2", text(root, "#level"));
+            assertEquals("E-Math", text(root, "#subject"));
+            assertEquals("Phone: " + student.getPhone().value, text(root, "#phone"));
+            assertEquals("Address: 10 Short Street", text(root, "#address"));
+            assertEquals("Call parent", text(root, "#flagBanner"));
+            assertTrue(root.lookup("#flagBanner").isVisible());
+            assertTrue(root.lookup("#flagIcon").isVisible());
+            assertEquals("Lessons (2)", text(root, "#lessonHeading"));
+            assertEquals(List.of("1. 08/10/2026 Vectors", "2. 01/10/2026 Algebra"), lessonRows(root));
+            assertFalse(root.lookup("#noLessonsState").isVisible());
+
+            panel.show(new PersonBuilder(SHORT_PERSON).withFlag().build(), 0);
+            assertEquals(StudentDetailPanel.NO_FLAG_REASON, text(root, "#flagBanner"));
+            assertEquals(List.of(), lessonRows(root));
+            assertTrue(root.lookup("#noLessonsState").isVisible());
+            assertFalse(root.lookup("#lessonOrder").isVisible());
+            assertEquals("No lessons logged yet for Alicia Tan.", text(root, "#noLessonsText"));
+            assertEquals("log INDEX c/Topic covered", text(root, "#noLessonsCommand"));
+
+            panel.show(SHORT_PERSON, 2);
+            assertFalse(root.lookup("#flagBanner").isVisible());
+            assertFalse(root.lookup("#flagIcon").isVisible());
+            assertEquals("log 2 c/Topic covered", text(root, "#noLessonsCommand"));
+
+            panel.clear();
+            assertTrue(panel.getStudent().isEmpty());
+            assertTrue(root.lookup("#noStudentState").isVisible());
+            assertEquals(List.of(), lessonRows(root));
+        });
+    }
+
+    @Test
+    public void detailPanel_longLevelAndSubject_stackAndWrapWithoutClipping() throws Exception {
+        runOnJavaFxThread(() -> {
+            StudentDetailPanel panel = new StudentDetailPanel();
+            Region root = panel.getRoot();
+            StackPane container = new StackPane(root);
+            Scene scene = new Scene(container, 320, 500);
+            scene.getStylesheets().add(PersonListPanel.class.getResource("/view/DarkTheme.css").toExternalForm());
+            Person longChips = new PersonBuilder(SHORT_PERSON).withLevel("Upper Secondary Two")
+                    .withSubject("Higher Order Thinking in Additional Mathematics").build();
+
+            panel.show(longChips, 1);
+            settle(container, 320);
+            Label level = (Label) root.lookup("#level");
+            Label subject = (Label) root.lookup("#subject");
+            assertFullyRendered(level, "Upper Secondary Two");
+            assertFullyRendered(subject, "Higher Order Thinking in Additional Mathematics");
+            assertTrue(sceneY(subject) > sceneY(level), "Chips that do not fit side by side are stacked");
+
+            panel.show(SHORT_PERSON, 1);
+            settle(container, 320);
+            assertFullyRendered(level, "Sec 2");
+            assertFullyRendered(subject, "E-Math");
+            assertEquals(sceneY(level), sceneY(subject), LAYOUT_TOLERANCE, "Short chips stay side by side");
+
+            // widening the panel puts long chips side by side again
+            panel.show(longChips, 1);
+            settle(container, 900);
+            assertEquals(sceneY(level), sceneY(subject), LAYOUT_TOLERANCE);
+            assertFullyRendered(subject, "Higher Order Thinking in Additional Mathematics");
+        });
+    }
+
+    @Test
+    public void commandBox_studentCommands_keepDetailPanelInSync(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                assertTrue(root.lookup("#noStudentState").isVisible());
+
+                enterClickTestCommand(root, "log 2 c/Fractions date/1/1/2020");
+                assertDetail(root, "Ben", "Lessons (1)");
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+
+                enterClickTestCommand(root, "find amy");
+                assertTrue(root.lookup("#noStudentState").isVisible(), "A filtered-out student is no longer shown");
+                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
+
+                enterClickTestCommand(root, "edit 1 n/Amelia");
+                assertDetail(root, "Amelia", "Lessons (3)");
+                assertEquals(2, list.getItems().size(), "edit lists all students again");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+
+                assertFeedback(root, "view 9", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
+                assertDetail(root, "Amelia", "Lessons (3)");
+                assertTrue(root.lookup("#resultDisplay").getStyleClass().contains(ResultDisplay.ERROR_STYLE_CLASS));
+                assertFeedback(root, "list", "Listed 2 students.", false);
+                assertFalse(root.lookup("#resultDisplay").getStyleClass()
+                        .contains(ResultDisplay.ERROR_STYLE_CLASS));
+                assertDetail(root, "Amelia", "Lessons (3)");
+
+                enterClickTestCommand(root, "deletelesson 1 1");
+                assertDetail(root, "Amelia", "Lessons (2)");
+                enterClickTestCommand(root, "flag 2 r/Call parent");
+                assertDetail(root, "Ben", "Lessons (1)");
+                assertEquals("Call parent", text(root, "#flagBanner"));
+                enterClickTestCommand(root, "flagged");
+                enterClickTestCommand(root, "unflag 1");
+                assertDetail(root, "Ben", "Lessons (1)");
+                assertFalse(root.lookup("#detailPanel #flagBanner").isVisible());
+                assertTrue(list.getItems().isEmpty(), "Ben left the flagged list but stays in the panel");
+                assertFeedback(root, "view 1", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
+                assertDetail(root, "Ben", "Lessons (1)");
+                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
+
+                enterClickTestCommand(root, "list");
+                enterClickTestCommand(root, "delete 2");
+                assertTrue(root.lookup("#noStudentState").isVisible(), "A deleted student is no longer shown");
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void studentCard_primaryClicksOnly_reportsCurrentDisplayedIndex() throws Exception {
         runOnJavaFxThread(() -> {
             ObservableList<Person> persons = FXCollections.observableArrayList(SHORT_PERSON, CHARLOTTE);
@@ -387,9 +537,15 @@ public class PersonListPanelTest {
             layout(list, 450);
             assertEquals(List.of(Index.fromOneBased(2)), clicked);
 
-            clickNode(label(cellAt(list, 0), "address"), MouseButton.PRIMARY);
+            clickNode(label(cellAt(list, 0), "levelSubject"), MouseButton.PRIMARY);
             clickNode(cellAt(list, 0), MouseButton.PRIMARY);
             assertEquals(List.of(Index.fromOneBased(2), Index.fromOneBased(1), Index.fromOneBased(1)), clicked);
+
+            // a navigation key with no student to select reports nothing
+            persons.clear();
+            layout(list, 450);
+            pressKey(list, KeyCode.DOWN);
+            assertEquals(3, clicked.size());
         });
     }
 
@@ -509,7 +665,7 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void studentCard_flaggedBadgeAndReason_followFlagState() throws Exception {
+    public void studentCard_flagIcon_followsFlagStateWithoutReasonText() throws Exception {
         runOnJavaFxThread(() -> {
             Person withoutReason = new PersonBuilder(SHORT_PERSON).withFlag().build();
             Person withReason = new PersonBuilder(CHARLOTTE)
@@ -517,22 +673,16 @@ public class PersonListPanelTest {
             ListView<?> list = createList(FXCollections.observableArrayList(SHORT_PERSON, withoutReason, withReason));
             layout(list, 400);
 
-            Label unflaggedBadge = label(cellAt(list, 0), "flaggedBadge");
-            Label unflaggedReason = label(cellAt(list, 0), "flagReason");
-            assertFalse(unflaggedBadge.isVisible());
-            assertFalse(unflaggedBadge.isManaged());
-            assertFalse(unflaggedReason.isVisible());
-            assertFalse(unflaggedReason.isManaged());
-
-            assertEquals("FLAGGED", label(cellAt(list, 1), "flaggedBadge").getText());
-            assertTrue(label(cellAt(list, 1), "flaggedBadge").isVisible());
-            assertFalse(label(cellAt(list, 1), "flagReason").isManaged());
-
-            Label reason = label(cellAt(list, 2), "flagReason");
-            assertEquals("Flag reason: Missed homework twice; call parent before the next lesson", reason.getText());
-            assertTrue(reason.isVisible());
-            assertTrue(reason.isManaged());
-            assertTrue(reason.isWrapText());
+            assertFalse(flagIcon(cellAt(list, 0)).isVisible());
+            assertFalse(flagIcon(cellAt(list, 0)).isManaged());
+            for (int index : new int[] {1, 2}) {
+                assertTrue(flagIcon(cellAt(list, index)).isVisible());
+                assertTrue(flagIcon(cellAt(list, index)).isManaged());
+                assertEquals("Flagged", flagIcon(cellAt(list, index)).getAccessibleText());
+            }
+            // the reason is shown in the detail panel, not on the card
+            assertTrue(cellAt(list, 2).getGraphic().lookupAll(".label").stream()
+                    .noneMatch(node -> ((Label) node).getText().contains("Missed homework")));
             assertVisibleCardsFit(list);
         });
     }
@@ -548,8 +698,9 @@ public class PersonListPanelTest {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
                 enterClickTestCommand(root, "flag 2 r/Call parent");
-                assertTrue(label(cellAt(list, 1), "flaggedBadge").isVisible());
-                assertEquals("Flag reason: Call parent", label(cellAt(list, 1), "flagReason").getText());
+                assertTrue(flagIcon(cellAt(list, 1)).isVisible());
+                assertEquals("Ben", ((Label) root.lookup("#detailPanel #name")).getText());
+                assertEquals("Call parent", ((Label) root.lookup("#flagBanner")).getText());
 
                 enterClickTestCommand(root, "flagged");
                 assertEquals(1, list.getItems().size());
@@ -561,7 +712,7 @@ public class PersonListPanelTest {
                 assertTrue(root.lookup("#emptyState").isVisible());
                 enterClickTestCommand(root, "list");
                 assertEquals(2, list.getItems().size());
-                assertFalse(label(cellAt(list, 1), "flaggedBadge").isVisible());
+                assertFalse(flagIcon(cellAt(list, 1)).isVisible());
             } finally {
                 window.getPrimaryStage().close();
             }
@@ -756,6 +907,83 @@ public class PersonListPanelTest {
         });
     }
 
+    @Test
+    public void studentList_keyboardNavigation_viewsSelectedStudentInPanel(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            Logic logic = clickTestLogic(clickTestModel(),
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                TextField input = (TextField) root.lookup("#commandTextField");
+                enterClickTestCommand(root, "view 1");
+                input.setText("log 2 c/unfinished");
+
+                pressKey(list, KeyCode.DOWN);
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+                assertDetail(root, "Ben", "Lessons (0)");
+                assertEquals("No lessons logged yet for Ben.", ((TextArea) root.lookup("#resultDisplay")).getText());
+                assertEquals("log 2 c/unfinished", input.getText(), "Keyboard viewing keeps typed text");
+
+                pressKey(list, KeyCode.HOME);
+                assertDetail(root, "Amy", "Lessons (3)");
+                pressKey(list, KeyCode.END);
+                assertDetail(root, "Ben", "Lessons (0)");
+
+                // keys that do not move the selection do not view anyone
+                enterClickTestCommand(root, "view 1");
+                pressKey(list, KeyCode.A);
+                pressKey(list, KeyCode.ENTER);
+                assertDetail(root, "Amy", "Lessons (3)");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_saveFailure_keepsShownStudentHighlighted(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(directory.resolve("students.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new IOException("disk unavailable");
+                }
+            };
+            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), failingStorage, directory),
+                    directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                String saveError = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable");
+                enterClickTestCommand(root, "view 2");
+                for (String mutation : List.of("log 2 c/Unsaved lesson date/01/01/2020", "edit 2 n/Bernard",
+                        "flag 2 r/Call parent", "delete 2", "log 1 c/Unsaved lesson")) {
+                    assertFeedback(root, mutation, saveError, true);
+                    assertEquals(1, list.getSelectionModel().getSelectedIndex(), mutation);
+                    assertDetail(root, "Ben", "Lessons (0)");
+                    assertEquals(2, list.getItems().size(), mutation);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
+     * Fires a key press and release at {@code node}, as when the user presses {@code code} while it has focus.
+     */
+    private static void pressKey(Node node, KeyCode code) {
+        for (EventType<KeyEvent> type : List.of(KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED)) {
+            node.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
+        }
+        node.getScene().getRoot().applyCss();
+        node.getScene().getRoot().layout();
+    }
+
     /**
      * Creates distinct test students with repeated lessons for Amy and no lessons for Ben.
      */
@@ -833,9 +1061,11 @@ public class PersonListPanelTest {
      * Verifies that a wrapped address grows its row and that widening restores the compact height.
      */
     @Test
-    public void longAddress_resizeNarrowThenWide_cardGrowsAndShrinksWithoutGaps() throws Exception {
+    public void longName_resizeNarrowThenWide_cardGrowsAndShrinksWithoutGaps() throws Exception {
         runOnJavaFxThread(() -> {
-            ListView<?> list = createList(FXCollections.observableArrayList(SHORT_PERSON, CHARLOTTE, SHORT_PERSON));
+            Person longName = new PersonBuilder(CHARLOTTE)
+                    .withName("Nurul Aisyah binte Mohamed Rizwan Abdullah Tan Siew Ling").build();
+            ListView<?> list = createList(FXCollections.observableArrayList(SHORT_PERSON, longName, SHORT_PERSON));
             layout(list, 740);
             double wideHeight = cellAt(list, 1).getHeight();
             double shortHeight = cellAt(list, 0).getHeight();
@@ -844,8 +1074,8 @@ public class PersonListPanelTest {
 
             layout(list, 400);
             ListCell<?> wrappedCell = cellAt(list, 1);
-            assertTrue(label(wrappedCell, "address").getHeight() > label(wrappedCell, "phone").getHeight(),
-                    "The address must actually wrap, rather than extend beyond the viewport");
+            assertTrue(label(wrappedCell, "name").getHeight() > label(wrappedCell, "lessonStatus").getHeight(),
+                    "The name must actually wrap, rather than extend beyond the viewport");
             assertTrue(wrappedCell.getHeight() > wideHeight);
             assertEquals(shortHeight, cellAt(list, 0).getHeight(), LAYOUT_TOLERANCE);
             assertVisibleCardsFit(list);
@@ -960,8 +1190,9 @@ public class PersonListPanelTest {
             SplitPane split = (SplitPane) root.lookup(".split-pane");
             Region result = (Region) root.lookup("#resultDisplayPlaceholder");
             Region students = (Region) root.lookup("#personList");
+            Region details = (Region) root.lookup("#studentDetailPanelPlaceholder");
             Region command = (Region) root.lookup("#commandBoxPlaceholder");
-            for (double width : new double[] {450, 900}) {
+            for (double width : new double[] {700, 1000}) {
                 root.resize(width, 560);
                 root.layout();
                 split.setDividerPositions(0.1);
@@ -970,9 +1201,12 @@ public class PersonListPanelTest {
                 split.setDividerPositions(0.9);
                 root.layout();
                 assertTrue(result.getHeight() > smallHeight);
-                assertTrue(result.getHeight() >= 100);
-                assertTrue(students.getHeight() >= 180);
-                assertTrue(students.getWidth() >= 340);
+                assertTrue(result.getHeight() >= 70);
+                assertTrue(students.getHeight() >= 160);
+                assertTrue(students.getWidth() >= 290);
+                assertTrue(details.getWidth() >= 300);
+                assertTrue(students.localToScene(students.getBoundsInLocal()).getMaxX()
+                        <= details.localToScene(details.getBoundsInLocal()).getMinX());
                 assertTrue(command.getHeight() > 0);
                 assertTrue(command.getBoundsInParent().getMaxY() <= split.getLayoutY());
             }
@@ -1216,6 +1450,70 @@ public class PersonListPanelTest {
     }
 
     /**
+     * Returns the text of the label with {@code selector} in the detail panel.
+     */
+    private static String text(Region root, String selector) {
+        Node detailPanel = root.getId() != null && root.getId().equals("detailPanel") ? root
+                : root.lookup("#detailPanel");
+        return ((Label) detailPanel.lookup(selector)).getText();
+    }
+
+    /**
+     * Returns each lesson row in the detail panel as "number date content".
+     */
+    private static List<String> lessonRows(Region root) {
+        VBox rows = (VBox) root.lookup("#lessonList");
+        return rows.getChildren().stream()
+                .map(row -> ((HBox) row).getChildren().stream()
+                        .map(label -> ((Label) label).getText()).reduce((a, b) -> a + " " + b).orElse(""))
+                .toList();
+    }
+
+    /**
+     * Checks that the detail panel shows {@code name} with the given lesson heading.
+     */
+    private static void assertDetail(Region root, String name, String lessonHeading) {
+        assertTrue(root.lookup("#detailScrollPane").isVisible());
+        assertEquals(name, text(root, "#name"));
+        assertEquals(lessonHeading, text(root, "#lessonHeading"));
+    }
+
+    /**
+     * Resizes {@code root} to {@code width} and settles CSS and layout, including chip rearrangement.
+     */
+    private static void settle(Region root, double width) {
+        root.resize(width, 500);
+        for (int pass = 0; pass < 4; pass++) {
+            root.applyCss();
+            root.layout();
+        }
+    }
+
+    private static double sceneY(Node node) {
+        return node.localToScene(node.getBoundsInLocal()).getMinY();
+    }
+
+    /**
+     * Checks that {@code label} shows all of {@code expected}, wrapped if needed, without an ellipsis or clipping.
+     */
+    private static void assertFullyRendered(Label label, String expected) {
+        Text rendered = (Text) label.lookup(".text");
+        assertEquals(expected, rendered.getText(), "Clipped text");
+        assertTrue(rendered.getLayoutBounds().getHeight() <= label.getHeight() + LAYOUT_TOLERANCE,
+                "Wrapped text taller than its label: " + expected);
+        Bounds bounds = label.localToScene(label.getBoundsInLocal());
+        Bounds panel = label.getScene().getRoot().localToScene(label.getScene().getRoot().getBoundsInLocal());
+        assertTrue(bounds.getMaxX() <= panel.getMaxX() + LAYOUT_TOLERANCE, "Label extends past the panel");
+    }
+
+    /**
+     * Returns the flag icon from the card displayed by a list cell.
+     */
+    private static Node flagIcon(ListCell<?> cell) {
+        return cell.getGraphic().lookup("#flagIcon");
+    }
+
+    /**
      * Checks rendered text, field bounds, row height, bottom padding, and indexes against the model.
      */
     private static void assertVisibleCardsFit(ListView<?> list) {
@@ -1224,10 +1522,9 @@ public class PersonListPanelTest {
         for (ListCell<?> cell : cells) {
             Region card = (Region) cell.getGraphic();
             Person person = (Person) list.getItems().get(cell.getIndex());
-            String[] ids = {"id", "name", "phone", "address", "level", "subject", "lessonStatus"};
-            String[] expected = {cell.getIndex() + 1 + ". ", person.getName().fullName, person.getPhone().value,
-                person.getAddress().value, person.getLevel().value, person.getSubject().value,
-                Messages.formatLessonStatus(person)};
+            String[] ids = {"id", "name", "levelSubject", "lessonStatus"};
+            String[] expected = {cell.getIndex() + 1 + ". ", person.getName().fullName,
+                PersonCard.formatLevelAndSubject(person), Messages.formatLessonStatus(person)};
             double previousBottom = 0;
             for (int index = 0; index < ids.length; index++) {
                 Label field = label(cell, ids[index]);
@@ -1241,7 +1538,10 @@ public class PersonListPanelTest {
                 if (index > 1) {
                     assertTrue(bounds.getMinY() >= previousBottom - LAYOUT_TOLERANCE, "Overlapping fields");
                 }
-                previousBottom = Math.max(previousBottom, bounds.getMaxY());
+                if (index > 0) {
+                    // the index sits beside the name; the other fields stack under the name
+                    previousBottom = Math.max(previousBottom, bounds.getMaxY());
+                }
             }
             Bounds indexBounds = label(cell, "id").localToScene(label(cell, "id").getBoundsInLocal());
             Bounds nameBounds = label(cell, "name").localToScene(label(cell, "name").getBoundsInLocal());
@@ -1259,9 +1559,8 @@ public class PersonListPanelTest {
     private static void assertBottomPadding(ListCell<?> cell) {
         Region card = (Region) cell.getGraphic();
         Label status = label(cell, "lessonStatus");
-        Region content = (Region) status.getParent();
         double bottom = card.sceneToLocal(status.localToScene(status.getBoundsInLocal())).getMaxY();
-        assertEquals(content.getInsets().getBottom(), cell.getHeight() - bottom, LAYOUT_TOLERANCE,
+        assertEquals(card.getInsets().getBottom(), cell.getHeight() - bottom, LAYOUT_TOLERANCE,
                 "Space below the lesson status must be padding, not stale wrapping height");
     }
 

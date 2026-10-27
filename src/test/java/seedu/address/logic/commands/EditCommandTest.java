@@ -73,7 +73,7 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(firstPerson, expectedPerson);
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, new CommandResult(expectedMessage, expectedPerson), expectedModel);
     }
 
     @Test
@@ -106,8 +106,8 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(addressBook), new UserPrefs());
         expectedModel.setPerson(withLessons, expectedPerson);
 
-        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), modelWithLessons, expectedMessage,
-                expectedModel);
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), modelWithLessons,
+                new CommandResult(expectedMessage, expectedPerson), expectedModel);
         assertEquals(List.of(new Lesson("Quadratic inequalities"), new Lesson("Binomial theorem")),
                 modelWithLessons.getFilteredPersonList().get(0).getLessons());
     }
@@ -124,8 +124,8 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(firstPerson, expectedPerson);
 
-        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model, expectedMessage,
-                expectedModel);
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                new CommandResult(expectedMessage, expectedPerson), expectedModel);
     }
 
     @Test
@@ -142,7 +142,7 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personInFilteredList, editedPerson);
 
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(editCommand, model, new CommandResult(expectedMessage, editedPerson), expectedModel);
     }
 
     @Test
@@ -242,8 +242,8 @@ public class EditCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(freshModel.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(firstPerson, expectedPerson);
 
-        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), freshModel, expectedMessage,
-                expectedModel);
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), freshModel,
+                new CommandResult(expectedMessage, expectedPerson), expectedModel);
     }
 
     private static String[] contents(List<Lesson> lessons) {

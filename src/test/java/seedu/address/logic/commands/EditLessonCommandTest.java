@@ -328,7 +328,7 @@ public class EditLessonCommandTest {
         expectedModel.addPerson(expectedStudent);
         expectedModel.addPerson(OTHER_STUDENT);
 
-        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertCommandSuccess(command, model, new CommandResult(expectedMessage, expectedStudent), expectedModel);
     }
 
     private static Person studentWith(Lesson... lessons) {

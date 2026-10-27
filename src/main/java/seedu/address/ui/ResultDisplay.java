@@ -11,6 +11,8 @@ import javafx.scene.layout.Region;
  */
 public class ResultDisplay extends UiPart<Region> {
 
+    static final String ERROR_STYLE_CLASS = "result-error";
+
     private static final String FXML = "ResultDisplay.fxml";
 
     @FXML
@@ -27,7 +29,22 @@ public class ResultDisplay extends UiPart<Region> {
      * Shows the latest feedback from its beginning, including when the text is unchanged.
      */
     public void setFeedbackToUser(String feedbackToUser) {
+        showFeedback(feedbackToUser, false);
+    }
+
+    /**
+     * Shows an error message in the error style until the next feedback replaces it.
+     */
+    public void setErrorToUser(String errorMessage) {
+        showFeedback(errorMessage, true);
+    }
+
+    private void showFeedback(String feedbackToUser, boolean isError) {
         requireNonNull(feedbackToUser);
+        resultDisplay.getStyleClass().remove(ERROR_STYLE_CLASS);
+        if (isError) {
+            resultDisplay.getStyleClass().add(ERROR_STYLE_CLASS);
+        }
         resultDisplay.setText(feedbackToUser);
         resultDisplay.positionCaret(0);
         resultDisplay.setScrollTop(0);

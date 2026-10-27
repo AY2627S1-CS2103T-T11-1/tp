@@ -88,7 +88,7 @@ public class LogCommand extends Command {
         logger.fine("Logged lesson dated " + lessonDate + " for displayed student " + targetIndex.getOneBased());
 
         return new CommandResult(String.format(MESSAGE_LOG_LESSON_SUCCESS, studentWithLesson.getName(),
-                Messages.formatLessonDate(datedLesson), datedLesson.content));
+                Messages.formatLessonDate(datedLesson), datedLesson.content), studentWithLesson);
     }
 
     /**

@@ -65,7 +65,7 @@ public class LogCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(student, studentWithLesson);
 
-        assertCommandSuccess(logCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(logCommand, model, new CommandResult(expectedMessage, studentWithLesson), expectedModel);
     }
 
     @Test
@@ -84,7 +84,7 @@ public class LogCommandTest {
         expectedModel.setPerson(student, studentWithLesson);
         showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
 
-        assertCommandSuccess(logCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(logCommand, model, new CommandResult(expectedMessage, studentWithLesson), expectedModel);
     }
 
     @Test
