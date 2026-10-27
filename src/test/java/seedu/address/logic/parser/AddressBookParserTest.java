@@ -29,6 +29,7 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.SummaryCommand;
 import seedu.address.logic.commands.UnflagCommand;
+import seedu.address.logic.commands.UnloggedCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
@@ -52,6 +53,14 @@ public class AddressBookParserTest {
         assertEquals(expected, parser.parseCommand("findlesson 1\u00a0algebra"));
         assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 FindLessonCommand.MESSAGE_USAGE), () -> parser.parseCommand("findlesson 1"));
+    }
+
+    @Test
+    public void parseCommand_unlogged() throws Exception {
+        assertTrue(parser.parseCommand("unlogged") instanceof UnloggedCommand);
+        assertTrue(parser.parseCommand("  unlogged \u00a0") instanceof UnloggedCommand);
+        assertThrows(ParseException.class, UnloggedCommand.MESSAGE_INVALID_ARGUMENTS, () ->
+                parser.parseCommand("unlogged 1"));
     }
 
     @Test
