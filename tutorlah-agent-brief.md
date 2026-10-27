@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 27, 2026, for the split-view GUI with the student details panel (#155).
+Last updated: Oct 28, 2026, for safe JSON replacement (#170).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -360,6 +360,8 @@ accepted by the parser. Commands apply these errors consistently:
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.
+
+Student data and preferences are serialized completely, written to a unique temporary file beside the destination and replaced atomically. A write or replacement failure keeps the previous saved file; failed first saves leave no empty destination. Temporary files are cleaned up where possible. Unsupported atomic replacement is a save error, with no non-atomic fallback. This does not add a second-instance lock or guarantee recovery from power loss.
 
 ---
 

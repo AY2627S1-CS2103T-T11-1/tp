@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 27, 2026, for the split-view GUI with the student details panel (#155).
+Last updated: Oct 28, 2026, for safe JSON replacement (#170).
 
 ## What it is
 
@@ -53,6 +53,9 @@ recorded about them, not building a new kind of app.
 If a command cannot be saved, TutorLah restores its preceding in-memory student data and active filter, then reports the save error. Retrying uses the original displayed indexes; a later command cannot silently persist a failed mutation.
 
 If an existing student file cannot be loaded, including a null JSON root or null student entry, the app shows recovery instructions and disables saving for that session. Commands cannot overwrite the unreadable file. Read-only commands, help and exit still work; a data-changing command is rejected and rolled back. The tutor exits, backs up and repairs or restores the file, then restarts to resume normal use. A genuinely missing file still loads sample students. Student data is saved only when a command changes it, so read-only commands do not rewrite the file.
+
+
+Student data and preferences are serialized completely, written to a unique temporary file beside the destination and replaced atomically. A write or replacement failure keeps the previous saved file; failed first saves leave no empty destination. Temporary files are cleaned up where possible. Unsupported atomic replacement is a save error, with no non-atomic fallback. This does not add a second-instance lock or guarantee recovery from power loss.
 
 ## Where the changes land in the code
 
