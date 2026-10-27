@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 26, 2026, for lesson search and the `addr/` address prefix.
+Last updated: Oct 27, 2026, for the split-view GUI with the student details panel (#155).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -116,7 +116,7 @@ ask the team. Do not guess.
 
 **Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the command changes no student data and does not attempt to save.
 
-**Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep flag badge/reason visibility independent.
+**Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep the flag icon independent.
 
 **Help:** show the TutorLah User Guide URL and a Copy URL button, without
 individual command hints.
@@ -139,11 +139,21 @@ Any older document that says `lessons INDEX`, `LessonsCommand` or
 `lessons-command` means `view`.
 
 **GUI shortcut:** left-clicking a populated student card runs `view INDEX` for
-its current displayed index. Clicking it again refreshes the output. Existing
+its current displayed index. Clicking it again views the student again. Existing
 history messages and newest-first ordering apply, and typed command text is kept.
 Successful views also highlight and scroll to that student's card. The shortcut
 runs on the first primary mouse press, before selection can rebuild the cell.
 List updates and programmatic selection changes do not execute this shortcut.
+
+**Details panel (#155):** the right-hand `StudentDetailPanel` shows one student
+or `No student selected.` Commands that view or change exactly one student
+(`view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag`,
+`unflag`) return that student, as it is after the command, in
+`CommandResult(String, Person)`. Any new command of that kind must do the same.
+After other successful commands, `MainWindow` keeps the panel's student only
+while the displayed list still contains it. Failed commands use the red
+result-box style and leave the panel unchanged. Lesson rows use `view`'s
+numbering, newest first.
 
 Other messages:
 
@@ -158,7 +168,7 @@ Other messages:
 the lesson number from `view` (newest first). Remove only that occurrence,
 even if contents repeat. Keep the student, remaining lessons and current
 filter. Deleting the last lesson leaves an empty history. Show confirmation;
-use `view` or a card click to see the remaining records.
+the details panel shows the remaining records.
 
 **Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `log` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
 
@@ -202,8 +212,8 @@ replaces any `find` filter and keeps original order. `list` restores all
 students. Unflagging from the flagged view removes that student from the view.
 Filters are not persisted, but flags are.
 
-Flagged cards show an amber `FLAGGED` badge. A reason is shown below the name
-as `Flag reason: {REASON}`; a reasonless flag has no empty row. JSON omits the
+Flagged cards show a red flag icon. The details panel shows the reason in a red
+banner, or `Flagged (no reason given)` for a reasonless flag. JSON omits the
 `flag` property for an unflagged student, stores `"flag": {}` without a reason,
 and stores `"flag": {"reason": "..."}` with one. Data without `flag` loads as
 unflagged. Edit, log and deletelesson preserve the flag when rebuilding a
@@ -328,11 +338,13 @@ accepted by the parser. Commands apply these errors consistently:
 - `PersonListPanel(ObservableList<Person>, Consumer<Index>)` invokes the callback
   for primary-button clicks on populated cards. `MainWindow` routes that index
   through `Logic.execute("view " + index.getOneBased())` and displays its result.
-- `ViewCommand` returns `CommandResult(feedback, Index)`. The optional
-  `getViewedStudentIndex()` identifies the displayed student to highlight.
-  Other commands leave it empty. `MainWindow` passes successful view indexes to
-  `PersonListPanel#selectPerson(Index)`, which highlights and scrolls without
-  executing another command or taking focus from the command box.
+- `view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and
+  `unflag` return `CommandResult(feedback, Person)` with the student as it is
+  after the command. The optional `getStudent()` is empty for other commands.
+  `MainWindow` shows that student in `StudentDetailPanel#show(Person, int)` and
+  passes its displayed position to `PersonListPanel#selectPerson(Index)`, which
+  highlights and scrolls without executing another command or taking focus from
+  the command box.
 - Prefixes in `CliSyntax`: `n/`, `p/`, `addr/`, `l/`, `sub/`, `c/`, `date/`,
   `r/`, `from/`, `to/`.
 - `LessonSearchPredicate(List<String>, LocalDate, LocalDate)` copies keywords and

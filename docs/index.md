@@ -8,7 +8,7 @@
 [![Java CI](https://github.com/AY2627S1-CS2103T-T11-1/tp/actions/workflows/gradle.yml/badge.svg?branch=master)](https://github.com/AY2627S1-CS2103T-T11-1/tp/actions/workflows/gradle.yml)
 [![codecov](https://codecov.io/gh/AY2627S1-CS2103T-T11-1/tp/branch/master/graph/badge.svg)](https://codecov.io/gh/AY2627S1-CS2103T-T11-1/tp)
 
-<a href="images/Ui.png"><img src="images/Ui.png" alt="TutorLah showing dated lesson records and lesson counts on student cards" width="726"></a>
+<a href="images/Ui.png"><img src="images/Ui.png" alt="TutorLah showing a student list with lesson counts and a details panel with dated lesson records" width="726"></a>
 
 **TutorLah is a desktop application for freelance tutors in Singapore to keep track of their secondary and junior college (JC) students and the lessons they have taught them.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
 

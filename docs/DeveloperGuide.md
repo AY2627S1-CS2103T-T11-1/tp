@@ -78,19 +78,20 @@ The sections below give more details of each component.
 
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/ui/Ui.java).
 
-<puml src="diagrams/UiClassDiagram.puml" alt="Partial UI class diagram showing the main window, callback fields, student cards and feedback display" width="850" />
+<puml src="diagrams/UiClassDiagram.puml" alt="Partial UI class diagram showing the main window, callback fields, student cards, the student detail panel and feedback display" width="850" />
 
-This partial class diagram focuses on command input, student cards and feedback. `MainWindow` supplies a `CommandExecutor` callback to `CommandBox` and a `Consumer<Index>` callback to `PersonListPanel`. The fields shown on those classes hold the callbacks; neither input part needs a reference to the concrete `MainWindow` class. Solid arrows show held references, with `1` identifying a single referenced object; dashed arrows with `<<create>>` show creation dependencies. `PersonListPanel` creates `PersonCard` objects for visible students, and each card displays one `Person` from the Model component. The creation dependency does not describe how many cards are visible. `Person` remains the Java class name for a student.
+This partial class diagram focuses on command input, student cards, the details panel and feedback. `MainWindow` supplies a `CommandExecutor` callback to `CommandBox` and a `Consumer<Index>` callback to `PersonListPanel`. The fields shown on those classes hold the callbacks; neither input part needs a reference to the concrete `MainWindow` class. Solid arrows show held references, with `1` identifying a single referenced object; dashed arrows with `<<create>>` show creation dependencies. `PersonListPanel` creates `PersonCard` objects for visible students, and each card displays one `Person` from the Model component. `StudentDetailPanel` holds at most one `Person`, the student it currently shows. The creation dependency does not describe how many cards are visible. `Person` remains the Java class name for a student.
 
 `UiManager` implements `Ui` and creates `MainWindow`. `MainWindow` and its visible UI parts inherit from `UiPart`; the window also creates `HelpWindow` and `StatusBarFooter`. These startup, shared-base and supporting classes are omitted from the focused diagram. The UI uses JavaFX, with layouts in `src/main/resources/view`, such as [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/resources/view/MainWindow.fxml).
 
 The UI responsibilities are:
 
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
-* `PersonListPanel` observes the filtered student list supplied by `Logic`. Cards show each student's displayed index, name, phone, address, level and subject. A flagged card also shows an amber badge and its optional reason. The indexes follow the displayed list, including after filtering or deletion.
-* A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses refresh the history; empty cells and other mouse buttons do not execute the shortcut.
-* `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider.
-* After a successful `view`, `MainWindow` asks `PersonListPanel` to highlight and scroll to the viewed student. Programmatic selection and list changes do not execute a view command.
+* `PersonListPanel` observes the filtered student list supplied by `Logic`. Compact cards show each student's displayed index, initials, name, level and subject, and lesson status. A flagged card also shows a red flag icon. The indexes follow the displayed list, including after filtering or deletion.
+* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance instead. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state.
+* A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses view the student again; empty cells and other mouse buttons do not execute the shortcut.
+* `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Error feedback uses a red style until the next command. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider. The student list and details panel share the area below, separated by a vertical divider.
+* After a successful command, `MainWindow` updates the details panel and the list highlight, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync). Programmatic selection and list changes do not execute a view command.
 
 ### Logic component
 
@@ -180,11 +181,37 @@ Both `view INDEX` and a primary press on a student card reach `MainWindow#execut
 
 The sequence shows a successful view of displayed student 1. The `User` actor represents the person entering a command or pressing a student card. Both entry paths share the same execution flow in `MainWindow`. The diagram expands only the UI component; `Logic` is shown through its interface. Parsing, model access, saving, JavaFX internals and error paths are omitted. Activation bars and the private self-call from `handlePersonClick` to `executeCommand` are omitted. Solid arrows show input events or calls; dashed arrows show returns. A return labelled `return` carries no value. The final alternatives complete the same entry path chosen at the top.
 
-`MainWindow` passes the command to `Logic#execute`. A successful `ViewCommand` returns a `CommandResult` containing the feedback and the viewed student's displayed index. `MainWindow` displays the feedback, then passes the index to `PersonListPanel#selectPerson` to synchronise the highlight and scroll position. The index is present even when the student's history is empty. This selection does not invoke the click callback, so it cannot execute the command again.
+`MainWindow` passes the command to `Logic#execute`. A successful `ViewCommand` returns a `CommandResult` containing the feedback and the viewed `Person`. `MainWindow` displays the feedback, then finds the student's position in the displayed list, shows the student in `StudentDetailPanel` and passes the position to `PersonListPanel#selectPerson` to synchronise the highlight and scroll position. The student is present even when their history is empty. This selection does not invoke the click callback, so it cannot execute the command again.
 
 `ViewCommand` reads the student from `Model#getFilteredPersonList`, leaving the current filter and student data unchanged. It traverses the stored lessons backwards: the most recent lesson date appears first, with the most recently logged record first among equal dates. Existing undated records appear at the oldest end when lessons have been added in date order. Each row shows its displayed lesson number, formatted date and content; undated records use `(undated)`. An empty history returns `No lessons logged yet for NAME.`.
 
-If parsing or execution fails, `MainWindow` displays the error instead of the history and does not apply a viewed-student selection. For typed input, `CommandBox` keeps the failed command and marks it as an error. Card-click failures are displayed through the same execution path without clearing typed text. Viewing changes no student or lesson data, so `LogicManager` returns its result without attempting to save.
+If parsing or execution fails, `MainWindow` displays the error in the error style and leaves the details panel and highlight unchanged. For typed input, `CommandBox` keeps the failed command and marks it as an error. Card-click failures are displayed through the same execution path without clearing typed text. Viewing changes no student or lesson data, so `LogicManager` returns its result without attempting to save.
+
+### Keeping the details panel in sync
+
+`StudentDetailPanel` must reflect the latest data after any command, but student values are immutable: `log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` each replace the student in the Model with a new `Person`. A panel that kept the old object would show stale data.
+
+Every command that views or changes exactly one student therefore returns that student, as it is after the command, through `CommandResult#getStudent`. These are `view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`. After each successful command, `MainWindow#updateSelectedStudent` applies these rules:
+
+1. If the result names a student, the panel shows that student. The list highlights the student's current position in `Logic#getFilteredPersonList`, or clears the highlight if a filter now hides them. For example, `unflag 1` in the `flagged` results removes the student from the list but keeps them in the panel.
+1. Otherwise, the panel keeps its current student if the displayed list still contains that same value, and refreshes the highlight because positions may have shifted.
+1. Otherwise, for example after `find` hides the student or `delete` removes them, the panel and the highlight are cleared.
+
+Failed commands skip these rules, so an error never changes the panel. Commands that affect no single student, such as `list`, `summary` and `add`, need no changes.
+
+**Design considerations:**
+
+* **Alternative 1 (current choice):** commands return the `Person` they acted on.
+  * Pros: correct even when the displayed index changes during the command. `edit` resets the filter to all students, so the edited student's index afterwards can differ from the index the user typed.
+  * Cons: each targeted command builds its result with the updated student, and its tests compare that student.
+* **Alternative 2:** commands return the displayed index, as `view` did before.
+  * Pros: smaller change, as only `view` and `findlesson` used it.
+  * Cons: points at the wrong student after `edit` resets the filter, and has no value to show once `unflag` removes a student from the `flagged` list.
+* **Alternative 3:** a "selected student" property in `Model` that commands set.
+  * Pros: other UI parts could observe it.
+  * Cons: adds UI state to the Model and a method that every Model stub in the tests must implement, for no current user benefit.
+
+`PersonListPanelTest` covers the panel's contents and every rule above, including error feedback, filter changes, `edit` resetting the filter, `unflag` in the `flagged` results and deletion. The command tests check the student each targeted command returns.
 
 ### Rejecting blank Unicode fields
 
@@ -235,7 +262,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 `AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections, singular/plural wording and whether any students lack lesson records. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. Because the command changes no stored data, `LogicManager` returns its result without attempting to save, including during recovery.
 
-`Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
+`Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the level and subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
 
 `StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, unavailable saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
 
@@ -255,7 +282,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 `FlagCommand` and `UnflagCommand` obtain their target from `Model#getFilteredPersonList`, so they act on the displayed number after either `find` or `flagged`. They replace the immutable `Person` through `Model#setPerson` without changing its identity, details or lessons. Reflagging with a new reason replaces only the `Flag`; reflagging without a reason never clears an existing reason. `FlaggedCommand` applies `Person#isFlagged` to the full backing student list through `Model#updateFilteredPersonList`. Consequently, unflagging a student while that filter is active removes the updated value from the displayed list automatically.
 
-`JsonAdaptedPerson` omits its nullable adapted flag for unflagged students. A present `JsonAdaptedFlag` omits its nullable reason, producing an empty JSON object for a reasonless flag. This distinguishes all three persisted states while keeping older data files compatible. The UI derives badge and reason-row visibility directly from each immutable `Person`; no separate UI state is stored.
+`JsonAdaptedPerson` omits its nullable adapted flag for unflagged students. A present `JsonAdaptedFlag` omits its nullable reason, producing an empty JSON object for a reasonless flag. This distinguishes all three persisted states while keeping older data files compatible. The UI derives the card's flag icon and the details panel's flag banner directly from each immutable `Person`; no separate UI state is stored.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -643,7 +670,7 @@ Use a separate test folder with an empty student file and fictional data only.
 1. Enter `summary 1`. Expected: the summary usage, with the preceding filter and student data unchanged.
 1. Enter `list`, edit Amy's latest lesson to an earlier date, then remove her lessons one at a time using `deletelesson`. Expected: the card immediately follows the most recent remaining date, the count decreases, and removing the last record shows `No lessons yet`. `summary` then reports 2 students, 0 lesson records and 2 students with no lessons.
 1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons (undated)` (or `1 lesson (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
-1. Check the status alongside a flag reason, selected and hovered cards, long student details and the supported display sizes/scales. Expected: the status and reason remain readable without overlapping other fields.
+1. Check the status alongside a flag icon, selected and hovered cards, long student names and the supported display sizes/scales. Expected: the status and flag icon remain readable without overlapping other fields.
 
 ### Searching lesson histories
 
@@ -724,12 +751,12 @@ log 2 c/Calculus
 
 Use a separate test directory containing two fictional students. Enter the following commands in order:
 
-1. Enter `flag 1`. Expected: student 1 shows an amber `FLAGGED` badge with no empty reason row, and the confirmation is `Flagged student: NAME.`.
-1. Enter `flag 2 r/Missed homework twice`. Expected: student 2 shows the badge and `Flag reason: Missed homework twice`; the confirmation includes the same reason.
+1. Enter `flag 1`. Expected: student 1's card shows a red flag icon, the details panel opens student 1 with the banner `Flagged (no reason given)`, and the confirmation is `Flagged student: NAME.`.
+1. Enter `flag 2 r/Missed homework twice`. Expected: student 2's card shows the flag icon, and the details panel opens student 2 with the banner `Missed homework twice`; the confirmation includes the same reason.
 1. Enter `flag 2 r/Call parent about a/level worksheet`. Expected: only student 2's reason changes, including the literal `a/level` text. Enter the same command again; TutorLah reports that the student is already flagged with that reason and makes no change.
 1. Enter `flagged`. Expected: both flagged students appear in their original order, renumbered from 1. Enter `unflag 1`; the first student disappears from the filtered list. Enter `list`; both saved students reappear, with only the second still flagged.
 1. Try an empty `r/`, two `r/` prefixes, a 101-character reason, `flag 0`, `unflag 01`, and `flagged extra`. Expected: each command gives the corresponding reason, duplicate-prefix, index or unsupported-parameter error without changing any flag.
-1. Edit the remaining flagged student, log and delete one lesson, then exit and restart. Expected: the student's badge and reason remain, while the active `flagged` filter is not restored. Enter `unflag INDEX`, exit and restart again; the student remains unflagged and their JSON object has no `flag` property.
+1. Edit the remaining flagged student, log and delete one lesson, then exit and restart. Expected: the student's flag icon and reason remain, while the active `flagged` filter is not restored. Enter `unflag INDEX`, exit and restart again; the student remains unflagged and their JSON object has no `flag` property.
 
 Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
 
@@ -856,6 +883,26 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 1. Enter `find ben`, then `view 1` and press Ben's card. Expected: both show Ben's Calculus record while only Ben is displayed. Enter `list`, then `delete 1` to remove Amy. Ben becomes student 1; `view 1` and a single press on his card still show only his Calculus record. `view 2` reports an invalid student index.
 1. Prepare a separate fictional student with 40 lesson records, including a 300-character record. View the student and scroll to the bottom. Expected: the header shows count 40, the records are newest first, the long content wraps, and row 40 is reachable. Press the same card again, then view another student: both updates reset the result area to its beginning without losing records.
 1. Repeat the scrolling and selection checks in a smaller and a larger window, moving the horizontal divider both ways. The command box and student list must remain usable, and all records must remain reachable. Check the screen resolutions and scaling levels listed under Non-Functional Requirements as well.
+
+### Student details panel
+
+Start with an empty data folder and add two fictional students:
+
+```text
+add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
+add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
+```
+
+1. Launch TutorLah. Expected: the details panel shows `No student selected.` and no card is highlighted.
+1. Enter `view 2`. Expected: the panel shows Ben's initials, name, level and subject chips, phone and address, `Lessons (0)` and the hint `log 2 c/Topic covered`. Ben's card is highlighted.
+1. Enter `log 1 c/Algebra date/1/10/2026`, then `log 1 c/Vectors date/8/10/2026`. Expected: the panel switches to Amy after the first command and lists `1. 08/10/2026 Vectors` and `2. 01/10/2026 Algebra` after the second, without another `view`.
+1. Enter `editlesson 1 2 date/9/10/2026`, then `deletelesson 1 1`. Expected: Algebra first moves to lesson 1, and after the deletion only Vectors remains as lesson 1.
+1. Enter `flag 2 r/Call parent`. Expected: the panel switches to Ben, with a red flag beside his name and the banner `Call parent`. His card shows a red flag icon.
+1. Enter `flagged`, then `unflag 1`. Expected: the displayed list becomes empty, but the panel still shows Ben, now without the flag or banner.
+1. Enter `list`, then `view 1`, then `find ben`. Expected: Amy is hidden by the search, so the panel returns to `No student selected.`.
+1. Enter `list`, `view 1`, then `edit 1 n/Amelia Tan`. Expected: the panel shows `Amelia Tan` and keeps her lesson. Enter `view 9`: the result box turns red with the student-index error, and the panel still shows Amelia.
+1. Enter `delete 1`. Expected: the panel returns to `No student selected.`.
+1. Resize the window to its minimum width and drag the vertical divider both ways. Expected: long names and lesson content wrap, and nothing overlaps or is cut off.
 
 ### Lesson dates and data saved by v1.3
 

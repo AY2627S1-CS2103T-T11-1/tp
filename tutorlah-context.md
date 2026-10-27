@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 26, 2026, for lesson search and the `addr/` address prefix.
+Last updated: Oct 27, 2026, for the split-view GUI with the student details panel (#155).
 
 ## What it is
 
@@ -63,14 +63,20 @@ If an existing student file cannot be loaded, including a null JSON root or null
   new `LogCommand` and `ViewCommand` classes with their parsers. `list` gets
   a check that rejects parameters.
 - **Storage:** `JsonAdaptedPerson` saves level, subject, lessons and optional flags.
-- **UI:** the person card shows level, subject and lesson count/latest date. Flagged cards show an amber
-  `FLAGGED` badge and an optional `Flag reason:` row. Lessons appear in the result
-  box. Tutors can type `view INDEX` or left-click a student card to view that
-  student's history. Repeated clicks refresh it, while command text is preserved.
+- **UI (#155):** a split view. The left list has compact cards: displayed index,
+  initials, name, `level · subject`, lesson count/latest date, and a red flag icon
+  for flagged students. The right details panel shows one student's level and
+  subject chips, phone, address, flag reason banner and numbered lessons, newest
+  first, with the same numbers as `view`. Tutors can type `view INDEX` or
+  left-click a student card to open that student, while command text is preserved.
   The click callback uses the current displayed index and the existing command path.
-  Successful views from either input method highlight the matching card and scroll
-  it into view. Card presses are handled before selection updates, so switching
-  from typed commands needs only one click.
+  `view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and
+  `unflag` open their student in the panel through `CommandResult#getStudent`.
+  Other commands keep the panel's student while it is still displayed, and clear
+  the panel otherwise. Failed commands turn the result box red and never change
+  the panel. Successful views highlight the matching card and scroll it into view.
+  Card presses are handled before selection updates, so switching from typed
+  commands needs only one click. `view` still lists the records in the result box.
 
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.

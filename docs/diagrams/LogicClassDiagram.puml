@@ -27,7 +27,7 @@ package "Logic (partial)" {
         - feedbackToUser : String
         - showHelp : boolean
         - exit : boolean
-        - viewedStudentIndex : Index [0..1]
+        - student : Person [0..1]
     }
 }
 class "<<interface>>\nModel" as ModelApi MODEL_COLOR_T1
