@@ -26,6 +26,8 @@ public class PersonCardTest {
 
     @Test
     public void initialsOf_noWordStartsWithLetter_returnsPlaceholder() {
+        assertEquals("?", PersonCard.initialsOf(""));
+        assertEquals("?", PersonCard.initialsOf("   "));
         assertEquals("?", PersonCard.initialsOf("-"));
         assertEquals("?", PersonCard.initialsOf("' ."));
         assertEquals("DT", PersonCard.initialsOf("- Dan  'x Tan"));
