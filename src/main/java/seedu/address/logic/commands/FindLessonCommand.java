@@ -60,7 +60,7 @@ public class FindLessonCommand extends Command {
         List<Lesson> lessons = student.getLessons();
         if (lessons.isEmpty()) {
             return new CommandResult(
-                    String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()), studentIndex);
+                    String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()), student);
         }
 
         List<String> matches = formatMatchingLines(lessons);
@@ -69,7 +69,7 @@ public class FindLessonCommand extends Command {
         String feedback = matches.isEmpty() ? String.format(MESSAGE_NO_MATCHES, student.getName())
                 : String.format(MESSAGE_MATCHES_HEADER, student.getName(), matches.size())
                         + "\n" + String.join("\n", matches);
-        return new CommandResult(feedback, studentIndex);
+        return new CommandResult(feedback, student);
     }
 
     /** Formats matches in view order without renumbering gaps left by non-matching records. */

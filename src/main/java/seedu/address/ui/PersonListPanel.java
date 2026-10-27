@@ -59,6 +59,13 @@ public class PersonListPanel extends UiPart<Region> {
     }
 
     /**
+     * Removes the highlight, for when the student shown in the detail panel is not in the displayed list.
+     */
+    public void clearSelection() {
+        personListView.getSelectionModel().clearSelection();
+    }
+
+    /**
      * Custom {@code ListCell} that displays the graphics of a {@code Person} using a {@code PersonCard}.
      */
     class PersonListViewCell extends ListCell<Person> {

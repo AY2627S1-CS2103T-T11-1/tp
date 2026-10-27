@@ -36,8 +36,9 @@ public class UnflagCommandTest {
 
     @Test
     public void execute_flaggedStudent_removesFlagAndReason() throws Exception {
-        assertEquals("Unflagged student: Alice Pauline.",
-                new UnflagCommand(INDEX_FIRST_PERSON).execute(model).getFeedbackToUser());
+        CommandResult result = new UnflagCommand(INDEX_FIRST_PERSON).execute(model);
+        assertEquals("Unflagged student: Alice Pauline.", result.getFeedbackToUser());
+        assertEquals(ALICE, result.getStudent().orElseThrow());
         assertEquals(List.of(ALICE, BENSON), model.getAddressBook().getPersonList());
     }
 

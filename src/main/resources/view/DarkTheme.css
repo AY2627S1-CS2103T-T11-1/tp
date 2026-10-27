@@ -105,23 +105,28 @@
     -fx-text-fill: #5B6B79;
 }
 
-.flagged-badge {
-    -fx-background-color: #FEF3C7;
-    -fx-background-radius: 4;
-    -fx-border-color: #F59E0B;
-    -fx-border-radius: 4;
-    -fx-border-width: 1;
+.card-index {
     -fx-font-family: "System";
-    -fx-font-size: 10px;
-    -fx-font-weight: bold;
-    -fx-padding: 1 5 1 5;
-    -fx-text-fill: #92400E !important;
+    -fx-font-size: 13px;
+    -fx-text-fill: #5B6B79 !important;
 }
 
-.flag-reason {
+/* Initials in a teal circle; the large variant heads the detail panel. */
+.avatar {
+    -fx-background-color: #DCEDF2;
+    -fx-background-radius: 50%;
     -fx-font-family: "System";
     -fx-font-size: 12px;
-    -fx-text-fill: #92400E !important;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D6475 !important;
+}
+
+.avatar-large {
+    -fx-font-size: 15px;
+}
+
+.flag-icon {
+    -fx-fill: #C0392B;
 }
 
 /* ---------- Empty student list ---------- */
@@ -157,6 +162,73 @@
     -fx-border-top-width: 1px;
 }
 
+/* ---------- Student detail panel ---------- */
+
+.detail-pane, .detail-scroll, .detail-scroll > .viewport {
+    -fx-background-color: #FFFFFF;
+}
+
+.detail-pane {
+    -fx-background-radius: 6;
+}
+
+.detail-scroll {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.detail-name {
+    -fx-font-family: "System";
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1F2933;
+}
+
+.chip {
+    -fx-background-color: #EEF1F4;
+    -fx-background-radius: 10;
+    -fx-padding: 1 8 1 8;
+    -fx-font-size: 12px;
+    -fx-text-fill: #3E4C59;
+}
+
+.detail-contact, .detail-muted, .lesson-number {
+    -fx-font-size: 13px;
+    -fx-text-fill: #5B6B79;
+}
+
+.flag-banner {
+    -fx-background-color: #FDECEA;
+    -fx-border-color: transparent transparent transparent #C0392B;
+    -fx-border-width: 0 0 0 3;
+    -fx-padding: 6 10 6 10;
+    -fx-font-size: 13px;
+    -fx-text-fill: #8E2A20;
+}
+
+.detail-section-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1F2933;
+}
+
+.lesson-row {
+    -fx-padding: 7 0 7 0;
+    -fx-border-color: transparent transparent #E4E8EC transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.lesson-date {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2A8BA3;
+}
+
+.lesson-content {
+    -fx-font-size: 13px;
+    -fx-text-fill: #1F2933;
+}
+
 /* ---------- Result display ---------- */
 
 .result-display {
@@ -177,6 +249,16 @@
     -fx-background-radius: 6;
     -fx-border-color: #D9DEE4;
     -fx-border-radius: 6;
+}
+
+/* A failed command turns the feedback red until the next command runs. */
+#resultDisplay.result-error {
+    -fx-text-fill: #8E2A20;
+}
+
+#resultDisplay.result-error .content {
+    -fx-background-color: #FDECEA;
+    -fx-border-color: #C0392B;
 }
 
 /* ---------- Command box ---------- */

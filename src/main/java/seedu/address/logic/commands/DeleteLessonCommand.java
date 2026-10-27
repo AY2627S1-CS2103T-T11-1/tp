@@ -64,11 +64,12 @@ public class DeleteLessonCommand extends Command {
 
         int storedIndex = toStoredLessonIndex(lessons.size(), lessonIndex.getOneBased());
         Lesson deletedLesson = lessons.get(storedIndex);
-        model.setPerson(student, student.withLessonRemoved(storedIndex));
+        Person studentWithoutLesson = student.withLessonRemoved(storedIndex);
+        model.setPerson(student, studentWithoutLesson);
         logger.fine("Removed lesson " + lessonIndex.getOneBased()
                 + " from displayed student " + studentIndex.getOneBased());
         return new CommandResult(String.format(MESSAGE_DELETE_LESSON_SUCCESS,
-                lessonIndex.getOneBased(), student.getName(), deletedLesson));
+                lessonIndex.getOneBased(), student.getName(), deletedLesson), studentWithoutLesson);
     }
 
     /**

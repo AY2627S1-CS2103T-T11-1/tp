@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+
+<StackPane id="detailPanel" styleClass="detail-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <VBox fx:id="noStudentState" alignment="CENTER" spacing="8" mouseTransparent="true">
+    <padding>
+      <Insets top="16" right="16" bottom="16" left="16" />
+    </padding>
+    <Label styleClass="empty-state-title" text="No student selected." />
+    <Label styleClass="empty-state-text" wrapText="true"
+           text="Click a student, or type view INDEX, to see their details and lessons here." />
+    <Label styleClass="empty-state-command" text="view 1" />
+  </VBox>
+
+  <ScrollPane fx:id="detailScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="detail-scroll">
+    <VBox fx:id="details" spacing="10" minWidth="0">
+      <padding>
+        <Insets top="14" right="16" bottom="14" left="16" />
+      </padding>
+      <HBox spacing="12" alignment="CENTER_LEFT">
+        <Label fx:id="avatar" styleClass="avatar, avatar-large" alignment="CENTER"
+               minWidth="44" prefWidth="44" maxWidth="44" minHeight="44" prefHeight="44" maxHeight="44" />
+        <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
+          <HBox spacing="8" alignment="CENTER_LEFT">
+            <Label fx:id="name" styleClass="detail-name" wrapText="true" minWidth="0" />
+            <SVGPath fx:id="flagIcon" styleClass="flag-icon" accessibleText="Flagged"
+                     content="M3 1h1.8v15H3z M4.8 1.5H14l-2.4 3.7L14 8.9H4.8z" />
+          </HBox>
+          <HBox spacing="6">
+            <Label fx:id="level" styleClass="chip" />
+            <Label fx:id="subject" styleClass="chip" />
+          </HBox>
+        </VBox>
+      </HBox>
+
+      <VBox spacing="2">
+        <Label fx:id="phone" styleClass="detail-contact" wrapText="true" minWidth="0" maxWidth="Infinity" />
+        <Label fx:id="address" styleClass="detail-contact" wrapText="true" minWidth="0" maxWidth="Infinity" />
+      </VBox>
+
+      <Label fx:id="flagBanner" styleClass="flag-banner" wrapText="true" minWidth="0" maxWidth="Infinity" />
+
+      <HBox alignment="BOTTOM_LEFT">
+        <padding>
+          <Insets top="6" />
+        </padding>
+        <Label fx:id="lessonHeading" styleClass="detail-section-title" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="lessonOrder" styleClass="detail-muted" text="newest first" />
+      </HBox>
+      <VBox fx:id="lessonList" />
+      <VBox fx:id="noLessonsState" spacing="4" alignment="CENTER">
+        <padding>
+          <Insets top="12" bottom="12" />
+        </padding>
+        <Label fx:id="noLessonsText" styleClass="empty-state-text" wrapText="true" />
+        <Label fx:id="noLessonsCommand" styleClass="empty-state-command" />
+      </VBox>
+    </VBox>
+  </ScrollPane>
+</StackPane>

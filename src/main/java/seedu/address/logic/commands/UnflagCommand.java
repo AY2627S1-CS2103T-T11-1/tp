@@ -48,8 +48,9 @@ public class UnflagCommand extends Command {
             throw new CommandException(String.format(MESSAGE_NOT_FLAGGED, student.getName()));
         }
 
-        model.setPerson(student, student.withoutFlag());
-        return new CommandResult(String.format(MESSAGE_UNFLAGGED_SUCCESS, student.getName()));
+        Person unflaggedStudent = student.withoutFlag();
+        model.setPerson(student, unflaggedStudent);
+        return new CommandResult(String.format(MESSAGE_UNFLAGGED_SUCCESS, student.getName()), unflaggedStudent);
     }
 
     @Override

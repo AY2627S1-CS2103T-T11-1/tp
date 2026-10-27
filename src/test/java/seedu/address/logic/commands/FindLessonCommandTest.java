@@ -39,7 +39,7 @@ public class FindLessonCommandTest {
         AddressBook before = new AddressBook(model.getAddressBook());
         String expected = "Matching lesson records for Amy Tan (3):\n2. 03/01/2020: Algebra"
                 + "\n4. 02/01/2020: Algebra\n5. (undated): Algebra legacy";
-        assertEquals(new CommandResult(expected, FIRST), search("alg").execute(model));
+        assertEquals(new CommandResult(expected, AMY), search("alg").execute(model));
         assertEquals(before, model.getAddressBook());
         assertSame(AMY, model.getFilteredPersonList().getFirst());
     }
@@ -51,7 +51,7 @@ public class FindLessonCommandTest {
         FindLessonCommand command = new FindLessonCommand(
                 FIRST, new LessonSearchPredicate(List.of(), DAY, DAY));
         assertEquals(new CommandResult("Matching lesson records for Amy Tan (2):"
-                + "\n3. 02/01/2020: Geometry\n4. 02/01/2020: Algebra", FIRST), command.execute(model));
+                + "\n3. 02/01/2020: Geometry\n4. 02/01/2020: Algebra", AMY), command.execute(model));
     }
 
     @Test
@@ -59,10 +59,11 @@ public class FindLessonCommandTest {
         ModelManager model = new ModelManager();
         Person student = new PersonBuilder().withName("Ben Lim").build();
         model.addPerson(student);
-        assertEquals(new CommandResult("No lessons logged yet for Ben Lim.", FIRST),
+        assertEquals(new CommandResult("No lessons logged yet for Ben Lim.", student),
                 search("alg").execute(model));
-        model.setPerson(student, student.withLessonAdded(new Lesson("Geometry")));
-        assertEquals(new CommandResult("No matching lesson records found for Ben Lim.", FIRST),
+        Person withLesson = student.withLessonAdded(new Lesson("Geometry"));
+        model.setPerson(student, withLesson);
+        assertEquals(new CommandResult("No matching lesson records found for Ben Lim.", withLesson),
                 search("alg").execute(model));
     }
 
@@ -74,7 +75,7 @@ public class FindLessonCommandTest {
         model.addPerson(AMY);
         model.updateFilteredPersonList(Person::isFlagged);
         var list = model.getFilteredPersonList();
-        assertEquals(FIRST, search("alg").execute(model).getViewedStudentIndex().orElseThrow());
+        assertSame(AMY, search("alg").execute(model).getStudent().orElseThrow());
         assertSame(list, model.getFilteredPersonList());
         assertEquals(List.of(AMY), list);
         Person flaggedStudent = new PersonBuilder(ben).withFlag().build();

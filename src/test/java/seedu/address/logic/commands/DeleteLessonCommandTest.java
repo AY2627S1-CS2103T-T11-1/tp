@@ -179,6 +179,7 @@ public class DeleteLessonCommandTest {
         assertEquals("Deleted lesson " + displayedLesson + " for " + STUDENT.getName() + ": " + deletedContent,
                 result.getFeedbackToUser());
         Person expected = new PersonBuilder(STUDENT).withLessons(remaining.toArray(String[]::new)).build();
+        assertEquals(expected, result.getStudent().orElseThrow());
         assertEquals(List.of(expected, OTHER_STUDENT), model.getAddressBook().getPersonList());
         assertEquals(List.of(expected, OTHER_STUDENT), model.getFilteredPersonList());
         assertEquals(new PersonBuilder(ALICE).withLessons("Algebra", "Geometry", "Algebra").build(), STUDENT);

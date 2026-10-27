@@ -103,7 +103,8 @@ public class EditLessonCommand extends Command {
         logger.fine("Edited lesson " + lessonIndex.getOneBased() + " of displayed student "
                 + studentIndex.getOneBased() + ", now lesson " + newLessonNumber);
         return new CommandResult(String.format(MESSAGE_EDIT_LESSON_SUCCESS, lessonIndex.getOneBased(),
-                student.getName(), newLessonNumber, Messages.formatLessonDate(editedLesson), editedLesson.content));
+                student.getName(), newLessonNumber, Messages.formatLessonDate(editedLesson), editedLesson.content),
+                editedStudent);
     }
 
     /**
