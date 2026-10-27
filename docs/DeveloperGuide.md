@@ -89,7 +89,7 @@ The UI responsibilities are:
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
 * `PersonListPanel` observes the filtered student list supplied by `Logic`. Compact cards show each student's displayed index, initials, name, level and subject, and lesson status. A flagged card also shows a red flag icon. The indexes follow the displayed list, including after filtering or deletion.
 * `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance instead. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state.
-* A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses view the student again; empty cells and other mouse buttons do not execute the shortcut.
+* A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses view the student again; empty cells and other mouse buttons do not execute the shortcut. Releasing a navigation key (arrows, Page Up/Down, Home, End) in the focused list sends the newly selected index through the same callback, so keyboard selection cannot leave the list and details panel showing different students. Programmatic selection and list changes fire no key events, so they never execute a command.
 * `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Error feedback uses a red style until the next command. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider. The student list and details panel share the area below, separated by a vertical divider.
 * After a successful command, `MainWindow` updates the details panel and the list highlight, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync). Programmatic selection and list changes do not execute a view command.
 
@@ -197,7 +197,7 @@ Every command that views or changes exactly one student therefore returns that s
 1. Otherwise, the panel keeps its current student if the displayed list still contains that same value, and refreshes the highlight because positions may have shifted.
 1. Otherwise, for example after `find` hides the student or `delete` removes them, the panel and the highlight are cleared.
 
-Failed commands skip these rules, so an error never changes the panel. Commands that affect no single student, such as `list`, `summary` and `add`, need no changes.
+Failed commands skip these rules, so an error never changes the panel. A failed save is a special case: `LogicManager` restores the previous address book, which replaces the list contents and clears the JavaFX selection. `MainWindow#restoreShownStudentHighlight` therefore highlights the panel's student again after any failed command, without scrolling if the highlight was not lost. Commands that affect no single student, such as `list`, `summary` and `add`, need no changes.
 
 **Design considerations:**
 
@@ -211,7 +211,7 @@ Failed commands skip these rules, so an error never changes the panel. Commands 
   * Pros: other UI parts could observe it.
   * Cons: adds UI state to the Model and a method that every Model stub in the tests must implement, for no current user benefit.
 
-`PersonListPanelTest` covers the panel's contents and every rule above, including error feedback, filter changes, `edit` resetting the filter, `unflag` in the `flagged` results and deletion. The command tests check the student each targeted command returns.
+`PersonListPanelTest` covers the panel's contents and every rule above, including error feedback, filter changes, `edit` resetting the filter, `unflag` in the `flagged` results, deletion, keyboard navigation and failed saves after `log`, `edit`, `flag` and `delete`. The command tests check the student each targeted command returns.
 
 ### Rejecting blank Unicode fields
 
@@ -901,6 +901,7 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 1. Enter `flagged`, then `unflag 1`. Expected: the displayed list becomes empty, but the panel still shows Ben, now without the flag or banner.
 1. Enter `list`, then `view 1`, then `find ben`. Expected: Amy is hidden by the search, so the panel returns to `No student selected.`.
 1. Enter `list`, `view 1`, then `edit 1 n/Amelia Tan`. Expected: the panel shows `Amelia Tan` and keeps her lesson. Enter `view 9`: the result box turns red with the student-index error, and the panel still shows Amelia.
+1. Click Amelia's card, then press the Down arrow. Expected: Ben's card is highlighted and the panel shows Ben. Press Up: both return to Amelia.
 1. Enter `delete 1`. Expected: the panel returns to `No student selected.`.
 1. Resize the window to its minimum width and drag the vertical divider both ways. Expected: long names and lesson content wrap, and nothing overlaps or is cut off.
 

@@ -138,7 +138,7 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Views a clicked student's lessons through the same command path as typed input.
+     * Views a student chosen by a click or keyboard navigation through the same command path as typed input.
      */
     private void handlePersonClick(Index index) {
         try {
@@ -170,6 +170,17 @@ public class MainWindow extends UiPart<Stage> {
             return;
         }
         personListPanel.selectPerson(Index.fromZeroBased(displayedIndex));
+    }
+
+    /**
+     * Highlights the shown student again after a failed command. A failed save restores the list,
+     * which clears its selection, while the details panel keeps showing the student.
+     */
+    private void restoreShownStudentHighlight() {
+        studentDetailPanel.getStudent()
+                .map(logic.getFilteredPersonList()::indexOf)
+                .filter(displayedIndex -> displayedIndex >= 0)
+                .ifPresent(displayedIndex -> personListPanel.restoreSelection(Index.fromZeroBased(displayedIndex)));
     }
 
     private void clearSelectedStudent() {
@@ -245,6 +256,7 @@ public class MainWindow extends UiPart<Stage> {
         } catch (CommandException | ParseException e) {
             logger.info("An error occurred while executing command: " + commandText);
             resultDisplay.setErrorToUser(e.getMessage());
+            restoreShownStudentHighlight();
             throw e;
         }
     }

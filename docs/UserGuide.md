@@ -285,10 +285,11 @@ Opens one student in the details panel on the right, showing their details and a
 
 Format: `view INDEX`
 
-You can also left-click a student's card to view the same student.
-Viewing by either method highlights the student's card and scrolls it
-into view. A single left-click switches students directly from the command box.
-Any text you are typing in the command box is preserved.
+You can also left-click a student's card to view the same student. After clicking
+the student list, the Up and Down arrow keys, Page Up, Page Down, Home and End move
+to another student and view them. Viewing by any of these methods highlights the
+student's card and scrolls it into view. A single left-click switches students
+directly from the command box. Any text you are typing in the command box is preserved.
 
 * `INDEX` is a positive integer from the currently displayed student list.
 * Records appear with the most recent date first, numbered from 1. Records on the same date appear with the most recently logged first. These numbers identify rows in the output, not student indexes.
@@ -309,11 +310,11 @@ Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays 
 
 The details panel always shows one student, or a hint when no student is selected.
 
-* **Opening a student:** `view`, clicking a card, `findlesson`, and any command that changes one student (`log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) open that student in the panel. Changes appear immediately, so you do not need to run `view` again.
+* **Opening a student:** `view`, clicking a card, moving through the list with the arrow keys, `findlesson`, and any command that changes one student (`log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) open that student in the panel. Changes appear immediately, so you do not need to run `view` again.
 * **Lesson numbers** in the panel are the same numbers that `view`, `editlesson` and `deletelesson` use. Lesson 1 is the most recent.
 * **No lessons yet:** the panel shows an example `log` command for that student.
 * **Other commands** such as `list`, `find`, `flagged`, `summary` and `add` keep the same student in the panel while they are still in the displayed list. If `find` or `flagged` hides them, or `delete` removes them, the panel returns to the hint.
-* **Failed commands** never change the panel.
+* **Failed commands** never change the panel or the highlighted card, including when TutorLah cannot save your data.
 * After `unflag` in the `flagged` results, the student leaves the list but stays in the panel, so you can see what changed.
 * When TutorLah starts, no student is selected.
 

@@ -39,6 +39,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -465,6 +467,9 @@ public class PersonListPanelTest {
                 assertDetail(root, "Ben", "Lessons (1)");
                 assertFalse(root.lookup("#detailPanel #flagBanner").isVisible());
                 assertTrue(list.getItems().isEmpty(), "Ben left the flagged list but stays in the panel");
+                assertFeedback(root, "view 1", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
+                assertDetail(root, "Ben", "Lessons (1)");
+                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
 
                 enterClickTestCommand(root, "list");
                 enterClickTestCommand(root, "delete 2");
@@ -502,6 +507,12 @@ public class PersonListPanelTest {
             clickNode(label(cellAt(list, 0), "levelSubject"), MouseButton.PRIMARY);
             clickNode(cellAt(list, 0), MouseButton.PRIMARY);
             assertEquals(List.of(Index.fromOneBased(2), Index.fromOneBased(1), Index.fromOneBased(1)), clicked);
+
+            // a navigation key with no student to select reports nothing
+            persons.clear();
+            layout(list, 450);
+            pressKey(list, KeyCode.DOWN);
+            assertEquals(3, clicked.size());
         });
     }
 
@@ -861,6 +872,83 @@ public class PersonListPanelTest {
                 window.getPrimaryStage().close();
             }
         });
+    }
+
+    @Test
+    public void studentList_keyboardNavigation_viewsSelectedStudentInPanel(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            Logic logic = clickTestLogic(clickTestModel(),
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                TextField input = (TextField) root.lookup("#commandTextField");
+                enterClickTestCommand(root, "view 1");
+                input.setText("log 2 c/unfinished");
+
+                pressKey(list, KeyCode.DOWN);
+                assertEquals(1, list.getSelectionModel().getSelectedIndex());
+                assertDetail(root, "Ben", "Lessons (0)");
+                assertEquals("No lessons logged yet for Ben.", ((TextArea) root.lookup("#resultDisplay")).getText());
+                assertEquals("log 2 c/unfinished", input.getText(), "Keyboard viewing keeps typed text");
+
+                pressKey(list, KeyCode.HOME);
+                assertDetail(root, "Amy", "Lessons (3)");
+                pressKey(list, KeyCode.END);
+                assertDetail(root, "Ben", "Lessons (0)");
+
+                // keys that do not move the selection do not view anyone
+                enterClickTestCommand(root, "view 1");
+                pressKey(list, KeyCode.A);
+                pressKey(list, KeyCode.ENTER);
+                assertDetail(root, "Amy", "Lessons (3)");
+                assertEquals(0, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_saveFailure_keepsShownStudentHighlighted(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(directory.resolve("students.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    throw new IOException("disk unavailable");
+                }
+            };
+            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), failingStorage, directory),
+                    directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                String saveError = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable");
+                enterClickTestCommand(root, "view 2");
+                for (String mutation : List.of("log 2 c/Unsaved lesson date/01/01/2020", "edit 2 n/Bernard",
+                        "flag 2 r/Call parent", "delete 2", "log 1 c/Unsaved lesson")) {
+                    assertFeedback(root, mutation, saveError, true);
+                    assertEquals(1, list.getSelectionModel().getSelectedIndex(), mutation);
+                    assertDetail(root, "Ben", "Lessons (0)");
+                    assertEquals(2, list.getItems().size(), mutation);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
+     * Fires a key press and release at {@code node}, as when the user presses {@code code} while it has focus.
+     */
+    private static void pressKey(Node node, KeyCode code) {
+        for (EventType<KeyEvent> type : List.of(KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED)) {
+            node.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
+        }
+        node.getScene().getRoot().applyCss();
+        node.getScene().getRoot().layout();
     }
 
     /**
