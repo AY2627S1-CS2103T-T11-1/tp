@@ -108,7 +108,7 @@ How command execution works:
 1. `LogicManager` calls `Command#execute(Model)`, which reads or updates the model and returns a `CommandResult`.
 1. `LogicManager` compares the complete address book with its snapshot from before execution. If student data changed, it saves through `Storage` before returning the result. Otherwise it returns without saving, so `list`, `view`, `find`, `flagged`, `help` and `exit` work even when saving is unavailable. An edit that leaves the stored values unchanged also skips saving.
 
-`CommandResult` contains feedback and the help/exit flags. A successful `view` also supplies a displayed student `Index`, even for an empty history; other commands leave it absent (`0..1`). The UI uses it to highlight the student, as shown in [Viewing lesson history](#viewing-lesson-history).
+`CommandResult` contains feedback and the help/exit flags. Commands that view or change exactly one student (`view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) also supply that `Person` as it is after the command, through `getStudent()`, even when the student has no lessons. Other commands leave it absent (`0..1`). The UI shows that student in the details panel and highlights their card, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync).
 
 Invalid input raises `ParseException`; execution or save failures raise `CommandException`. Before executing a parsed command, `LogicManager` copies the address book and captures the current filter through `Model#getFilteredPersonListPredicate`. Student, lesson and flag values are immutable, so the copied list preserves the previous values. If saving throws `IOException`, including `AccessDeniedException`, the manager restores changed data through `Model#setAddressBook` and reapplies the captured predicate before reporting the existing save error. Capturing the predicate, rather than only the visible students, preserves its meaning for later updates. The existing observable list remains connected to the UI, and a retry uses the original displayed indexes.
 
@@ -255,7 +255,8 @@ matches only when neither boundary is supplied.
 `FindLessonCommand` reads the selected student's complete history from the filtered student
 list and iterates backwards. It derives each view number from the original stored position
 before collecting matches, so gaps remain and repeated content is not merged. The result
-identifies the student for the existing highlight/scroll path. No lesson filter, model update
+identifies the student, so the UI shows their complete history in the details panel and
+highlights their card. No lesson filter, model update
 or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 ### Student and lesson summaries
