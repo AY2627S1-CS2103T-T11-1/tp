@@ -48,6 +48,10 @@ public class StudentDetailPanel extends UiPart<Region> {
     @FXML
     private SVGPath flagIcon;
     @FXML
+    private VBox chips;
+    @FXML
+    private HBox chipRow;
+    @FXML
     private Label level;
     @FXML
     private Label subject;
@@ -75,6 +79,10 @@ public class StudentDetailPanel extends UiPart<Region> {
      */
     public StudentDetailPanel() {
         super(FXML);
+        // A chip wider than the panel wraps its own text instead of being cut off
+        level.maxWidthProperty().bind(chips.widthProperty());
+        subject.maxWidthProperty().bind(chips.widthProperty());
+        chips.widthProperty().addListener((unused1, unused2, unused3) -> arrangeChips());
         clear();
     }
 
@@ -100,6 +108,7 @@ public class StudentDetailPanel extends UiPart<Region> {
         setShown(flagIcon, student.isFlagged());
         level.setText(student.getLevel().value);
         subject.setText(student.getSubject().value);
+        arrangeChips();
         phone.setText("Phone: " + student.getPhone().value);
         address.setText("Address: " + student.getAddress().value);
         flagBanner.setText(student.getFlag().map(flag -> flag.getReason().orElse(NO_FLAG_REASON)).orElse(""));
@@ -153,6 +162,21 @@ public class StudentDetailPanel extends UiPart<Region> {
         HBox row = new HBox(10, numberLabel, dateLabel, contentLabel);
         row.getStyleClass().add("lesson-row");
         return row;
+    }
+
+    /**
+     * Places the level and subject chips side by side when both fit on one line, and otherwise stacks
+     * them, so that a chip which still does not fit can wrap its text within the full width.
+     */
+    private void arrangeChips() {
+        boolean isSideBySide = level.prefWidth(-1) + chipRow.getSpacing() + subject.prefWidth(-1) <= chips.getWidth();
+        if (isSideBySide && !chips.getChildren().contains(chipRow)) {
+            chipRow.getChildren().setAll(level, subject);
+            chips.getChildren().setAll(chipRow);
+        } else if (!isSideBySide && chips.getChildren().contains(chipRow)) {
+            chipRow.getChildren().clear();
+            chips.getChildren().setAll(level, subject);
+        }
     }
 
     private void setShowingStudent(boolean isShowingStudent) {

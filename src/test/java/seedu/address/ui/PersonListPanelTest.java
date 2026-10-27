@@ -425,6 +425,39 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void detailPanel_longLevelAndSubject_stackAndWrapWithoutClipping() throws Exception {
+        runOnJavaFxThread(() -> {
+            StudentDetailPanel panel = new StudentDetailPanel();
+            Region root = panel.getRoot();
+            StackPane container = new StackPane(root);
+            Scene scene = new Scene(container, 320, 500);
+            scene.getStylesheets().add(PersonListPanel.class.getResource("/view/DarkTheme.css").toExternalForm());
+            Person longChips = new PersonBuilder(SHORT_PERSON).withLevel("Upper Secondary Two")
+                    .withSubject("Higher Order Thinking in Additional Mathematics").build();
+
+            panel.show(longChips, 1);
+            settle(container, 320);
+            Label level = (Label) root.lookup("#level");
+            Label subject = (Label) root.lookup("#subject");
+            assertFullyRendered(level, "Upper Secondary Two");
+            assertFullyRendered(subject, "Higher Order Thinking in Additional Mathematics");
+            assertTrue(sceneY(subject) > sceneY(level), "Chips that do not fit side by side are stacked");
+
+            panel.show(SHORT_PERSON, 1);
+            settle(container, 320);
+            assertFullyRendered(level, "Sec 2");
+            assertFullyRendered(subject, "E-Math");
+            assertEquals(sceneY(level), sceneY(subject), LAYOUT_TOLERANCE, "Short chips stay side by side");
+
+            // widening the panel puts long chips side by side again
+            panel.show(longChips, 1);
+            settle(container, 900);
+            assertEquals(sceneY(level), sceneY(subject), LAYOUT_TOLERANCE);
+            assertFullyRendered(subject, "Higher Order Thinking in Additional Mathematics");
+        });
+    }
+
+    @Test
     public void commandBox_studentCommands_keepDetailPanelInSync(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
@@ -1443,6 +1476,34 @@ public class PersonListPanelTest {
         assertTrue(root.lookup("#detailScrollPane").isVisible());
         assertEquals(name, text(root, "#name"));
         assertEquals(lessonHeading, text(root, "#lessonHeading"));
+    }
+
+    /**
+     * Resizes {@code root} to {@code width} and settles CSS and layout, including chip rearrangement.
+     */
+    private static void settle(Region root, double width) {
+        root.resize(width, 500);
+        for (int pass = 0; pass < 4; pass++) {
+            root.applyCss();
+            root.layout();
+        }
+    }
+
+    private static double sceneY(Node node) {
+        return node.localToScene(node.getBoundsInLocal()).getMinY();
+    }
+
+    /**
+     * Checks that {@code label} shows all of {@code expected}, wrapped if needed, without an ellipsis or clipping.
+     */
+    private static void assertFullyRendered(Label label, String expected) {
+        Text rendered = (Text) label.lookup(".text");
+        assertEquals(expected, rendered.getText(), "Clipped text");
+        assertTrue(rendered.getLayoutBounds().getHeight() <= label.getHeight() + LAYOUT_TOLERANCE,
+                "Wrapped text taller than its label: " + expected);
+        Bounds bounds = label.localToScene(label.getBoundsInLocal());
+        Bounds panel = label.getScene().getRoot().localToScene(label.getScene().getRoot().getBoundsInLocal());
+        assertTrue(bounds.getMaxX() <= panel.getMaxX() + LAYOUT_TOLERANCE, "Label extends past the panel");
     }
 
     /**
