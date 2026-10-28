@@ -135,6 +135,12 @@ The helper dependencies are shown separately to keep the overview readable. Pale
 
 The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
 
+Command words, positional indexes and prefix boundaries recognise Unicode
+whitespace, including non-breaking spaces. `ArgumentTokenizer` trims field
+boundaries without replacing internal spacing. In the UI, `CommandBox` uses a
+`TextFormatter` to replace inserted tabs and line breaks with spaces before
+JavaFX discards them, so pasted words do not join. Pasting does not execute a command.
+
 ### Model component
 
 The **API** of this component is specified in [`Model.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/model/Model.java).

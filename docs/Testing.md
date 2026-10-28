@@ -43,6 +43,30 @@ This project has three types of tests:
 1. *Hybrid tests* combine unit and integration testing. These tests check both the individual units and how they work together.<br>
    For example: `seedu.address.logic.LogicManagerTest`
 
+## Command whitespace and paste checks
+
+Use a disposable folder and fictional students, not your normal saved data.
+Start with an empty student list and add
+`add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math`.
+
+1. Enter `edit 1 addr/New Rd[NBSP]l/Sec 4`, replacing `[NBSP]` with a
+   non-breaking space (Option+Space on macOS). Check that the address is
+   `New Rd` and the level is `Sec 4`, including after restarting.
+2. Enter `log 1[NBSP]c/Algebra` using the same separator. It should log
+   `Algebra`, just like `log 1 c/Algebra` with an ordinary space.
+3. Copy `log 1 c/Quadratic` and `inequalities` as two lines, then paste into
+   the command box. Check that it reads `log 1 c/Quadratic inequalities` and
+   nothing is logged until Enter is pressed. Repeat with a tab between the words.
+4. Paste `Amy` and `Tan` separated by a tab over the name in `find old name`.
+   Check the result is `find Amy Tan`; undo and redo should restore each version.
+5. Check `view 01` still fails and repeated prefixes still report an error.
+   Addresses and lesson notes with repeated internal spaces or joiners should
+   keep those characters after saving and restarting.
+
+`CommandWhitespaceTest` covers parsing and validation; `LogicManagerTest`
+checks the saved fields. `PersonListPanelTest` exercises the real command box
+and system clipboard using temporary storage, restoring clipboard contents afterwards.
+
 ## Student-card layout checks
 
 `PersonListPanelTest` renders the real panel with the application stylesheets. It checks address wrapping,

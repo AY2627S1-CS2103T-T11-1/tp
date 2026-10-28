@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -14,7 +15,7 @@ public class ListCommandParser implements Parser<ListCommand> {
      * @throws ParseException if any arguments are provided
      */
     public ListCommand parse(String args) throws ParseException {
-        if (!args.trim().isEmpty()) {
+        if (!StringUtil.stripUnicodeWhitespace(args).isEmpty()) {
             throw new ParseException(ListCommand.MESSAGE_INVALID_ARGUMENTS);
         }
         return new ListCommand();

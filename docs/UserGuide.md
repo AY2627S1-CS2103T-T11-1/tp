@@ -84,7 +84,10 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 * Extraneous parameters for `help` and `exit` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
+* Non-breaking spaces copied from websites or documents work as separators
+  between the command word, indexes and prefixed fields, just like ordinary spaces.
+  Pasted tabs and line breaks become spaces rather than joining words. Paste one
+  command at a time, check it in the command box, then press Enter to run it.
 </box>
 
 ### Viewing help: `help`

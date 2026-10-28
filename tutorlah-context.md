@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 27, 2026, for the split-view GUI with the student details panel (#155).
+Last updated: Oct 28, 2026, for command whitespace handling.
 
 ## What it is
 
@@ -90,6 +90,11 @@ formatting characters, such as non-breaking spaces and zero-width spaces.
 Commands and JSON loading use the same validation. Real text keeps its
 internal spaces and formatting, including joiners used in written languages
 and emoji sequences.
+
+Command words, indexes and prefixed fields can be separated by Unicode
+whitespace, including non-breaking spaces. Pasted tabs and line breaks become
+spaces so words do not join. Tutors check the pasted command and press Enter
+to run it; meaningful spacing inside addresses and lesson content is kept.
 
 ## MVP commands
 
