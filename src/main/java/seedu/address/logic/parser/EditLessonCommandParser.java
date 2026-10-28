@@ -44,7 +44,8 @@ public class EditLessonCommandParser implements Parser<EditLessonCommand> {
                     ParserUtil.parseLessonContent(argMultimap.getValue(PREFIX_CONTENT).get()).content);
         }
         if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
-            editLessonDescriptor.setDate(ParserUtil.parseLessonDate(argMultimap.getValue(PREFIX_DATE).get()));
+            editLessonDescriptor.setDate(
+                    ParserUtil.parseLessonDateWithNotesHint(argMultimap.getValue(PREFIX_DATE).get()));
         }
 
         if (!editLessonDescriptor.isAnyFieldEdited()) {

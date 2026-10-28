@@ -51,6 +51,11 @@ public class LessonSearchPredicate implements Predicate<Lesson> {
         this.toDate = toDate;
     }
 
+    /** Returns the immutable content keywords as entered, without date boundaries. */
+    public List<String> getKeywords() {
+        return keywords;
+    }
+
     /**
      * Returns true if the lesson meets every content and date criterion.
      * Undated lessons match only when neither date boundary is supplied.

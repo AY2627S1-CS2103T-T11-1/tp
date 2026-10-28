@@ -22,6 +22,8 @@ public class LogCommandParserTest {
     private static final String VALID_CONTENT = "Quadratic inequalities";
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE);
+    private static final String MESSAGE_DATE_WITH_HINT =
+            Lesson.MESSAGE_DATE_CONSTRAINTS + "\n" + Messages.MESSAGE_LESSON_DATE_TEXT_HINT;
 
     private LogCommandParser parser = new LogCommandParser();
 
@@ -68,17 +70,39 @@ public class LogCommandParserTest {
     }
 
     @Test
-    public void parse_invalidDate_failure() {
+    public void parse_invalidDate_failureWithNotesHint() {
         String withContent = " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_DATE;
 
         // impossible date
-        assertParseFailure(parser, withContent + "31/02/2026", Lesson.MESSAGE_DATE_CONSTRAINTS);
+        assertParseFailure(parser, withContent + "31/02/2026", MESSAGE_DATE_WITH_HINT);
 
         // year first
-        assertParseFailure(parser, withContent + "2026-10-21", Lesson.MESSAGE_DATE_CONSTRAINTS);
+        assertParseFailure(parser, withContent + "2026-10-21", MESSAGE_DATE_WITH_HINT);
 
         // empty date
-        assertParseFailure(parser, withContent, Lesson.MESSAGE_DATE_CONSTRAINTS);
+        assertParseFailure(parser, withContent, MESSAGE_DATE_WITH_HINT);
+    }
+
+    @Test
+    public void parse_dateTextInContent_failureWithNotesHint() {
+        // date/ inside the notes is still read as the date, so the error suggests rewording
+        assertParseFailure(parser, " 1 " + PREFIX_CONTENT + "Revised date/time conversions", MESSAGE_DATE_WITH_HINT);
+    }
+
+    @Test
+    public void parse_nonDateErrors_omitDateHint() {
+        // the index and content are checked before the date, so their errors have no date hint
+        assertParseFailure(parser, " 0 " + PREFIX_CONTENT + "Revised date/time",
+                MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertParseFailure(parser, " 1 " + PREFIX_CONTENT + "  " + PREFIX_DATE + "time", Lesson.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_rewordedNotes_success() {
+        for (String content : new String[]{"Worksheet collected care of Mum", "Revised date and time conversions"}) {
+            assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + content,
+                    new LogCommand(INDEX_FIRST_PERSON, new Lesson(content)));
+        }
     }
 
     @Test
@@ -150,6 +174,9 @@ public class LogCommandParserTest {
     @Test
     public void parse_duplicateContentPrefix_failure() {
         assertParseFailure(parser, " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_CONTENT + "Binomial theorem",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT));
+        // c/ inside the notes is still read as a second content field, and the error suggests rewording
+        assertParseFailure(parser, " 1 " + PREFIX_CONTENT + "Worksheet collected c/o Mum",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT));
     }
 }

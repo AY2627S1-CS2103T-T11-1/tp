@@ -34,7 +34,7 @@ public class LogCommandParser implements Parser<LogCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_CONTENT, PREFIX_DATE);
         Lesson lesson = ParserUtil.parseLessonContent(argMultimap.getValue(PREFIX_CONTENT).get());
         if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
-            lesson = lesson.withDate(ParserUtil.parseLessonDate(argMultimap.getValue(PREFIX_DATE).get()));
+            lesson = lesson.withDate(ParserUtil.parseLessonDateWithNotesHint(argMultimap.getValue(PREFIX_DATE).get()));
         }
 
         return new LogCommand(index, lesson);

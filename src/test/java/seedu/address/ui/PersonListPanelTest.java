@@ -270,6 +270,44 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void commandBox_unlogged_keepsPanelAndDisplayedIndexesInSync(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            model.addPerson(new PersonBuilder().withName("Carol Ng").withPhone("81230009").build());
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "view 1");
+                assertFeedback(root, "unlogged", "Listed 2 students with no recorded lessons.", false);
+                assertTrue(root.lookup("#noStudentState").isVisible());
+                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
+                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
+                enterClickTestCommand(root, "view 1");
+                assertDetail(root, "Ben", "Lessons (0)");
+                enterClickTestCommand(root, "log 1 c/Vectors date/1/1/2020");
+                assertDetail(root, "Ben", "Lessons (1)");
+                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
+                assertEquals(1, list.getItems().size());
+                assertEquals("Carol Ng", label(cellAt(list, 0), "name").getText());
+                enterClickTestCommand(root, "view 1");
+                assertDetail(root, "Carol Ng", "Lessons (0)");
+                enterClickTestCommand(root, "log 1 c/Calculus date/2/1/2020");
+                assertDetail(root, "Carol Ng", "Lessons (1)");
+                assertTrue(list.getItems().isEmpty());
+                enterClickTestCommand(root, "list");
+                assertEquals(3, list.getItems().size());
+                assertDetail(root, "Carol Ng", "Lessons (1)");
+                assertEquals(2, list.getSelectionModel().getSelectedIndex());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void commandBox_summaryAndLessonChanges_refreshStatusWithoutChangingFilter(@TempDir Path directory)
             throws Exception {
         runOnJavaFxThread(() -> {
@@ -428,6 +466,57 @@ public class PersonListPanelTest {
                 assertTrue(warnings.isEmpty());
             } finally {
                 stage.hide();
+            }
+        });
+    }
+
+    @Test
+    public void start_startupFailure_showsErrorWithoutMainWindow() throws Exception {
+        runOnJavaFxThread(() -> {
+            Stage stage = new Stage();
+            List<String> shownFailure = new ArrayList<>();
+            UiManager ui = new UiManager("Another copy is open") {
+                @Override
+                void showAlertDialogAndWait(AlertType type, String title, String header, String content) {
+                    shownFailure.addAll(List.of(type.name(), title, header, content,
+                            Boolean.toString(stage.isShowing())));
+                }
+            };
+
+            ui.start(stage);
+
+            assertEquals(List.of("ERROR", "TutorLah could not start",
+                    "TutorLah is already open or its data folder is unavailable", "Another copy is open", "false"),
+                    shownFailure);
+        });
+    }
+
+    @Test
+    public void start_startupFailure_realDialogSupportsOwnerWithOrWithoutScene() throws Exception {
+        runOnJavaFxThread(() -> {
+            for (boolean hasScene : List.of(false, true)) {
+                Stage stage = new Stage();
+                if (hasScene) {
+                    stage.setScene(new Scene(new StackPane(), 100, 100));
+                }
+                AtomicReference<Throwable> closeFailure = new AtomicReference<>();
+                Platform.runLater(() -> {
+                    try {
+                        Window dialog = Window.getWindows().stream()
+                                .filter(candidate -> candidate instanceof Stage alert
+                                        && "TutorLah could not start".equals(alert.getTitle()))
+                                .findFirst().orElseThrow();
+                        dialog.hide();
+                    } catch (Throwable throwable) {
+                        closeFailure.set(throwable);
+                    }
+                });
+
+                new UiManager("Another copy is open").start(stage);
+
+                assertTrue(closeFailure.get() == null, () ->
+                        "Could not close startup dialog: " + closeFailure.get());
+                assertFalse(stage.isShowing());
             }
         });
     }
@@ -1100,6 +1189,60 @@ public class PersonListPanelTest {
         root.applyCss();
         root.layout();
         return window;
+    }
+
+    @Test
+    public void commandBox_lessonSearchSyntaxHint_keepsStudentAndRecovers(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                root.resize(700, 560);
+                for (String keyword : List.of("c/algebra", "date/01/01/2020")) {
+                    assertFeedback(root, "findlesson 1 " + keyword,
+                            "No matching lesson records found for Amy.\n"
+                                    + "To search by date, use from/ and to/. Content keywords need no prefix.", false);
+                    assertDetail(root, "Amy", "Lessons (3)");
+                }
+                assertFeedback(root, "findlesson 1 algebra", "Matching lesson records for Amy (2):"
+                        + "\n1. (undated): Algebra\n3. (undated): Algebra", false);
+                assertEquals(3, model.getFilteredPersonList().getFirst().getLessonCount());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_addUnsupportedPrefix_keepsInputAndStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                root.resize(700, 560);
+                enterClickTestCommand(root, "view 1");
+                assertFeedback(root, "add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend",
+                        Subject.MESSAGE_CONSTRAINTS + "\n"
+                                + "If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.", true);
+                for (String subject : List.of("Physics/Chemistry", "Math/Science", "Math! t/friend")) {
+                    assertFeedback(root, "add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/" + subject,
+                            Subject.MESSAGE_CONSTRAINTS, true);
+                }
+                assertFeedback(root, "add n/Ramesh s/o Kumar2 p/81230015 addr/6 St l/Sec 3 sub/Math",
+                        Name.MESSAGE_CONSTRAINTS, true);
+                assertEquals(2, model.getAddressBook().getPersonList().size());
+                assertDetail(root, "Amy", "Lessons (3)");
+                assertFeedback(root, "list", "Listed 2 students.", false);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
     }
 
     /**

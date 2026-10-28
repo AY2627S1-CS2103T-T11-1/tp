@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
@@ -192,6 +193,20 @@ public class ParserUtil {
             throw new ParseException(Lesson.MESSAGE_CONSTRAINTS);
         }
         return new Lesson(trimmedContent);
+    }
+
+    /**
+     * Parses a lesson date given in {@code log} or {@code editlesson} as {@link #parseLessonDate} does. An error
+     * keeps the original message and cause, and adds a hint in case {@code date/} was meant as lesson notes.
+     *
+     * @throws ParseException if the given {@code date} is not a real date in that format.
+     */
+    public static LocalDate parseLessonDateWithNotesHint(String date) throws ParseException {
+        try {
+            return parseLessonDate(date);
+        } catch (ParseException e) {
+            throw new ParseException(e.getMessage() + "\n" + Messages.MESSAGE_LESSON_DATE_TEXT_HINT, e);
+        }
     }
 
     /**

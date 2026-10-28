@@ -1,6 +1,9 @@
 package seedu.address.logic;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -8,6 +11,7 @@ import static seedu.address.logic.commands.CommandTestUtil.LEVEL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.SUBJECT_DESC_AMY;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.LessonDateUtil.todayText;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -17,6 +21,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,12 +33,17 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Subject;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -56,6 +66,60 @@ public class LogicManagerTest {
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(addressBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
+    }
+
+    @Test
+    public void execute_addUnsupportedPrefix_preservesDataAndFilter() throws Exception {
+        logic.execute("add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math");
+        logic.execute("find amy");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        byte[] savedBefore = Files.readAllBytes(dataFile);
+        Person visibleBefore = model.getFilteredPersonList().getFirst();
+
+        assertParseException("add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend",
+                Subject.MESSAGE_CONSTRAINTS + "\n"
+                        + String.format(AddCommandParser.MESSAGE_UNSUPPORTED_PREFIX_HINT, "t/"));
+        for (String subject : List.of("Physics/Chemistry", "Math/Science", "Math! t/friend")) {
+            assertParseException("add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/" + subject,
+                    Subject.MESSAGE_CONSTRAINTS);
+            assertEquals(before, model.getAddressBook());
+            assertArrayEquals(savedBefore, Files.readAllBytes(dataFile));
+        }
+        assertParseException("add n/Ramesh s/o Kumar2 p/81230015 addr/6 St l/Sec 3 sub/Math",
+                Name.MESSAGE_CONSTRAINTS);
+
+        assertEquals(before, model.getAddressBook());
+        assertEquals(List.of(visibleBefore), model.getFilteredPersonList());
+        assertTrue(model.getFilteredPersonListPredicate().test(
+                new PersonBuilder().withName("Amy Lee").build()));
+        assertFalse(model.getFilteredPersonListPredicate().test(
+                new PersonBuilder().withName("Ben Lim").build()));
+        assertArrayEquals(savedBefore, Files.readAllBytes(dataFile));
+    }
+
+    @Test
+    public void execute_prefixTextInLessonNotes_rejectedWithoutChangingData() throws Exception {
+        logic.execute("add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math");
+        logic.execute("log 1 c/Algebra date/21/10/2026");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        byte[] savedBefore = Files.readAllBytes(dataFile);
+        AddressBook dataBefore = new AddressBook(model.getAddressBook());
+
+        String duplicateContent = Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT);
+        String dateWithHint = Lesson.MESSAGE_DATE_CONSTRAINTS + "\n" + Messages.MESSAGE_LESSON_DATE_TEXT_HINT;
+        assertParseException("log 1 c/Worksheet collected c/o Mum", duplicateContent);
+        assertParseException("log 1 c/Revised date/time conversions", dateWithHint);
+        assertParseException("editlesson 1 1 c/Notes collected c/o tutor", duplicateContent);
+        assertParseException("editlesson 1 1 c/Revised date/time conversions", dateWithHint);
+        assertEquals(dataBefore, model.getAddressBook());
+        assertArrayEquals(savedBefore, Files.readAllBytes(dataFile));
+
+        // the reworded notes are logged and saved
+        logic.execute("log 1 c/Worksheet collected care of Mum");
+        assertTrue(model.getFilteredPersonList().getFirst().getLessons().stream()
+                .anyMatch(lesson -> lesson.content.equals("Worksheet collected care of Mum")));
+        assertEquals(model.getAddressBook(), new JsonAddressBookStorage(dataFile).readAddressBook().orElseThrow());
     }
 
     @Test

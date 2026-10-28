@@ -40,6 +40,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
    * `list` : Lists all students.
 
    * `summary` : Shows a short paragraph summarising all students and lesson records.
+   * `unlogged` : Shows students with no recorded lessons.
 
    * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
 
@@ -74,7 +75,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `Tan Wei Ming`.
 
-* Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
+* Command words ignore uppercase/lowercase, so `list`, `LIST` and `LiSt` work the same way.
+  Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
 
 * Parameters with prefixes can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
@@ -88,6 +90,15 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
   between the command word, indexes and prefixed fields, just like ordinary spaces.
   Pasted tabs and line breaks become spaces rather than joining words. Paste one
   command at a time, check it in the command box, then press Enter to run it.
+
+* A prefix used by the command you are typing starts a new field wherever it follows whitespace
+  (an ordinary space, a non-breaking space or a tab). Other slashes are ordinary text, so `a/l` in a
+  name or `d/dx` in lesson notes is kept. If your text contains one of that command's prefixes after a
+  space, such as `c/o` in `log` notes, reword it, for example `care of`. When this causes an error,
+  such as `Multiple values specified for the following single-valued field(s): c/`, the message adds
+  `A recognised prefix after a space starts another field. If it was part of your text, please reword it.`
+  A command that is still valid is not detected: `edit 1 addr/Unit l/2` changes the address to `Unit`
+  and the level to `2`.
 </box>
 
 ### Viewing help: `help`
@@ -108,12 +119,17 @@ Adds a student to the end of the student list.
 Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 
 * All five fields are required.
-* `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar`, `Muthu a/l Raju` and `Siti a/p Ahmad` work.
+* `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with at least one letter and no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar`, `Muthu a/l Raju` and `Siti a/p Ahmad` work.
 * The address prefix is `addr/`, not `a/`, so `a/l` and `a/p` in a name are kept as part of the name. If you type `a/` and leave out `addr/`, the error message reminds you to use `addr/`.
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 40 characters of letters, digits and spaces, such as `Sec 3`, `JC1` or `Sec 4 Normal Academic`.
 * `SUBJECT` is 1 to 50 characters of letters, digits, spaces, hyphens, `&`, `(`, `)`, `+` and commas, starting with a letter or digit, such as `E-Math`, `H2 Chemistry` or `E-Math & A-Math`.
+* If a phone, level or subject fails validation, a separate prefix-like token after an otherwise valid
+  value, such as `sub/Math t/friend`, adds the hint
+  `If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
+  `sub/Physics/Chemistry` and invalid names or addresses keep their normal errors. This hint does not
+  introduce extra fields or change validation.
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
 
 Examples:
@@ -130,7 +146,7 @@ Shows all students and reports the number displayed.
 
 Format: `list`
 
-* Restores the full student list after a `find` or `flagged` command.
+* Restores the full student list after a `find`, `flagged` or `unlogged` command.
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
 * With one student: `Listed 1 student.`
 * Without students: `No students found. Use add to create a student.`
@@ -155,7 +171,7 @@ You have 3 students and 3 lesson records in total. 1 student has no lessons reco
 ```
 
 * A short paragraph describes the collection and highlights students without recorded lessons. With no students, it suggests adding a student.
-* Totals include **all saved students**, even after `find` or `flagged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
+* Totals include **all saved students**, even after `find`, `flagged` or `unlogged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
 * Every lesson record counts, including undated records saved before v1.4 and separate records with identical content. These totals describe recorded history, not scheduled lessons or teaching hours.
 * `summary` accepts no parameters. For example, `summary 1` shows the summary usage and keeps the current list.
 * The command introduces no new saved fields and does not change students or lessons. It does not attempt to save, so it also works while saving is unavailable.
@@ -175,6 +191,23 @@ Each student card also shows a lesson-status line below the subject:
 
 `last` means the most recent **recorded lesson date**, rather than when a command was typed. When dated and undated lessons coexist, all records count and the most recent dated lesson supplies the date. The line refreshes after `log`, `editlesson` and `deletelesson`, and a flagged student's flag icon remains visible.
 
+### Listing students without lesson records: `unlogged`
+
+Shows students who have no lesson records, so you can follow up on the summary's count of students without recorded lessons.
+
+Format: `unlogged`
+
+* Checks **all students**, replacing any previous `find`, `flagged` or `unlogged` filter. Matches keep their original order and are numbered from 1. Other commands use these displayed student numbers.
+* A student with even one undated lesson has recorded history and is not included. This identifies missing records, not whether teaching has taken place.
+* Feedback is `Listed 1 student with no recorded lessons.` or `Listed N students with no recorded lessons.`. With no matches, including when no students are saved, it says `No students without lesson records found. Use list to show all students.`
+* Logging a first lesson removes that student from the results automatically. The remaining students are renumbered, so check the displayed list before the next command. The details panel still shows the student whose lesson you just logged.
+* `list` restores all students; `find` and `flagged` replace this filter. `summary` still counts all students and keeps the filter. Filters are not saved across restarts.
+* `unlogged` changes no student or lesson data and does not attempt to save, including while saving is disabled. Extra arguments such as `unlogged 1` are rejected with `The unlogged command does not accept parameters.` and keep the current filter.
+
+**Screenshot example:** Amy Tan has a recorded lesson and Ben Lim has none. After `unlogged`, only Ben is displayed, renumbered to student 1:
+
+<a href="images/unlogged.png"><img src="images/unlogged.png" alt="One student without lesson records after unlogged, with Ben Lim numbered 1" width="726"></a>
+
 ### Finding students: `find`
 
 Shows students whose name, subject or level contain the search keywords, for example to bring up every Sec 3 Physics student before preparing material for them. You can use part of a word instead of typing it in full.
@@ -183,15 +216,16 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 
 * At least one keyword or field is required. `find` on its own shows the invalid command format message and usage; the displayed list is unchanged.
 * Keywords typed before any prefix search names, as do the keywords after `n/`. `sub/` searches subjects and `l/` searches levels. `find tan`, `find n/tan` and `find tan n/wei` all search names.
+* Every word after `sub/` or `l/`, up to the next prefix, searches that field, so put name keywords first. `find ng sub/Physics` finds Chloe Ng taking Physics, while `find sub/Physics ng` looks for a subject containing both `Physics` and `ng`.
 * Matching ignores uppercase/lowercase. `find TAN` and `find sub/physics` match `Tan` and `Physics`.
 * Every keyword must occur somewhere in its field, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`. `l/Sec 3` needs both `Sec` and `3` in the level.
 * When several fields are given, a student must match all of them. `find sub/Physics l/Sec 3` shows only Sec 3 students taking Physics.
-* Each field can be given at most once. `find sub/Math sub/Physics` is rejected with `Multiple values specified for the following single-valued field(s): sub/`.
+* Each field can be given at most once. `find sub/Math sub/Physics` is rejected with `Multiple values specified for the following single-valued field(s): sub/`, followed by the hint to reword prefix text.
 * A field cannot be blank. `find sub/` is rejected with the same message as an invalid subject in `add`, and likewise for `n/` and `l/`.
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no wildcard matching or spelling correction. Punctuation and accented characters must match as entered, ignoring case.
 * Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
-* Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
-* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels.
+* Each search checks all saved students, replacing the previous `find`, `flagged` or `unlogged` filter. The matches keep their original list order.
+* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels. If moving the last words after `sub/` or `l/` to the names would find someone, the message adds `Words after sub/ or l/ search only that field. Did you mean: find ng sub/Physics?` with the suggested search.
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
 * Adding or editing a student also restores the full list. Viewing, logging and deleting use the current filter.
@@ -350,6 +384,10 @@ Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
   date can change them; run the search or `view` again before acting on an older result.
 * An empty history gives `No lessons logged yet for NAME.`. If records exist but
   none match, the message is `No matching lesson records found for NAME.`.
+  If a keyword starts with lowercase `c/` or `date/`, a no-match result adds
+  `To search by date, use from/ and to/. Content keywords need no prefix.`
+  For example, use `findlesson 1 algebra`, not `findlesson 1 c/algebra`.
+  These keywords remain literal text: successful matches do not show the hint.
 * This is a one-off result, not a saved lesson filter. The matches appear in the
   result box, and the student opens in the details panel with their complete
   history. The student list and stored data do not change.
@@ -389,6 +427,7 @@ Format: `log INDEX c/CONTENT [date/DATE]`
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces. Internal spaces and formatting characters used in real text are kept.
+* `c/` and `date/` after a space always start a field, even inside your notes. Write `care of` instead of `c/o` and `date and time` instead of `date/time`. For example, `log 1 c/Worksheet collected care of Mum` works, while `log 1 c/Worksheet collected c/o Mum` is rejected as a repeated `c/`. An invalid date in `log` or `editlesson` also says `If "date/" was part of your lesson notes, please reword it, for example "date and time".`
 * `DATE` is the day the lesson was taught, as `DD/MM/YYYY`, for example `21/10/2026`. Single-digit days and months such as `1/2/2026` are also accepted. Without `date/`, the lesson is dated with today's date on your computer.
 * `DATE` must be a real date from 01/01/2000 up to today: future dates and dates such as `31/02/2026` are rejected. The day and month have one or two digits, and the year has exactly four.
 * Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
@@ -444,7 +483,7 @@ Format: `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`
 
 * `STUDENT_INDEX` and `LESSON_INDEX` work as in `deletelesson`: the student's number in the displayed student list, and the lesson's current number shown by `view STUDENT_INDEX`, where lesson 1 is the most recent.
 * Give at least one of `c/` and `date/`. Without either, the command reports `At least one field to edit must be provided.`
-* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today.
+* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today. As in `log`, reword `c/` or `date/` inside the content, for example `care of` and `date and time`.
 * Changing only the content keeps the lesson's number.
 * Changing the date moves the lesson to its place in date order, so its number can change. On a date that already has lessons, the edited lesson goes after them, so `view` shows it first among that date's lessons. The confirmation gives the new number to use in later `editlesson` and `deletelesson` commands.
 * Lessons saved before v1.4 have no date and show `(undated)`. Editing only their content keeps them undated, and giving `date/` dates them. A date cannot be removed from a dated lesson.
@@ -466,7 +505,11 @@ Format: `exit`
 
 TutorLah automatically saves after a successful command changes student or lesson data. Commands that only display or filter data, open help or exit do not rewrite the student data file. You do not need to save manually.
 
-If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry.
+Only one copy of TutorLah can use a data folder at a time. If another copy is already open from the same folder, the second copy explains the conflict and exits without loading or changing student data. Close the first copy before reopening TutorLah. The hidden `data/.tutorlah.lock` file may remain after TutorLah closes; it is harmless and does not mean the app is still running.
+
+If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry. Student data and preferences are written to a temporary file before replacing the previous file. If the write or replacement fails, the previous saved file is kept; a failed first save leaves no empty data file. Saving requires a folder that supports atomic replacement of an existing file; otherwise, saving reports an error.
+
+An abrupt shutdown, such as force-quitting TutorLah before the replacement finishes, may leave a hidden `.tutorlah-*.tmp` file beside the data or preferences file. These temporary files are not loaded as student data and are not automatically removed on restart. After closing all copies of TutorLah, you may delete these temporary files; keep `addressbook.json` and `preferences.json`.
 
 ### Editing the data file
 
@@ -481,7 +524,7 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
+If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `unlogged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
 Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
@@ -523,5 +566,6 @@ Action     | Format, Examples
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
 **Unflag** | `unflag INDEX`<br> e.g., `unflag 2`
+**Unlogged** | `unlogged` (use `list` to show all students again)
 **Help**   | `help`
 **Exit**   | `exit`

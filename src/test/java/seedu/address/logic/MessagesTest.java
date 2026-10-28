@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.Prefix;
 import seedu.address.model.AddressBook;
 import seedu.address.model.StudentSummary;
 import seedu.address.model.lesson.Lesson;
@@ -13,6 +14,20 @@ import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
 public class MessagesTest {
+
+    @Test
+    public void getErrorMessageForDuplicatePrefixes_addsRewordingHint() {
+        assertEquals("Multiple values specified for the following single-valued field(s): c/\n"
+                + "A recognised prefix after a space starts another field. "
+                + "If it was part of your text, please reword it.",
+                Messages.getErrorMessageForDuplicatePrefixes(new Prefix("c/")));
+    }
+
+    @Test
+    public void lessonDateTextHint_suggestsRewording() {
+        assertEquals("If \"date/\" was part of your lesson notes, please reword it, for example \"date and time\".",
+                Messages.MESSAGE_LESSON_DATE_TEXT_HINT);
+    }
 
     @Test
     public void formatSummaryParagraph_emptyCollection_suggestsAddingStudent() {

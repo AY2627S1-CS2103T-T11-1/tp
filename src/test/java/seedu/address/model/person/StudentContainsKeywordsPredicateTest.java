@@ -79,6 +79,56 @@ public class StudentContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void withTrailingFieldWordsAsNames_singleWordFields_returnsNoAlternatives() {
+        assertTrue(names("tan", "wei").withTrailingFieldWordsAsNames().isEmpty());
+        assertTrue(new StudentContainsKeywordsPredicate(List.of("tan"), List.of("physics"), List.of("3"))
+                .withTrailingFieldWordsAsNames().isEmpty());
+    }
+
+    @Test
+    public void withTrailingFieldWordsAsNames_multiWordFields_movesFewestWordsFirst() {
+        StudentContainsKeywordsPredicate predicate = new StudentContainsKeywordsPredicate(List.of("tan"),
+                List.of("physics", "ming"), List.of("sec", "3", "wei"));
+
+        assertEquals(List.of(
+                new StudentContainsKeywordsPredicate(List.of("tan", "ming"), List.of("physics"),
+                        List.of("sec", "3", "wei")),
+                new StudentContainsKeywordsPredicate(List.of("tan", "wei"), List.of("physics", "ming"),
+                        List.of("sec", "3")),
+                new StudentContainsKeywordsPredicate(List.of("tan", "3", "wei"), List.of("physics", "ming"),
+                        List.of("sec"))),
+                predicate.withTrailingFieldWordsAsNames());
+        // the original search is unchanged
+        assertEquals(List.of("physics", "ming"), predicate.getSubjectKeywords());
+    }
+
+    @Test
+    public void withTrailingFieldWordsAsNames_threeWordsInBothFields_interleavesByWordsMoved() {
+        StudentContainsKeywordsPredicate predicate = new StudentContainsKeywordsPredicate(List.of(),
+                List.of("h2", "math", "amy"), List.of("jc", "1", "lee"));
+
+        assertEquals(List.of(
+                new StudentContainsKeywordsPredicate(List.of("amy"), List.of("h2", "math"),
+                        List.of("jc", "1", "lee")),
+                new StudentContainsKeywordsPredicate(List.of("lee"), List.of("h2", "math", "amy"),
+                        List.of("jc", "1")),
+                new StudentContainsKeywordsPredicate(List.of("math", "amy"), List.of("h2"),
+                        List.of("jc", "1", "lee")),
+                new StudentContainsKeywordsPredicate(List.of("1", "lee"), List.of("h2", "math", "amy"),
+                        List.of("jc"))),
+                predicate.withTrailingFieldWordsAsNames());
+    }
+
+    @Test
+    public void getters_returnKeywordsAsGiven() {
+        StudentContainsKeywordsPredicate predicate = new StudentContainsKeywordsPredicate(List.of("Tan"),
+                List.of("Physics"), List.of("Sec", "3"));
+        assertEquals(List.of("Tan"), predicate.getNameKeywords());
+        assertEquals(List.of("Physics"), predicate.getSubjectKeywords());
+        assertEquals(List.of("Sec", "3"), predicate.getLevelKeywords());
+    }
+
+    @Test
     public void isNameSearchOnly_onlyNameKeywords_returnsTrue() {
         assertTrue(names("tan").isNameSearchOnly());
         assertFalse(subjects("math").isNameSearchOnly());
