@@ -278,6 +278,10 @@ Instead, the error messages explain the limitation:
 
 The UG asks users to reword such text, for example `care of` and `date and time`. Hints appear only when the input is invalid. A valid command with a different meaning, such as `edit 1 addr/Unit l/2`, which sets the level to `2`, cannot be detected; this is a documented limitation. A general quoting or escaping syntax for literal prefix text is a possible future enhancement.
 
+`AddCommandParser` also preserves each field's validation error and cause, appending conditional guidance
+when that failing value contains an unsupported ASCII-letter prefix at its start or after Unicode
+whitespace. Valid slash text is not scanned or rejected, and missing/duplicate fields retain their errors.
+
 ### Searching lesson histories
 
 `FindLessonCommandParser` tokenizes `from/` and `to/` after normalizing Unicode whitespace.
@@ -974,6 +978,9 @@ Use a separate test directory with `data/addressbook.json` containing `{"persons
    Expected: the student is added with the full name `Muthu a/l Raju`; the edit changes only the name to `Siti a/p Ahmad`, and the address stays `13 Example Street`. `delete 3` then removes this student, so the two Amy Tan students remain for the following steps.
 1. Enter `add n/Ben Lim p/81230014 a/14 Example Street l/Sec 2 sub/E-Math`, using the old `a/` prefix.<br>
    Expected: the add-command usage followed by `The address prefix is addr/, for example addr/1 Example Street.` No student is added.
+1. Enter `add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend`.<br>
+   Expected: the subject error followed by `If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
+   No student is added. Slash-containing names and addresses in valid commands still work.
 1. Try omitting each required prefix in turn. Also try `p/123`, `l/`, `sub/`, a 101-character name and an address containing only spaces.<br>
    Expected: each command is rejected with either the add-command usage or the relevant field constraint. Neither existing student changes.
 

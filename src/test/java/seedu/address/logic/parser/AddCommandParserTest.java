@@ -1,5 +1,7 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
@@ -36,6 +38,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -46,6 +49,57 @@ import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
+
+    @Test
+    public void parse_unsupportedPrefixInInvalidField_keepsErrorAndAddsHint() {
+        String hint = "If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.";
+        for (String separator : new String[]{" ", "\u00a0", "\t", "\u2003"}) {
+            assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                    + " sub/Math" + separator + "t/friend", Subject.MESSAGE_CONSTRAINTS + "\n" + hint);
+        }
+        assertParseFailure(parser, " sub/Math t/friend" + LEVEL_DESC_BOB + ADDRESS_DESC_BOB
+                + PHONE_DESC_BOB + NAME_DESC_BOB, Subject.MESSAGE_CONSTRAINTS + "\n" + hint);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                + " sub/x/extra", Subject.MESSAGE_CONSTRAINTS + "\n"
+                + String.format(AddCommandParser.MESSAGE_UNSUPPORTED_PREFIX_HINT, "x/"));
+
+        ParseException error = assertThrows(ParseException.class, () -> parser.parse(NAME_DESC_BOB
+                + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB + " sub/Math t/friend"));
+        assertEquals(Subject.MESSAGE_CONSTRAINTS, error.getCause().getMessage());
+    }
+
+    @Test
+    public void parse_prefixLikeTextInOtherInvalidFields_addsHintToFirstError() {
+        String hint = "\n" + String.format(AddCommandParser.MESSAGE_UNSUPPORTED_PREFIX_HINT, "x/");
+        assertParseFailure(parser, " n/Bob x/1" + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                + SUBJECT_DESC_BOB, Name.MESSAGE_CONSTRAINTS + hint);
+        assertParseFailure(parser, NAME_DESC_BOB + " p/22222222 x/extra" + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                + SUBJECT_DESC_BOB, Phone.MESSAGE_CONSTRAINTS + hint);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " addr/" + "A".repeat(Address.MAX_LENGTH)
+                + " x/extra" + LEVEL_DESC_BOB + SUBJECT_DESC_BOB, Address.MESSAGE_CONSTRAINTS + hint);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + " l/Sec 3 x/extra"
+                + SUBJECT_DESC_BOB, Level.MESSAGE_CONSTRAINTS + hint);
+        assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                + " sub/Math x/extra", Name.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_slashTextInValidFields_preservesValues() {
+        for (String address : new String[]{"Block 1 #02/03", "Home c/o Mum", "See https://example.com/a/b",
+            "Home x/annex"}) {
+            Person expected = new PersonBuilder(BOB).withName("Ramesh s/o Kumar").withAddress(address).build();
+            assertParseSuccess(parser, " n/Ramesh s/o Kumar" + PHONE_DESC_BOB + " addr/" + address
+                    + LEVEL_DESC_BOB + SUBJECT_DESC_BOB, new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_invalidFieldWithoutUnsupportedToken_keepsOriginalError() {
+        for (String subject : new String[]{"Math!", "Maths+Physics", "sub/Math", "Math (x/extra)"}) {
+            assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                    + " sub/" + subject, Subject.MESSAGE_CONSTRAINTS);
+        }
+    }
 
     @Test
     public void parse_allFieldsPresent_success() {

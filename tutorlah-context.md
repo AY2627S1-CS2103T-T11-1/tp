@@ -109,6 +109,10 @@ such as `c/o` or `date/time` cannot appear after whitespace inside lesson notes.
 it (`care of`, `date and time`); the duplicate-field and `log`/`editlesson`
 date errors say so. This is a deliberate, documented limitation.
 
+When an invalid `add` field contains unsupported prefix-like text, the error
+also lists the supported fields. Valid slash-containing names and addresses
+remain unchanged; no extra fields are parsed.
+
 ## MVP commands
 
 | Command | Format | Example |

@@ -1191,6 +1191,29 @@ public class PersonListPanelTest {
         return window;
     }
 
+    @Test
+    public void commandBox_addUnsupportedPrefix_keepsInputAndStudent(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                root.resize(700, 560);
+                enterClickTestCommand(root, "view 1");
+                assertFeedback(root, "add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend",
+                        Subject.MESSAGE_CONSTRAINTS + "\n"
+                                + "If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.", true);
+                assertEquals(2, model.getAddressBook().getPersonList().size());
+                assertDetail(root, "Amy", "Lessons (3)");
+                assertFeedback(root, "list", "Listed 2 students.", false);
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
     /**
      * Fires a mouse click on a card's child label to exercise event bubbling into the list cell.
      */

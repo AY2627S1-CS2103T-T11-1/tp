@@ -177,6 +177,10 @@ numbering, newest first.
 Other messages:
 
 - Duplicate student: `This student already exists in the list.` (used by `add` and `edit`)
+- `add` keeps each field's validation error and appends
+  `If {PREFIX} was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
+  when that invalid value contains an unsupported ASCII-letter prefix at its start or after Unicode
+  whitespace. Valid slash-containing values and missing/duplicate-field errors are unchanged.
 - `edit` with no field: `At least one field to edit must be provided.`
 - `list` with extra text: `The list command does not accept parameters.`
 - `find` without any keyword or field: invalid command format with the find usage; the current filter is kept. A blank `n/`, `sub/` or `l/` value gives that field's constraint message (`Name`, `Subject` or `Level`), and a repeated prefix gives the duplicate-prefix message.
