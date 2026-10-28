@@ -54,6 +54,8 @@ recorded about them, not building a new kind of app.
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
 
+TutorLah allows only one running copy per data folder. It keeps an operating-system lock on `data/.tutorlah.lock` for the whole session; a second copy explains the conflict and exits before loading or changing student data.
+
 If a command cannot be saved, TutorLah restores its preceding in-memory student data and active filter, then reports the save error. Retrying uses the original displayed indexes; a later command cannot silently persist a failed mutation.
 
 If an existing student file cannot be loaded, including a null JSON root or null student entry, the app shows recovery instructions and disables saving for that session. Commands cannot overwrite the unreadable file. Read-only commands, help and exit still work; a data-changing command is rejected and rolled back. The tutor exits, backs up and repairs or restores the file, then restarts to resume normal use. A genuinely missing file still loads sample students. Student data is saved only when a command changes it, so read-only commands do not rewrite the file.

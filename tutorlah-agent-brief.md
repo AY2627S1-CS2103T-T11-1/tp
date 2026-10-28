@@ -293,6 +293,8 @@ accepted by the parser. Commands apply these errors consistently:
 
 - If reading a student data file fails (including a null JSON root or null student entry), that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location. The original student file is preserved. Read-only commands still work; changed student data is rejected by the guard and rolled back. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples. `MainApp` and `UiManager` store the warning as a nullable string; `MainApp#getStartupWarning()` returns an `Optional<String>`.
 
+- At startup, `ApplicationLock` takes an operating-system lock on `data/.tutorlah.lock` before preferences or student data are loaded. `MainApp` retains it until `stop`. A second copy using the same data folder stops initialization before storage, model, logic or the main window is created; a failure-only `UiManager` explains the conflict. Failure to create or lock the lock file is also fatal. The lock file may remain after exit; only the operating-system lock indicates a running instance.
+
 - `seedu.address.model.person.Level` and `Subject`: same shape as
   `Address` (public `value`, `isValidLevel` / `isValidSubject`,
   `MESSAGE_CONSTRAINTS`, `MAX_LENGTH`).
