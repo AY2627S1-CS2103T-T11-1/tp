@@ -173,6 +173,8 @@ Loading reverses this conversion. Each `toModelType` method checks that required
 
 If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions; `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
 
+Before loading preferences or student data, `MainApp` asks `ApplicationLock` to obtain an operating-system lock on `data/.tutorlah.lock`. The channel and lock remain open for the application's lifetime and are released in `MainApp#stop`; the lock file itself may remain. If another process or application object already holds the lock, initialization stops before creating `Storage`, `Model`, `Logic` or `Ui`, and `start` shows an error before exiting. A failure to create or lock the file is also fatal rather than allowing an instance to save without exclusive access. This prevents two copies from loading the same snapshot and silently overwriting each other's later changes.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
@@ -845,6 +847,17 @@ Use a separate test directory containing two fictional students. Enter the follo
 Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
 
 ### Saving data
+
+#### Preventing concurrent copies
+
+Use a separate test folder with a valid `data/addressbook.json` containing `{"persons": []}`.
+
+1. Launch TutorLah and add Ben Lim, but leave that copy open.
+1. From the same working folder, launch the same JAR again. Expected: the second copy reports that another copy is already using the data folder and exits without showing the main window or changing the JSON file.
+1. In the first copy, add Amy Tan and exit. Expected: both students are saved.
+1. Launch TutorLah again. Expected: it starts normally and lists both students. The presence of `data/.tutorlah.lock` does not block startup after the first process releases its operating-system lock.
+
+`MainAppTest` also acquires the same folder lock from two application objects, verifies that the second initialization creates no UI or logic, releases the first lock and verifies that a new application can start.
 
 #### Recovering from a failed save
 

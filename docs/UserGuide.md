@@ -466,6 +466,8 @@ Format: `exit`
 
 TutorLah automatically saves after a successful command changes student or lesson data. Commands that only display or filter data, open help or exit do not rewrite the student data file. You do not need to save manually.
 
+Only one copy of TutorLah can use a data folder at a time. If another copy is already open from the same folder, the second copy explains the conflict and exits without loading or changing student data. Close the first copy before reopening TutorLah. The hidden `data/.tutorlah.lock` file may remain after TutorLah closes; it is harmless and does not mean the app is still running.
+
 If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry.
 
 ### Editing the data file

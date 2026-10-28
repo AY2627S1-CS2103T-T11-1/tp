@@ -78,6 +78,71 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_sameDataFolderAlreadyLocked_blocksSecondInstanceUntilFirstStops() throws Exception {
+        Path file = temporaryFolder.resolve("data").resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        MainApp firstApp = new MainApp(preferences, file);
+        MainApp secondApp = new MainApp(preferences, file);
+
+        firstApp.init();
+        try {
+            secondApp.init();
+            assertTrue(secondApp.getStartupFailure().orElseThrow().contains("already using this data folder"));
+            assertTrue(secondApp.ui == null);
+            assertTrue(secondApp.logic == null);
+        } finally {
+            secondApp.stop();
+            firstApp.stop();
+        }
+
+        MainApp restartedApp = new MainApp(preferences, file);
+        restartedApp.init();
+        try {
+            assertTrue(restartedApp.getStartupFailure().isEmpty());
+            assertNotNull(restartedApp.ui);
+        } finally {
+            restartedApp.stop();
+        }
+    }
+
+    @Test
+    public void init_lockFileCannotBeCreated_blocksStartup() throws Exception {
+        Path nonDirectory = temporaryFolder.resolve("not-a-directory");
+        Files.writeString(nonDirectory, "content");
+        MainApp app = new MainApp(temporaryFolder.resolve("preferences.json"),
+                nonDirectory.resolve("students.json"));
+
+        app.init();
+        assertTrue(app.getStartupFailure().orElseThrow().contains("could not secure exclusive access"));
+        assertTrue(app.ui == null);
+        assertTrue(app.logic == null);
+        app.stop();
+    }
+
+    @Test
+    public void init_failureAfterLock_releasesLock() throws Exception {
+        Path file = temporaryFolder.resolve("data").resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        MainApp failingApp = new MainApp(preferences, file) {
+            @Override
+            protected UserPrefs initPrefs(JsonUserPrefsStorage storage) {
+                throw new IllegalStateException("simulated initialization failure");
+            }
+        };
+
+        assertThrows(IllegalStateException.class, "simulated initialization failure", failingApp::init);
+
+        MainApp restartedApp = new MainApp(preferences, file);
+        restartedApp.init();
+        try {
+            assertTrue(restartedApp.getStartupFailure().isEmpty());
+            assertNotNull(restartedApp.ui);
+        } finally {
+            restartedApp.stop();
+        }
+    }
+
+    @Test
     public void init_nullJson_initializesUiAndProtectedStorage() throws Exception {
         for (String contents : List.of("null", "{\"persons\":[null]}")) {
             Path folder = Files.createTempDirectory(temporaryFolder, "null-startup-");

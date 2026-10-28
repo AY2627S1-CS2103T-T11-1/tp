@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 28, 2026, for command whitespace handling.
+Last updated: Oct 28, 2026, for issue #184 (single-instance data-folder locking).
 
 ## What it is
 
@@ -49,6 +49,8 @@ recorded about them, not building a new kind of app.
 - **Command style:** a command word, an index, then `prefix/value` parameters
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
+
+TutorLah allows only one running copy per data folder. It keeps an operating-system lock on `data/.tutorlah.lock` for the whole session; a second copy explains the conflict and exits before loading or changing student data.
 
 If a command cannot be saved, TutorLah restores its preceding in-memory student data and active filter, then reports the save error. Retrying uses the original displayed indexes; a later command cannot silently persist a failed mutation.
 

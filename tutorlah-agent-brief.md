@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 28, 2026, for command whitespace handling.
+Last updated: Oct 28, 2026, for issue #184 (single-instance data-folder locking).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -289,6 +289,8 @@ accepted by the parser. Commands apply these errors consistently:
 - `Model#getFilteredPersonListPredicate()` captures the active student filter as a non-null predicate. `LogicManager` snapshots the address book and filter before command execution. If saving fails, it restores changed student data and the captured filter before throwing the existing save-error `CommandException`. Lesson records and flags are preserved, and later commands cannot silently save the failed mutation.
 
 - If reading a student data file fails (including a null JSON root or null student entry), that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location. The original student file is preserved. Read-only commands still work; changed student data is rejected by the guard and rolled back. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples. `MainApp` and `UiManager` store the warning as a nullable string; `MainApp#getStartupWarning()` returns an `Optional<String>`.
+
+- At startup, `ApplicationLock` takes an operating-system lock on `data/.tutorlah.lock` before preferences or student data are loaded. `MainApp` retains it until `stop`. A second copy using the same data folder stops initialization, explains that TutorLah is already open and exits without creating storage, model, logic or UI. Failure to create or lock the lock file is also fatal. The lock file may remain after exit; only the operating-system lock indicates a running instance.
 
 - `seedu.address.model.person.Level` and `Subject`: same shape as
   `Address` (public `value`, `isValidLevel` / `isValidSubject`,
