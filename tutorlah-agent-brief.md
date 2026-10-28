@@ -25,8 +25,6 @@ ask the team. Do not guess.
 
 - Changes reach `master` only through a reviewed PR. Never push to the
   team repo (`upstream`).
-- **Agents do not commit, push, or post issues, PRs, comments, reviews or
-  releases.** The human does that after reading the change.
 - No `Co-Authored-By:` trailers or "Generated with" lines for AI tools in
   commits or PR text. Credit AI use in the DG Acknowledgements instead, as
   the course's [reuse policy][reuse] requires for widespread use.
@@ -475,8 +473,7 @@ From [Appendix E][appendix-e] and the [SE-EDU review guide][reviewing].
 - Point out overlaps with other open PRs, and say whether a conflict was
   actually checked.
 - Approve only after your earlier comments are addressed.
-- Use plain English with no slang. Agents may draft review comments, but
-  the reviewer reads, edits and posts them.
+- Use plain English with no slang.
 
 ---
 
