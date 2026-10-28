@@ -9,10 +9,10 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Level {
 
-    public static final int MAX_LENGTH = 20;
+    public static final int MAX_LENGTH = 40;
 
-    public static final String MESSAGE_CONSTRAINTS =
-            "Levels should contain only letters, digits and spaces, and must not be blank.";
+    public static final String MESSAGE_CONSTRAINTS = "Levels should be 1 to " + MAX_LENGTH
+            + " characters long and use only letters, digits and spaces.";
 
     /*
      * The first character of the level must not be a whitespace,

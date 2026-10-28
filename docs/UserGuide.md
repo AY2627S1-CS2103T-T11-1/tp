@@ -123,7 +123,7 @@ Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 * The address prefix is `addr/`, not `a/`, so `a/l` and `a/p` in a name are kept as part of the name. If you type `a/` and leave out `addr/`, the error message reminds you to use `addr/`.
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
-* `LEVEL` is 1 to 20 characters of letters, digits and spaces, such as `Sec 3` or `JC1`.
+* `LEVEL` is 1 to 40 characters of letters, digits and spaces, such as `Sec 3`, `JC1` or `Sec 4 Normal Academic`.
 * `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math`, `Physics` or `H2 Chemistry`.
 * If a phone, level or subject fails validation, a separate prefix-like token after an otherwise valid
   value, such as `sub/Math t/friend`, adds the hint
