@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 28, 2026, for issue #185 (case-insensitive command words).
+Last updated: Oct 28, 2026, for find search suggestions (#187) and case-insensitive command words (#185).
 
 ## What it is
 
@@ -158,7 +158,10 @@ given for that field, ignoring case and keyword order; partial words are
 accepted. Bare keywords and `n/` search names, `sub/` subjects and `l/`
 levels, and every given field must match, so a tutor can bring up all Sec 3
 Physics students at once. It searches all students each time and uses literal
-keywords without spelling correction.
+keywords without spelling correction. Every word after `sub/` or `l/` belongs
+to that field, so names go first; if a search such as `find sub/Physics ng`
+finds no one but `find ng sub/Physics` would, TutorLah suggests that search
+without changing the list (#187).
 Results keep their original order and are renumbered from 1. Commands and
 card clicks use these displayed indexes. `list` restores the full list.
 Adding or editing also restores it; viewing, logging and deleting students

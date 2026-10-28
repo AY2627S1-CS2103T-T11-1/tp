@@ -184,6 +184,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 
 * At least one keyword or field is required. `find` on its own shows the invalid command format message and usage; the displayed list is unchanged.
 * Keywords typed before any prefix search names, as do the keywords after `n/`. `sub/` searches subjects and `l/` searches levels. `find tan`, `find n/tan` and `find tan n/wei` all search names.
+* Every word after `sub/` or `l/`, up to the next prefix, searches that field, so put name keywords first. `find ng sub/Physics` finds Chloe Ng taking Physics, while `find sub/Physics ng` looks for a subject containing both `Physics` and `ng`.
 * Matching ignores uppercase/lowercase. `find TAN` and `find sub/physics` match `Tan` and `Physics`.
 * Every keyword must occur somewhere in its field, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`. `l/Sec 3` needs both `Sec` and `3` in the level.
 * When several fields are given, a student must match all of them. `find sub/Physics l/Sec 3` shows only Sec 3 students taking Physics.
@@ -192,7 +193,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no wildcard matching or spelling correction. Punctuation and accented characters must match as entered, ignoring case.
 * Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
 * Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
-* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels.
+* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels. If moving the last words after `sub/` or `l/` to the names would find someone, the message adds `Words after sub/ or l/ search only that field. Did you mean: find ng sub/Physics?` with the suggested search.
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
 * Adding or editing a student also restores the full list. Viewing, logging and deleting use the current filter.

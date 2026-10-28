@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -49,6 +50,56 @@ public class StudentContainsKeywordsPredicate implements Predicate<Person> {
      */
     public boolean isNameSearchOnly() {
         return subjectKeywords.isEmpty() && levelKeywords.isEmpty();
+    }
+
+    public List<String> getNameKeywords() {
+        return nameKeywords;
+    }
+
+    public List<String> getSubjectKeywords() {
+        return subjectKeywords;
+    }
+
+    public List<String> getLevelKeywords() {
+        return levelKeywords;
+    }
+
+    /**
+     * Returns searches in which the last words of a multi-word subject or level search are name keywords
+     * instead, for example a name typed after {@code sub/}. Each field keeps at least one keyword. Searches
+     * moving fewer words come first; for the same number of words, the subject search comes before the level
+     * search.
+     */
+    public List<StudentContainsKeywordsPredicate> withTrailingFieldWordsAsNames() {
+        List<StudentContainsKeywordsPredicate> alternatives = new ArrayList<>();
+        int maxMovedCount = Math.max(subjectKeywords.size(), levelKeywords.size()) - 1;
+        for (int movedCount = 1; movedCount <= maxMovedCount; movedCount++) {
+            if (movedCount < subjectKeywords.size()) {
+                alternatives.add(new StudentContainsKeywordsPredicate(
+                        withNames(lastWords(subjectKeywords, movedCount)),
+                        firstWords(subjectKeywords, movedCount), levelKeywords));
+            }
+            if (movedCount < levelKeywords.size()) {
+                alternatives.add(new StudentContainsKeywordsPredicate(
+                        withNames(lastWords(levelKeywords, movedCount)),
+                        subjectKeywords, firstWords(levelKeywords, movedCount)));
+            }
+        }
+        return alternatives;
+    }
+
+    private List<String> withNames(List<String> movedKeywords) {
+        List<String> names = new ArrayList<>(nameKeywords);
+        names.addAll(movedKeywords);
+        return names;
+    }
+
+    private static List<String> firstWords(List<String> keywords, int movedCount) {
+        return keywords.subList(0, keywords.size() - movedCount);
+    }
+
+    private static List<String> lastWords(List<String> keywords, int movedCount) {
+        return keywords.subList(keywords.size() - movedCount, keywords.size());
     }
 
     /**
