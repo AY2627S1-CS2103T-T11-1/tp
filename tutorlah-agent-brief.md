@@ -175,6 +175,15 @@ After other successful commands, `MainWindow` keeps the panel's student only
 while the displayed list still contains it. Failed commands use the red
 result-box style and leave the panel unchanged. Lesson rows use `view`'s
 numbering, newest first.
+With no student selected, the panel's hint suits the current list (#168):
+`view 1` while students are displayed, `list` when a filter hides every saved
+student, and the `add` format when there are none. It follows changes to
+`Logic#getFilteredPersonList` and `Logic#getAddressBook`'s student list.
+Stacked level and subject chips return side by side only with 20 pixels to
+spare, more than the scroll bar, so the layout cannot flicker (#202).
+`MainWindow` has a minimum size of 700 x 420 pixels and opens no larger than
+the primary screen's usable area, to stay usable at 1280x720 with 150% scale
+(#167).
 
 Other messages:
 

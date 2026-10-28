@@ -88,9 +88,10 @@ The UI responsibilities are:
 
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
 * `PersonListPanel` observes the filtered student list supplied by `Logic`. Compact cards show each student's displayed index, initials, name, level and subject, and lesson status. A flagged card also shows a red flag icon. The indexes follow the displayed list, including after filtering or deletion.
-* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance instead. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state. The level and subject chips sit side by side when both fit; otherwise the panel stacks them so that a long chip wraps its text within the panel width instead of being cut off.
+* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance that works for the current list: `view 1` while students are displayed, `list` when a filter hides every saved student, or the `add` format when there are no students. It listens to `Logic#getFilteredPersonList` and the address book's student list, so the guidance follows `find`, `list`, `add` and `delete` without a restart. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state. The level and subject chips sit side by side when both fit; otherwise the panel stacks them so that a long chip wraps its text within the panel width instead of being cut off. Stacked chips return side by side only when they fit with 20 pixels to spare, more than the vertical scroll bar's width. Stacking can add the scroll bar and narrow the panel, so without this margin the two layouts would keep replacing each other (#202).
 * A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses view the student again; empty cells and other mouse buttons do not execute the shortcut. Releasing a navigation key (arrows, Page Up/Down, Home, End) in the focused list sends the newly selected index through the same callback, so keyboard selection cannot leave the list and details panel showing different students. Programmatic selection and list changes fire no key events, so they never execute a command.
 * `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Error feedback uses a red style until the next command. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider. The student list and details panel share the area below, separated by a vertical divider.
+* `MainWindow` has a minimum size of 700 x 420 pixels. Its contents need about 350 pixels of height, leaving room for the title bar, so the window fits a `1280x720` screen at 150% scaling (about 853 x 480 logical pixels) with a taskbar. At startup, the saved or default window size is reduced to fit the primary screen's usable area, so the window never opens taller or wider than the screen.
 * After a successful command, `MainWindow` updates the details panel and the list highlight, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync). Programmatic selection and list changes do not execute a view command.
 
 ### Logic component
@@ -1239,24 +1240,32 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 
 ### Student details panel
 
-Start with an empty data folder and add two fictional students:
+Use a separate test folder and fictional students only.
 
-```text
-add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
-add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
-```
+1. Before launching, create `data/addressbook.json` containing `{"persons": []}`, so that TutorLah starts with no students instead of the sample data. Launch TutorLah. Expected: no card is highlighted, and the details panel shows `No student selected.`, the hint `Add a student first. Their details and lessons will show here.` and `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`.
+1. Add two students in this order, so that Amy is student 1 and Ben is student 2:
 
-1. Launch TutorLah. Expected: the details panel shows `No student selected.` and no card is highlighted.
+   ```text
+   add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
+   add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
+   ```
+
+   Expected: after the first `add`, the hint changes to `Click a student, or type view INDEX, to see their details and lessons here.` with `view 1`. No student opens in the panel.
+1. Exit and relaunch TutorLah. Expected: Amy and Ben are listed as students 1 and 2, no card is highlighted, and the panel shows `No student selected.` with `view 1`.
 1. Enter `view 2`. Expected: the panel shows Ben's initials, name, level and subject chips, phone and address, `Lessons (0)` and the hint `log 2 c/Topic covered`. Ben's card is highlighted.
 1. Enter `log 1 c/Algebra date/1/10/2026`, then `log 1 c/Vectors date/8/10/2026`. Expected: the panel switches to Amy after the first command and lists `1. 08/10/2026 Vectors` and `2. 01/10/2026 Algebra` after the second, without another `view`.
 1. Enter `editlesson 1 2 date/9/10/2026`, then `deletelesson 1 1`. Expected: Algebra first moves to lesson 1, and after the deletion only Vectors remains as lesson 1.
 1. Enter `flag 2 r/Call parent`. Expected: the panel switches to Ben, with a red flag beside his name and the banner `Call parent`. His card shows a red flag icon.
 1. Enter `flagged`, then `unflag 1`. Expected: the displayed list becomes empty, but the panel still shows Ben, now without the flag or banner.
 1. Enter `list`, then `view 1`, then `find ben`. Expected: Amy is hidden by the search, so the panel returns to `No student selected.`.
+1. Enter `find nobody`. Expected: the list is empty, and the panel's hint is `No students are displayed. Type list to show all students.` with `list`, not `view 1`. Enter `flagged` while no student is flagged: the same hint appears.
 1. Enter `list`, `view 1`, then `edit 1 n/Amelia Tan`. Expected: the panel shows `Amelia Tan` and keeps her lesson. Enter `view 9`: the result box turns red with the student-index error, and the panel still shows Amelia.
 1. Click Amelia's card, then press the Down arrow. Expected: Ben's card is highlighted and the panel shows Ben. Press Up: both return to Amelia.
-1. Enter `delete 1`. Expected: the panel returns to `No student selected.`.
 1. Resize the window to its minimum width and drag the vertical divider both ways. Expected: long names and lesson content wrap, and nothing overlaps or is cut off.
+1. Enter `edit 2 l/Secondary Four Normal Technical Stream 1 sub/Math`. Slowly shrink the window to its minimum width, pausing at several widths. Expected: at each width, the level and subject chips settle side by side or stacked, and stay in that layout while the window is still. The panel's scroll bar does not flash on and off.
+1. Shrink the window to its minimum height of 420 pixels. Expected: the command box, result box, student list, details panel and status bar all remain visible, and the result box, list and panel scroll instead of cutting off text.
+1. Enter `view 1`, then `delete 1`. Expected: the panel returns to `No student selected.` with `view 1`, because Ben is now student 1.
+1. Enter `delete 1` again. Expected: the list is empty, and the panel's hint asks you to add a student first, with the `add` format.
 
 ### Lesson dates and data saved by v1.3
 

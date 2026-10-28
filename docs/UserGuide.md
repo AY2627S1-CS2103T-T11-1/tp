@@ -354,6 +354,7 @@ The details panel always shows one student, or a hint when no student is selecte
 * **Failed commands** never change the panel or the highlighted card, including when TutorLah cannot save your data.
 * After `unflag` in the `flagged` results, the student leaves the list but stays in the panel, so you can see what changed.
 * When TutorLah starts, no student is selected.
+* **With no student selected,** the hint suggests a command that works for the current list: `view 1` when students are displayed, `list` when `find`, `flagged` or `unlogged` shows no students, or the `add` format when you have no students yet.
 
 ### Searching a student's lessons: `findlesson`
 
@@ -416,6 +417,7 @@ records. Each command displays its feedback from the beginning. The command box
 remains above the result box, and the student list and details panel remain below it.
 Drag the vertical divider between the student list and the details panel to resize
 them, and scroll inside the details panel to read a long lesson history.
+The window can be made as small as 700 x 420 pixels, so it fits small or highly scaled screens. TutorLah also opens no larger than your screen, even if it was last closed on a larger one.
 
 ### Logging a lesson: `log`
 
