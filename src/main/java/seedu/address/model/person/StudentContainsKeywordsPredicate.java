@@ -67,19 +67,23 @@ public class StudentContainsKeywordsPredicate implements Predicate<Person> {
     /**
      * Returns searches in which the last words of a multi-word subject or level search are name keywords
      * instead, for example a name typed after {@code sub/}. Each field keeps at least one keyword. Searches
-     * moving fewer words come first, and subject searches come before level searches.
+     * moving fewer words come first; for the same number of words, the subject search comes before the level
+     * search.
      */
     public List<StudentContainsKeywordsPredicate> withTrailingFieldWordsAsNames() {
         List<StudentContainsKeywordsPredicate> alternatives = new ArrayList<>();
-        for (int movedCount = 1; movedCount < subjectKeywords.size(); movedCount++) {
-            alternatives.add(new StudentContainsKeywordsPredicate(
-                    withNames(lastWords(subjectKeywords, movedCount)),
-                    firstWords(subjectKeywords, movedCount), levelKeywords));
-        }
-        for (int movedCount = 1; movedCount < levelKeywords.size(); movedCount++) {
-            alternatives.add(new StudentContainsKeywordsPredicate(
-                    withNames(lastWords(levelKeywords, movedCount)),
-                    subjectKeywords, firstWords(levelKeywords, movedCount)));
+        int maxMovedCount = Math.max(subjectKeywords.size(), levelKeywords.size()) - 1;
+        for (int movedCount = 1; movedCount <= maxMovedCount; movedCount++) {
+            if (movedCount < subjectKeywords.size()) {
+                alternatives.add(new StudentContainsKeywordsPredicate(
+                        withNames(lastWords(subjectKeywords, movedCount)),
+                        firstWords(subjectKeywords, movedCount), levelKeywords));
+            }
+            if (movedCount < levelKeywords.size()) {
+                alternatives.add(new StudentContainsKeywordsPredicate(
+                        withNames(lastWords(levelKeywords, movedCount)),
+                        subjectKeywords, firstWords(levelKeywords, movedCount)));
+            }
         }
         return alternatives;
     }

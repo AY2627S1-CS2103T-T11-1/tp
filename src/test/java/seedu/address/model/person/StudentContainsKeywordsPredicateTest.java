@@ -103,6 +103,23 @@ public class StudentContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void withTrailingFieldWordsAsNames_threeWordsInBothFields_interleavesByWordsMoved() {
+        StudentContainsKeywordsPredicate predicate = new StudentContainsKeywordsPredicate(List.of(),
+                List.of("h2", "math", "amy"), List.of("jc", "1", "lee"));
+
+        assertEquals(List.of(
+                new StudentContainsKeywordsPredicate(List.of("amy"), List.of("h2", "math"),
+                        List.of("jc", "1", "lee")),
+                new StudentContainsKeywordsPredicate(List.of("lee"), List.of("h2", "math", "amy"),
+                        List.of("jc", "1")),
+                new StudentContainsKeywordsPredicate(List.of("math", "amy"), List.of("h2"),
+                        List.of("jc", "1", "lee")),
+                new StudentContainsKeywordsPredicate(List.of("1", "lee"), List.of("h2", "math", "amy"),
+                        List.of("jc"))),
+                predicate.withTrailingFieldWordsAsNames());
+    }
+
+    @Test
     public void getters_returnKeywordsAsGiven() {
         StudentContainsKeywordsPredicate predicate = new StudentContainsKeywordsPredicate(List.of("Tan"),
                 List.of("Physics"), List.of("Sec", "3"));
