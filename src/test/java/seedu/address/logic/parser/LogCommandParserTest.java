@@ -148,8 +148,30 @@ public class LogCommandParserTest {
     }
 
     @Test
-    public void parse_duplicateContentPrefix_failure() {
-        assertParseFailure(parser, " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_CONTENT + "Binomial theorem",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT));
+    public void parse_laterContentPrefix_keptAsContent() {
+        String content = "Worksheet collected c/o Mum";
+        assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + content,
+                new LogCommand(INDEX_FIRST_PERSON, new Lesson(content)));
+
+        // only the first c/ starts the content
+        assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_CONTENT + "Binomial theorem",
+                new LogCommand(INDEX_FIRST_PERSON, new Lesson(VALID_CONTENT + " c/Binomial theorem")));
+    }
+
+    @Test
+    public void parse_dateTextInContent_keptAsContent() {
+        String content = "Revised date/time conversions";
+        assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + content,
+                new LogCommand(INDEX_FIRST_PERSON, new Lesson(content)));
+
+        // a real date after such content is still the lesson date
+        assertParseSuccess(parser, " 1 " + PREFIX_CONTENT + content + " c/o Mum " + PREFIX_DATE + "21/10/2026",
+                new LogCommand(INDEX_FIRST_PERSON, new Lesson(content + " c/o Mum", LocalDate.of(2026, 10, 21))));
+    }
+
+    @Test
+    public void parse_dateWithTextAfterIt_failure() {
+        assertParseFailure(parser, " 1 " + PREFIX_CONTENT + VALID_CONTENT + " " + PREFIX_DATE + "21/10/2026 homework",
+                Lesson.MESSAGE_DATE_CONSTRAINTS);
     }
 }

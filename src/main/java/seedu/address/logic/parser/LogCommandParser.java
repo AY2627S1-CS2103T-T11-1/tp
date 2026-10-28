@@ -22,7 +22,7 @@ public class LogCommandParser implements Parser<LogCommand> {
      */
     public LogCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_CONTENT, PREFIX_DATE);
+        ArgumentMultimap argMultimap = LessonArgumentTokenizer.tokenize(args);
 
         if (argMultimap.getValue(PREFIX_CONTENT).isEmpty() || argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE));

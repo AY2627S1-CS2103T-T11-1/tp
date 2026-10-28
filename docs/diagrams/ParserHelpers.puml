@@ -15,12 +15,15 @@ skinparam Padding 5
 package "Parser classes (partial)" {
     class LogCommandParser
     class DeleteLessonCommandParser
+    class LessonArgumentTokenizer #E8EBF4
     class ArgumentTokenizer #E8EBF4
     class ArgumentMultimap #E8EBF4
     class ParserUtil #E8EBF4
 }
 
-LogCommandParser .down.> ArgumentTokenizer
+LogCommandParser .down.> LessonArgumentTokenizer
+LessonArgumentTokenizer .down.> ArgumentTokenizer
+LessonArgumentTokenizer .down.> ArgumentMultimap
 ArgumentTokenizer .down.> ArgumentMultimap : <<create>>
 LogCommandParser .down.> ArgumentMultimap
 LogCommandParser .down.> ParserUtil

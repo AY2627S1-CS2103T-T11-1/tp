@@ -3,7 +3,6 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -115,13 +114,31 @@ public class EditLessonCommandParserTest {
     }
 
     @Test
-    public void parse_duplicatePrefixes_failure() {
-        assertParseFailure(parser, "1 1 c/Vectors c/Surds",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT));
+    public void parse_laterContentPrefix_keptAsContent() {
+        assertParseSuccess(parser, "1 1 c/Notes c/o tutor", new EditLessonCommand(FIRST, FIRST,
+                descriptor("Notes c/o tutor", null)));
+        // only the first c/ starts the content
+        assertParseSuccess(parser, "1 1 c/Vectors c/Surds", new EditLessonCommand(FIRST, FIRST,
+                descriptor("Vectors c/Surds", null)));
+    }
+
+    @Test
+    public void parse_dateTextInContent_keptAsContent() {
+        assertParseSuccess(parser, "1 1 c/Revised date/time conversions", new EditLessonCommand(FIRST, FIRST,
+                descriptor("Revised date/time conversions", null)));
+        // a real date after such content is still the new date
+        assertParseSuccess(parser, "1 1 c/Revised date/time conversions date/21/10/2026",
+                new EditLessonCommand(FIRST, FIRST, descriptor("Revised date/time conversions", OCT_21)));
+    }
+
+    @Test
+    public void parse_duplicateDatePrefixes_failure() {
         assertParseFailure(parser, "1 1 date/21/10/2026 date/22/10/2026",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
+        assertParseFailure(parser, "1 1 date/21/10/2026 c/Vectors date/22/10/2026",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
         assertParseFailure(parser, "1 1 c/Vectors date/21/10/2026 c/Surds date/22/10/2026",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT, PREFIX_DATE));
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
     }
 
     @Test

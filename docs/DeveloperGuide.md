@@ -130,14 +130,15 @@ The helper dependencies are shown separately to keep the overview readable. Pale
 
 <a href="diagrams/ParserHelpers.png" no-validation><puml src="diagrams/ParserHelpers.puml" alt="Partial parser helper diagram showing tokenization for logging and shared validation for both lesson parsers" width="500" /></a>
 
-* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date.
+* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `LessonArgumentTokenizer`, which lets lesson content contain text such as `c/o` or `date/time` (see [Lesson content that looks like a prefix](#lesson-content-that-looks-like-a-prefix)). It uses `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax` for the text before the content. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date.
 * `DeleteLessonCommandParser` splits two positional indexes on whitespace, without using the tokenizer. It shares `ParserUtil`'s index validation, using the appropriate student- or lesson-index error message.
 
 The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
 
 Command words, positional indexes and prefix boundaries recognise Unicode
 whitespace, including non-breaking spaces. `ArgumentTokenizer` trims field
-boundaries without replacing internal spacing. In the UI, `CommandBox` uses a
+boundaries without replacing internal spacing, and `LessonArgumentTokenizer`
+follows the same rule for `log` and `editlesson`. In the UI, `CommandBox` uses a
 `TextFormatter` to replace inserted tabs and line breaks with spaces before
 JavaFX discards them, so pasted words do not join. Pasting does not execute a command.
 
@@ -247,7 +248,7 @@ On success the command calls `Model#setPerson`, restores the full list as AB3 do
 
 ### Editing a lesson record
 
-`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `log`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
+`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. It uses `LessonArgumentTokenizer`, as `log` does, so content can also contain `c/o` or `date/time`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `log`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
 
 `EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does, reusing `DeleteLessonCommand#toStoredLessonIndex`. It then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
 
@@ -257,6 +258,18 @@ The command keeps each student's lessons in date order with one of two operation
 * If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `log` uses for a backdated lesson.
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
+
+### Lesson content that looks like a prefix
+
+`ArgumentTokenizer` treats every prefix that follows whitespace as the start of a new field. Lesson notes often contain such text, for example `Worksheet collected c/o Mum` or `Revised date/time conversions`, which would then be rejected as a duplicate `c/` or an invalid date. `LogCommandParser` and `EditLessonCommandParser` therefore use `LessonArgumentTokenizer`, which returns the same `ArgumentMultimap` so that both parsers keep their validation and error messages:
+
+* Like `ArgumentTokenizer`, it recognises a prefix after any Unicode whitespace, such as a non-breaking space or tab, and trims values with `StringUtil#stripUnicodeWhitespace`, keeping internal spacing.
+* Text before the first `c/` is passed to `ArgumentTokenizer` with only `date/`, so the preamble and a `date/` before the content are read as before. Without a `c/`, as in a date-only `editlesson`, the whole input is read this way.
+* The first `c/` starts the content. A later `c/` is part of the content, so a genuinely repeated `c/` is no longer reported as a duplicate.
+* After the first `c/`, a `date/` that follows whitespace starts the date only if the next non-whitespace character is an ASCII digit or there is none. `date/time` therefore stays in the content, while `date/31/02/2026`, `date/2026-10-21` and an empty `date/` still reach `ParserUtil#parseLessonDate` and are rejected. A rule that accepted only a well-formed `DD/MM/YYYY` value would silently store mistyped dates as content.
+* Each date occurrence is kept, so `ArgumentMultimap#verifyNoDuplicatePrefixesFor` still rejects two dates.
+
+The trade-off is that content cannot contain a separate `date/` followed by a digit, such as `date/2 methods`; such input is rejected with the date message rather than stored wrongly. `ArgumentTokenizer` itself is unchanged, so other commands are unaffected.
 
 ### Searching lesson histories
 
@@ -995,6 +1008,10 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
    Expected: `Vectors` is listed first with today's date, then `Surds` with yesterday's date. Enter `deletelesson INDEX 2`: `Surds` is deleted.
 1. Try `date/` with tomorrow's date, `31/02/2026`, `2026-10-20`, `1/1/-2026`, `31/12/1999` and an empty value.
    Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...`. No lesson is added.
+1. Enter `log INDEX c/Worksheet collected c/o Mum`, then `log INDEX c/Revised date/time conversions date/DD/MM/YYYY` with yesterday's date.
+   Expected: both are logged with the content as typed. The first is dated today and the second yesterday.
+1. Enter `editlesson INDEX 1 c/Notes c/o tutor`, then `log INDEX c/Algebra date/31/02/2026`.
+   Expected: the edit keeps `Notes c/o tutor` as the content. The log gives `Lesson dates should be real dates from 01/01/2000 onwards, ...` and adds no lesson.
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
