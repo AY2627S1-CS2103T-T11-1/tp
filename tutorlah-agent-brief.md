@@ -8,9 +8,11 @@ sections of the Oct 5 work plan.
 
 Last updated: Oct 28, 2026, for find search suggestions (#187) and case-insensitive command words (#185).
 
+Do not update the "Last updated" line in feature PRs; keeping it stable avoids
+merge conflicts between concurrent branches.
+
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
-in the same PR that changes a decision, message or interface, and refresh
-the date above.
+in the same PR that changes a decision, message or interface.
 
 **Order of authority:** course rules (section 9) come first, then this
 file, then older team documents, then the agent's own defaults. If this
