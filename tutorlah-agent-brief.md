@@ -6,7 +6,8 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 28, 2026, for issue #184 (single-instance data-folder locking).
+Last updated: Oct 28, 2026, for single-instance locking (#184), find search
+suggestions (#187), and case-insensitive command words (#185).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -103,7 +104,7 @@ ask the team. Do not guess.
 | Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
-| Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given |
+| Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given, or by `Words after sub/ or l/ search only that field. Did you mean: {FIND_COMMAND}?` when a search using `sub/` or `l/` finds no one but moving the last words of that field to the names would (#187) |
 | Find lesson | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | Header `Matching lesson records for {NAME} ({COUNT}):` then matching `view` lines, or `No matching lesson records found for {NAME}.` |
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
@@ -111,6 +112,9 @@ ask the team. Do not guess.
 | Summary | `summary` | `Summary:` then a single summary paragraph on the next line |
 | Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
+
+Command words ignore case, so `list`, `LIST` and `LiSt` select the same command.
+Prefixes remain case-sensitive and must be typed in lowercase as documented.
 
 **Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
 
@@ -363,7 +367,7 @@ accepted by the parser. Commands apply these errors consistently:
   student and lesson index validation. `parseStudentIndex` delegates to it
   with the student-index error message.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
-- `FindCommand(StudentContainsKeywordsPredicate)` replaces the displayed filter. The predicate takes name, subject and level keyword lists, needs at least one keyword in total and no blank keyword, and keeps immutable copies as typed. Each keyword matches a literal substring of its own field through `StringUtil#containsIgnoreCase`, which uses locale-independent `String#regionMatches(true, ...)` without lowercasing the text or keywords. An empty list means the field is not searched. Predicate equality and hashing use all three lists. `FindCommandParser` tokenizes only `n/`, `sub/` and `l/`; the preamble and `n/` value are name keywords.
+- `FindCommand(StudentContainsKeywordsPredicate)` replaces the displayed filter. The predicate takes name, subject and level keyword lists, needs at least one keyword in total and no blank keyword, and keeps immutable copies as typed. Each keyword matches a literal substring of its own field through `StringUtil#containsIgnoreCase`, which uses locale-independent `String#regionMatches(true, ...)` without lowercasing the text or keywords. An empty list means the field is not searched. Predicate equality and hashing use all three lists. `FindCommandParser` tokenizes only `n/`, `sub/` and `l/`; the preamble and `n/` value are name keywords. The predicate exposes `getNameKeywords()`, `getSubjectKeywords()` and `getLevelKeywords()`, and `withTrailingFieldWordsAsNames()` returns the searches that move the last 1, 2, ... words of a multi-word subject or level search to the names: fewest words first, subject before level for the same count, keeping at least one word per field. When a search using `sub/` or `l/` finds no one, `FindCommand` tests these alternatives against `Model#getAddressBook` without changing the displayed filter and suggests the first that matches, written as `find {names} sub/{subject} l/{level}` (#187).
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.
