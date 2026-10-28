@@ -9,10 +9,15 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
@@ -140,6 +145,7 @@ public class MainApp extends Application {
                     + " Saving is disabled for this session.");
             startupWarning = "The student data file could not be loaded:\n"
                     + storage.getAddressBookFilePath().toAbsolutePath().normalize()
+                    + "\n\nReason: " + getDataLoadingReason(e)
                     + "\n\nThe original file has not been changed. No students were loaded, and changes in this "
                     + "session cannot be saved. You can still use help and exit normally.\n\n"
                     + JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED;
@@ -147,6 +153,27 @@ public class MainApp extends Application {
         }
 
         return new ModelManager(initialData, userPrefs);
+    }
+
+    /** Returns recovery guidance without quoting JSON contents or internal exception messages. */
+    private static String getDataLoadingReason(DataLoadingException exception) {
+        Throwable cause = exception.getCause();
+        if (cause instanceof IllegalValueException && cause.getMessage() != null && !cause.getMessage().isBlank()) {
+            return cause.getMessage();
+        }
+        // Jackson can wrap syntax failures in a mapping error while reading a student's fields.
+        while (cause instanceof JsonProcessingException jsonError) {
+            if (jsonError instanceof JsonParseException) {
+                JsonLocation location = jsonError.getLocation();
+                if (location != null && location.getLineNr() > 0 && location.getColumnNr() > 0) {
+                    return "The file is not valid JSON (line " + location.getLineNr()
+                            + ", column " + location.getColumnNr() + ").";
+                }
+                return "The file is not valid JSON.";
+            }
+            cause = jsonError.getCause();
+        }
+        return "Check that the file is readable and contains valid student data.";
     }
 
     /** Returns the recovery warning prepared during model initialization, if loading failed. */

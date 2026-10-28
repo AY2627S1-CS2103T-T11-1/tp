@@ -51,6 +51,21 @@ public class JsonAdaptedLessonTest {
     }
 
     @Test
+    public void toModelType_dateBeforeMinimum_throwsIllegalValueException() {
+        JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_CONTENT, "1999-12-31");
+        assertThrows(IllegalValueException.class, MESSAGE_INVALID_DATE, lesson::toModelType);
+    }
+
+    @Test
+    public void toModelType_minimumAndFutureDates_preservesRecordedDate() throws Exception {
+        for (LocalDate date : new LocalDate[]{Lesson.EARLIEST_DATE, LocalDate.now().plusDays(1),
+            LocalDate.of(9999, 12, 31)}) {
+            assertEquals(new Lesson(VALID_CONTENT, date),
+                    new JsonAdaptedLesson(VALID_CONTENT, date.toString()).toModelType());
+        }
+    }
+
+    @Test
     public void toModelType_invalidContent_throwsIllegalValueException() {
         JsonAdaptedLesson lesson = new JsonAdaptedLesson(INVALID_CONTENT, VALID_DATE);
         assertThrows(IllegalValueException.class, Lesson.MESSAGE_CONSTRAINTS, lesson::toModelType);

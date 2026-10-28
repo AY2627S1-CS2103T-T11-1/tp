@@ -1,6 +1,8 @@
 package seedu.address.storage;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -84,10 +86,11 @@ class JsonAdaptedPerson {
         if (name == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
         }
-        if (!Name.isValidName(name)) {
+        String normalizedName = Name.normalize(name);
+        if (!Name.isValidName(normalizedName)) {
             throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
         }
-        final Name modelName = new Name(name);
+        final Name modelName = new Name(normalizedName);
 
         if (phone == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
@@ -129,6 +132,8 @@ class JsonAdaptedPerson {
             }
             modelLessons.add(lesson.toModelType());
         }
+        // List.sort is stable: equal-date and undated records retain their saved order.
+        modelLessons.sort(Comparator.comparing(lesson -> lesson.getDate().orElse(LocalDate.MIN)));
 
         if (flag == null) {
             return new Person(modelName, modelPhone, modelAddress, modelLevel, modelSubject, modelLessons);

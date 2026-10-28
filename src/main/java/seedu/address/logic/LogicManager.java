@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -23,6 +24,9 @@ import seedu.address.storage.Storage;
  */
 public class LogicManager implements Logic {
     public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+
+    public static final String FILE_OPS_FILESYSTEM_ERROR_FORMAT =
+            "Could not save data to file %s due to the following error: %s";
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
@@ -60,7 +64,16 @@ public class LogicManager implements Logic {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
             restoreModel(previousData, previousFilter);
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT,
+                    storage.getAddressBookFilePath()), e);
+        } catch (FileSystemException e) {
+            restoreModel(previousData, previousFilter);
+            String reason = e.getReason();
+            if (reason == null || reason.isBlank()) {
+                reason = "The file or folder could not be written.";
+            }
+            throw new CommandException(String.format(FILE_OPS_FILESYSTEM_ERROR_FORMAT,
+                    storage.getAddressBookFilePath(), reason), e);
         } catch (IOException ioe) {
             restoreModel(previousData, previousFilter);
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
