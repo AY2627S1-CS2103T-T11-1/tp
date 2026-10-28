@@ -1100,6 +1100,10 @@ Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim 
 
 `SaveFailureRollbackTest` also covers IO and permission failures for add, edit, log, delete, deletelesson, editlesson, flag and unflag, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
 
+Permission failures use `Storage#getAddressBookFilePath` in the existing permission message. Other `FileSystemException` failures use `Could not save data to file PATH due to the following error: REASON`, taking only `getReason()` rather than the exception's temporary-file paths. A missing or blank reason becomes `The file or folder could not be written.`. Other IO errors keep their existing messages, including the saving-disabled recovery explanation. The original exception remains the command error's cause, and rollback is unchanged.
+
+On a POSIX filesystem, make the disposable `data/` directory read-only while TutorLah is open and enter `log 1 c/Permission test`. Expected: the error names `addressbook.json` and contains no `.tutorlah-` filename; the student, selected index and saved bytes are unchanged, with no temporary files left behind. Restore directory permissions before retrying or removing the test folder. `SaveFailureRollbackTest` covers this real permission failure where supported, plus deterministic full-disk, unsupported-atomic-move and missing-reason failures on every platform, preserving the original exception and verifying successful retries.
+
 #### Missing or corrupted files
 
 Use a separate test folder and fictional data only. Keep a valid copy of the student file before changing it.

@@ -1,6 +1,8 @@
 package seedu.address.logic;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,11 +10,16 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -77,8 +84,9 @@ public class SaveFailureRollbackTest {
                 : new IOException("simulated disk full");
         storage.failNextSave(failure);
 
-        String message = String.format(permissionFailure ? LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT
-                : LogicManager.FILE_OPS_ERROR_FORMAT, failure.getMessage());
+        String message = permissionFailure
+                ? String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, storage.getAddressBookFilePath())
+                : String.format(LogicManager.FILE_OPS_ERROR_FORMAT, failure.getMessage());
         assertThrows(CommandException.class, message, () -> logic.execute(command));
         assertEquals(before, model.getAddressBook());
         assertEquals(List.of(AMY), model.getFilteredPersonList());
@@ -140,6 +148,77 @@ public class SaveFailureRollbackTest {
         assertEquals(originalBytes, Files.readString(file));
         logic.execute("delete 1");
         assertEquals(List.of(BEN), storage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> execute_filesystemFailure_reportsDestinationAndKeepsOriginalCause() {
+        String temporaryName = ".tutorlah-12345.tmp";
+        return Stream.of(new FileSystemException(temporaryName, null, "No space left on device"),
+                new AtomicMoveNotSupportedException(temporaryName, "other.json", "Atomic move is not supported"),
+                new FileSystemException(temporaryName), new FileSystemException(temporaryName, null, " "))
+                .map(failure -> DynamicTest.dynamicTest(failure.toString(), () -> {
+                    Path file = Files.createTempDirectory(temporaryFolder, "filesystem-").resolve("addressbook.json");
+                    Model model = new ModelManager();
+                    model.addPerson(AMY);
+                    FailOnceStorage storage = new FailOnceStorage(file);
+                    storage.saveAddressBook(model.getAddressBook());
+                    byte[] original = Files.readAllBytes(file);
+                    Logic logic = new LogicManager(model, new StorageManager(storage,
+                            new JsonUserPrefsStorage(file.resolveSibling("preferences.json"))));
+                    storage.failNextSave(failure);
+
+                    CommandException error = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, ()
+                            -> logic.execute("log 1 c/New lesson"));
+                    String reason = failure.getReason();
+                    if (reason == null || reason.isBlank()) {
+                        reason = "The file or folder could not be written.";
+                    }
+                    assertEquals(String.format(LogicManager.FILE_OPS_FILESYSTEM_ERROR_FORMAT, file, reason),
+                            error.getMessage());
+                    assertFalse(error.getMessage().contains(".tutorlah-"));
+                    assertSame(failure, error.getCause());
+                    assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+                    assertArrayEquals(original, Files.readAllBytes(file));
+                    logic.execute("log 1 c/New lesson");
+                    assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+                }));
+    }
+
+    @Test
+    public void execute_readOnlyDataFolder_reportsDataFileAndPreservesSavedData() throws Exception {
+        Path directory = Files.createDirectory(temporaryFolder.resolve("data"));
+        Assumptions.assumeTrue(Files.getFileStore(directory).supportsFileAttributeView("posix"),
+                "Read-only directory permissions require a POSIX filesystem");
+        Path file = directory.resolve("addressbook.json");
+        Model model = new ModelManager();
+        model.addPerson(AMY);
+        model.addPerson(BEN);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(model.getAddressBook());
+        byte[] original = Files.readAllBytes(file);
+        Logic logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        logic.execute("find amy");
+        Set<PosixFilePermission> previousPermissions = Files.getPosixFilePermissions(directory);
+        try {
+            Files.setPosixFilePermissions(directory,
+                    Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE));
+            Assumptions.assumeFalse(Files.isWritable(directory), "This user can bypass directory permissions");
+            CommandException error = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, ()
+                    -> logic.execute("log 1 c/New lesson"));
+            assertEquals(String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, file), error.getMessage());
+            assertFalse(error.getMessage().contains(".tutorlah-"));
+            assertEquals(List.of(AMY), model.getFilteredPersonList());
+            assertEquals(List.of(AMY, BEN), model.getAddressBook().getPersonList());
+            assertArrayEquals(original, Files.readAllBytes(file));
+            try (var files = Files.list(directory)) {
+                assertEquals(List.of(file), files.toList());
+            }
+        } finally {
+            Files.setPosixFilePermissions(directory, previousPermissions);
+        }
+        logic.execute("log 1 c/New lesson");
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     @TestFactory
