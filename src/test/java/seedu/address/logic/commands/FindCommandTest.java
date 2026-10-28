@@ -117,6 +117,38 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_nameWordAfterSubject_suggestsSearchWithNameFirst() {
+        AddressBook beforeFind = new AddressBook(model.getAddressBook());
+        assertEquals(FindCommand.MESSAGE_NO_MATCHES + " Words after sub/ or l/ search only that field. "
+                + "Did you mean: find ming sub/physics?",
+                fields(List.of(), List.of("physics", "ming"), List.of()).execute(model).getFeedbackToUser());
+        // the suggestion is only checked, so the list stays empty and no data changes
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(beforeFind, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_nameWordAfterLevel_suggestsSearchKeepingOtherFields() {
+        assertEquals(FindCommand.MESSAGE_NO_MATCHES + " Words after sub/ or l/ search only that field. "
+                + "Did you mean: find alicia l/Sec 3?",
+                fields(List.of(), List.of(), List.of("Sec", "3", "alicia")).execute(model).getFeedbackToUser());
+        assertEquals(FindCommand.MESSAGE_NO_MATCHES + " Words after sub/ or l/ search only that field. "
+                + "Did you mean: find tan ming sub/physics l/sec 3?",
+                fields(List.of("tan"), List.of("physics"), List.of("sec", "3", "ming")).execute(model)
+                        .getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_noAlternativeMatches_omitsSuggestion() {
+        // no one is in Sec 5, and no name contains 5
+        assertEquals(FindCommand.MESSAGE_NO_MATCHES, fields(List.of(), List.of(), List.of("sec", "5")).execute(model)
+                .getFeedbackToUser());
+        // moving the word to the names still finds no one
+        assertEquals(FindCommand.MESSAGE_NO_MATCHES, fields(List.of("alicia"), List.of("physics", "ming"),
+                List.of()).execute(model).getFeedbackToUser());
+    }
+
+    @Test
     public void execute_emptyAddressBook_returnsNoMatches() {
         Model emptyModel = new ModelManager();
         assertEquals(FindCommand.MESSAGE_NO_NAME_MATCHES, command("wei").execute(emptyModel).getFeedbackToUser());
