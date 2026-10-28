@@ -234,7 +234,7 @@ spaces before the command box removes them; pasting never executes a command.
 | Phone | `p/` | Exactly 8 digits. Spaces inside are removed first. No `+` or country code. | `Phone numbers should be exactly 8 digits.` |
 | Address | `addr/` | 1 to 200 printable characters | `Addresses must not be blank and must be at most 200 characters.` |
 | Level | `l/` | 1 to 40 characters: letters, digits, spaces | `Levels should be 1 to 40 characters long and use only letters, digits and spaces.` |
-| Subject | `sub/` | 1 to 50 characters: letters, digits, spaces, hyphens | `Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.` |
+| Subject | `sub/` | 1 to 50 characters, starting with a letter or digit: letters, digits, spaces, hyphens, `&`, `(`, `)`, `+`, commas | `Subjects should be 1 to 50 characters long, start with a letter or digit, and use only letters, digits, spaces, hyphens, &, (, ), + and commas.` |
 | Lesson content | `c/` | 1 to 300 printable characters, internal spaces kept | `Lesson content must not be blank and must be at most 300 characters.` |
 | Lesson date | `date/` | Optional. A real date as `D/M/YYYY` or `DD/MM/YYYY` (digits only, four-digit year), from 01/01/2000 (`Lesson.EARLIEST_DATE`), not in the future | `Lesson dates should be real dates from 01/01/2000 onwards, in the format DD/MM/YYYY, for example 21/10/2026.` |
 | Flag reason | `r/` | Optional. 1 to 100 characters after trimming surrounding Unicode whitespace; not blank and no control characters | `Flag reasons must not be blank and must be at most 100 characters.` |

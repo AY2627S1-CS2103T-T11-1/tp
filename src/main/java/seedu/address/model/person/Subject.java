@@ -12,14 +12,15 @@ public class Subject {
 
     public static final int MAX_LENGTH = 50;
 
-    public static final String MESSAGE_CONSTRAINTS =
-            "Subjects should contain only letters, digits, spaces and hyphens, and must not be blank.";
+    public static final String MESSAGE_CONSTRAINTS = "Subjects should be 1 to " + MAX_LENGTH
+            + " characters long, start with a letter or digit, and use only letters, digits, spaces, "
+            + "hyphens, &, (, ), + and commas.";
 
     /*
-     * The first character of the subject must not be a whitespace,
-     * otherwise " " (a blank string) becomes a valid input.
+     * The first character must be a letter or digit, so " " (a blank string) and "-Math" are rejected.
+     * '/' is not allowed, so text such as "t/friend" typed after sub/ is not saved as part of the subject.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} \\-]*";
+    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} \\-&()+,]*";
 
     public final String value;
 

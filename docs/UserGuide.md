@@ -113,7 +113,7 @@ Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 40 characters of letters, digits and spaces, such as `Sec 3`, `JC1` or `Sec 4 Normal Academic`.
-* `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math`, `Physics` or `H2 Chemistry`.
+* `SUBJECT` is 1 to 50 characters of letters, digits, spaces, hyphens, `&`, `(`, `)`, `+` and commas, starting with a letter or digit, such as `E-Math`, `H2 Chemistry` or `E-Math & A-Math`.
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
 
 Examples:

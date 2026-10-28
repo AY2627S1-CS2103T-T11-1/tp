@@ -30,6 +30,8 @@ public class SubjectTest {
         assertFalse(Subject.isValidSubject("Math/Science")); // slash not allowed in subjects
         assertFalse(Subject.isValidSubject("-Math")); // starts with a hyphen
         assertFalse(Subject.isValidSubject("a".repeat(51))); // longer than 50 characters
+        assertFalse(Subject.isValidSubject("Math t/friend")); // unknown prefix text stays invalid
+        assertFalse(Subject.isValidSubject("(H2) Math")); // starts with a bracket
 
         // valid
         assertTrue(Subject.isValidSubject("E-Math"));
@@ -37,6 +39,10 @@ public class SubjectTest {
         assertTrue(Subject.isValidSubject("Additional Mathematics"));
         assertTrue(Subject.isValidSubject("a")); // one character
         assertTrue(Subject.isValidSubject("a".repeat(50))); // exactly 50 characters
+        assertTrue(Subject.isValidSubject("E-Math & A-Math"));
+        assertTrue(Subject.isValidSubject("Math (H2)"));
+        assertTrue(Subject.isValidSubject("Physics, Chemistry"));
+        assertTrue(Subject.isValidSubject("Math + Science"));
     }
 
     @Test
