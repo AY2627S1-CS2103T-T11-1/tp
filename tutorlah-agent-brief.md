@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 28, 2026, for command whitespace handling.
+Last updated: Oct 28, 2026, for name, level and subject validation.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -230,7 +230,7 @@ spaces before the command box removes them; pasting never executes a command.
 
 | Field | Prefix | Accepted | Invalid-value message |
 |---|---|---|---|
-| Name | `n/` | 1 to 100 characters after collapsing repeated spaces. Unicode letters, spaces, `'`, `-`, `.` and `/`. No digits. | `Names should contain only letters, spaces, apostrophes, hyphens, periods and slashes, and must not be blank.` |
+| Name | `n/` | 1 to 100 characters after collapsing repeated spaces. Unicode letters, spaces, `'`, `-`, `.` and `/`, with at least one letter. No digits. | `Names should be 1 to 100 characters long, contain at least one letter, and use only letters, spaces, apostrophes, hyphens, periods and slashes.` |
 | Phone | `p/` | Exactly 8 digits. Spaces inside are removed first. No `+` or country code. | `Phone numbers should be exactly 8 digits.` |
 | Address | `addr/` | 1 to 200 printable characters | `Addresses must not be blank and must be at most 200 characters.` |
 | Level | `l/` | 1 to 20 characters: letters, digits, spaces | `Levels should contain only letters, digits and spaces, and must not be blank.` |

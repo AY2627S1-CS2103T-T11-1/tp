@@ -112,6 +112,14 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_nameWithoutLetters_throwsIllegalValueException() {
+        JsonAdaptedPerson person =
+                new JsonAdaptedPerson("-", VALID_PHONE, VALID_ADDRESS,
+                        VALID_LEVEL, VALID_SUBJECT, VALID_LESSONS);
+        assertThrows(IllegalValueException.class, Name.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
     public void toModelType_nullName_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(null, VALID_PHONE, VALID_ADDRESS,

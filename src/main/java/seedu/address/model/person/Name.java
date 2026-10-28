@@ -11,16 +11,17 @@ public class Name {
 
     public static final int MAX_LENGTH = 100;
 
-    public static final String MESSAGE_CONSTRAINTS =
-            "Names should contain only letters, spaces, apostrophes, hyphens, periods and slashes, "
-                    + "and must not be blank.";
+    public static final String MESSAGE_CONSTRAINTS = "Names should be 1 to " + MAX_LENGTH + " characters long, "
+            + "contain at least one letter, and use only letters, spaces, apostrophes, hyphens, periods "
+            + "and slashes.";
 
     /*
      * Letters include accented and non-Latin letters, with their combining marks.
      * '/' is allowed so that names such as "Ramesh s/o Kumar" can be entered.
      * The first character must not be a whitespace, otherwise " " (a blank string) becomes a valid input.
+     * The lookahead requires at least one letter, so names such as "-" or "..." are rejected.
      */
-    public static final String VALIDATION_REGEX = "[\\p{L}\\p{M}'.\\-/][\\p{L}\\p{M}'.\\-/ ]*";
+    public static final String VALIDATION_REGEX = "(?=.*\\p{L})[\\p{L}\\p{M}'.\\-/][\\p{L}\\p{M}'.\\-/ ]*";
 
     public final String fullName;
 
