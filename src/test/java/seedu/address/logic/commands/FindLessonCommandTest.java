@@ -68,6 +68,40 @@ public class FindLessonCommandTest {
     }
 
     @Test
+    public void execute_noMatchesWithLessonPrefixes_addsSyntaxHint() throws Exception {
+        ModelManager model = new ModelManager();
+        model.addPerson(AMY);
+        String expected = "No matching lesson records found for Amy Tan.\n"
+                + "To search by date, use from/ and to/. Content keywords need no prefix.";
+        for (String keyword : List.of("c/algebra", "date/02/01/2020", "c/", "date/")) {
+            assertEquals(new CommandResult(expected, AMY), search(keyword).execute(model));
+        }
+        assertEquals(new CommandResult(expected, AMY), new FindLessonCommand(FIRST,
+                new LessonSearchPredicate(List.of("algebra", "c/missing"), DAY, DAY)).execute(model));
+    }
+
+    @Test
+    public void execute_literalPrefixMatchesOrUnrelatedMisses_omitsHint() throws Exception {
+        ModelManager model = new ModelManager();
+        Person literal = new PersonBuilder().withName("Amy Tan")
+                .withLessons("Practised c/algebra and date/time conversions").build();
+        model.addPerson(literal);
+        for (String keyword : List.of("c/algebra", "date/time")) {
+            assertEquals(new CommandResult("Matching lesson records for Amy Tan (1):"
+                    + "\n1. (undated): Practised c/algebra and date/time conversions", literal),
+                    search(keyword).execute(model));
+        }
+        for (String keyword : List.of("unknown", "abc/date/time", "C/missing", "DATE/missing")) {
+            assertEquals(new CommandResult("No matching lesson records found for Amy Tan.", literal),
+                    search(keyword).execute(model));
+        }
+        Person empty = new PersonBuilder(literal).withLessons().build();
+        model.setPerson(literal, empty);
+        assertEquals(new CommandResult("No lessons logged yet for Amy Tan.", empty),
+                search("c/algebra").execute(model));
+    }
+
+    @Test
     public void execute_filteredStudents_targetsDisplayedIndexWithoutReplacingFilter() throws Exception {
         ModelManager model = new ModelManager();
         Person ben = new PersonBuilder().withName("Ben Lim").build();

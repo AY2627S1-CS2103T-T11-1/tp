@@ -109,6 +109,10 @@ such as `c/o` or `date/time` cannot appear after whitespace inside lesson notes.
 it (`care of`, `date and time`); the duplicate-field and `log`/`editlesson`
 date errors say so. This is a deliberate, documented limitation.
 
+For invalid `add` phones, levels and subjects, a separate prefix-like token
+after an otherwise valid value adds guidance listing the supported fields.
+Names and addresses keep their normal errors. No extra fields are parsed.
+
 ## MVP commands
 
 | Command | Format | Example |
@@ -144,6 +148,10 @@ Keywords must precede date prefixes; extra words after a valid date get a correc
 Results keep their original `view` numbers for editing or deletion, but those
 numbers can change after a lesson mutation. The search is a one-off result and
 changes neither stored data nor the student filter.
+
+When a lesson search finds no matches for keywords starting with `c/` or `date/`,
+the feedback explains date boundaries and plain content keywords. Searches still
+match literal text; no hint is added to successful results or empty histories.
 
 `summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
 

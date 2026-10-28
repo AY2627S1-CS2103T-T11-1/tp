@@ -177,6 +177,11 @@ numbering, newest first.
 Other messages:
 
 - Duplicate student: `This student already exists in the list.` (used by `add` and `edit`)
+- `add` keeps each field's validation error and appends
+  `If {PREFIX} was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
+  only for invalid phones, levels and subjects with an unsupported ASCII-letter prefix after Unicode
+  whitespace and an otherwise valid value. Names and addresses keep their normal errors. Validation,
+  accepted values and missing/duplicate-field errors are unchanged.
 - `edit` with no field: `At least one field to edit must be provided.`
 - `list` with extra text: `The list command does not accept parameters.`
 - `find` without any keyword or field: invalid command format with the find usage; the current filter is kept. A blank `n/`, `sub/` or `l/` value gives that field's constraint message (`Name`, `Subject` or `Level`), and a repeated prefix gives the duplicate-prefix message.
@@ -219,6 +224,10 @@ the shared error. Date criteria exclude undated lessons; content-only searches d
 Results retain full-history `view` numbers and order, with the same empty-history
 message as `view`. No student filter or saved data changes. Lesson mutations can
 change later numbers, so search again before reusing an old result.
+
+If records exist but a lesson search finds no matches and a keyword starts with
+lowercase `c/` or `date/`, append `To search by date, use from/ and to/. Content keywords need no prefix.`
+on a new line. Keywords remain literal; successful searches and empty histories get no hint.
 
 **Follow-up flags (#142):** `flag` and `unflag` use the current displayed index
 and retain the active filter. A flag may omit its reason. Flagging an already

@@ -125,6 +125,11 @@ Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 20 characters of letters, digits and spaces, such as `Sec 3` or `JC1`.
 * `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math`, `Physics` or `H2 Chemistry`.
+* If a phone, level or subject fails validation, a separate prefix-like token after an otherwise valid
+  value, such as `sub/Math t/friend`, adds the hint
+  `If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
+  `sub/Physics/Chemistry` and invalid names or addresses keep their normal errors. This hint does not
+  introduce extra fields or change validation.
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
 
 Examples:
@@ -379,6 +384,10 @@ Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
   date can change them; run the search or `view` again before acting on an older result.
 * An empty history gives `No lessons logged yet for NAME.`. If records exist but
   none match, the message is `No matching lesson records found for NAME.`.
+  If a keyword starts with lowercase `c/` or `date/`, a no-match result adds
+  `To search by date, use from/ and to/. Content keywords need no prefix.`
+  For example, use `findlesson 1 algebra`, not `findlesson 1 c/algebra`.
+  These keywords remain literal text: successful matches do not show the hint.
 * This is a one-off result, not a saved lesson filter. The matches appear in the
   result box, and the student opens in the details panel with their complete
   history. The student list and stored data do not change.
