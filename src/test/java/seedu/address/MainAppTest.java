@@ -169,6 +169,18 @@ public class MainAppTest {
     }
 
     @Test
+    public void stop_storageInitializedWithoutModel_doesNotSavePreferences() {
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        MainApp app = new MainApp(preferences, temporaryFolder.resolve("students.json"));
+        app.storage = new StorageManager(new JsonAddressBookStorage(temporaryFolder.resolve("students.json")),
+                new JsonUserPrefsStorage(preferences));
+
+        app.stop();
+
+        assertFalse(Files.exists(preferences));
+    }
+
+    @Test
     public void init_nullJson_initializesUiAndProtectedStorage() throws Exception {
         for (String contents : List.of("null", "{\"persons\":[null]}")) {
             Path folder = Files.createTempDirectory(temporaryFolder, "null-startup-");
