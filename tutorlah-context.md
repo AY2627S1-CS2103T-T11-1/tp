@@ -3,6 +3,9 @@
 Last updated: Oct 28, 2026, for single-instance locking (#184), find search
 suggestions (#187), and case-insensitive command words (#185).
 
+Do not update the "Last updated" line in feature PRs; keeping it stable avoids
+merge conflicts between concurrent branches.
+
 ## What it is
 
 TutorLah is a desktop app for freelance tutors in Singapore who teach secondary
