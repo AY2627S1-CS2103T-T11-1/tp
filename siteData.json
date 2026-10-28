@@ -120,6 +120,7 @@
         "testing-guide": "Testing guide",
         "running-tests": "Running tests",
         "types-of-tests": "Types of tests",
+        "command-whitespace-and-paste-checks": "Command whitespace and paste checks",
         "student-card-layout-checks": "Student-card layout checks"
       },
       "headingKeywords": {}
