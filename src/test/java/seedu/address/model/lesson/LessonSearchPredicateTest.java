@@ -47,6 +47,15 @@ public class LessonSearchPredicateTest {
     }
 
     @Test
+    public void getKeywords_returnsImmutableOriginalWords() {
+        List<String> words = new ArrayList<>(List.of("C/algebra", "date/time"));
+        LessonSearchPredicate predicate = new LessonSearchPredicate(words, START, END);
+        words.clear();
+        assertEquals(List.of("C/algebra", "date/time"), predicate.getKeywords());
+        assertThrows(UnsupportedOperationException.class, () -> predicate.getKeywords().add("geometry"));
+    }
+
+    @Test
     public void test_contentOnly_requiresEveryLiteralKeywordIgnoringCaseAndOrder() {
         Lesson lesson = new Lesson("Reviewed quadratic inequalities and algebra");
         assertTrue(content("ALG", "quadratic").test(lesson));

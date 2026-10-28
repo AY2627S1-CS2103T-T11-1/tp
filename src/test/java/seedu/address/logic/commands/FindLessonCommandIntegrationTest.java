@@ -66,6 +66,26 @@ public class FindLessonCommandIntegrationTest {
     }
 
     @Test
+    public void execute_unsupportedSearchPrefixes_addsHintWithoutSavingOrChangingFilter() throws Exception {
+        logic.execute("find amy");
+        for (String separator : List.of(" ", "\u00a0", "\t", "\u2003")) {
+            for (String keyword : List.of("c/algebra", "date/02/01/2020")) {
+                assertEquals("No matching lesson records found for Amy Tan.\n"
+                        + "To search by date, use from/ and to/. Content keywords need no prefix.",
+                        feedback("findlesson" + separator + "1" + separator + keyword));
+                assertEquals(List.of(AMY), model.getFilteredPersonList());
+                assertUnchanged();
+            }
+        }
+        assertEquals(ALGEBRA_MATCHES, feedback("findlesson 1 algebra"));
+        assertEquals("Matching lesson records for Amy Tan (1):\n4. 02/01/2020: Algebra",
+                feedback("findlesson 1 from/02/01/2020 to/02/01/2020"));
+        assertThrows(ParseException.class, Lesson.MESSAGE_DATE_CONSTRAINTS, () ->
+                logic.execute("findlesson 1 c/algebra from/31/02/2026"));
+        assertUnchanged();
+    }
+
+    @Test
     public void execute_studentFilters_useDisplayedIndexAndRetainCompleteSavedData() throws Exception {
         for (String filter : List.of("find amy", "flagged")) {
             logic.execute(filter);

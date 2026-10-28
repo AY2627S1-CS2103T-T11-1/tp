@@ -294,6 +294,10 @@ checks share `StringUtil#isBlankOrInvisible` with student searches and field val
 through `StringUtil#containsIgnoreCase` with inclusive date boundaries. An undated lesson
 matches only when neither boundary is supplied.
 
+The predicate exposes its immutable keywords through `getKeywords`. If records exist but no results
+match, `FindLessonCommand` adds a syntax hint when a keyword starts with lowercase `c/` or `date/`.
+It does not reinterpret keywords, change matching or replace empty-history and invalid-date feedback.
+
 `FindLessonCommand` reads the selected student's complete history from the filtered student
 list and iterates backwards. It derives each view number from the original stored position
 before collecting matches, so gaps remain and repeated content is not merged. The result

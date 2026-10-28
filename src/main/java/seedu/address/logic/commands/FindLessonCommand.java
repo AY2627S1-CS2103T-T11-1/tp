@@ -1,6 +1,8 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,8 @@ public class FindLessonCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1 algebra from/01/01/2020";
     public static final String MESSAGE_MATCHES_HEADER = "Matching lesson records for %1$s (%2$d):";
     public static final String MESSAGE_NO_MATCHES = "No matching lesson records found for %1$s.";
+    public static final String MESSAGE_SEARCH_SYNTAX_HINT = "To search by date, use from/ and to/. "
+            + "Content keywords need no prefix.";
     public static final String MESSAGE_KEYWORDS_AFTER_DATE = "Put keywords before from/ and to/. "
             + "Example: findlesson 1 algebra from/01/10/2026";
 
@@ -66,10 +70,19 @@ public class FindLessonCommand extends Command {
         List<String> matches = formatMatchingLines(lessons);
         logger.fine("Matched " + matches.size() + " of " + lessons.size()
                 + " lessons for displayed student " + studentIndex.getOneBased());
-        String feedback = matches.isEmpty() ? String.format(MESSAGE_NO_MATCHES, student.getName())
+        String feedback = matches.isEmpty() ? formatNoMatches(student)
                 : String.format(MESSAGE_MATCHES_HEADER, student.getName(), matches.size())
                         + "\n" + String.join("\n", matches);
         return new CommandResult(feedback, student);
+    }
+
+    /** Adds syntax guidance to empty results without reinterpreting literal search keywords. */
+    private String formatNoMatches(Person student) {
+        String feedback = String.format(MESSAGE_NO_MATCHES, student.getName());
+        boolean hasLessonFieldPrefix = predicate.getKeywords().stream()
+                .anyMatch(word -> word.startsWith(PREFIX_CONTENT.getPrefix())
+                        || word.startsWith(PREFIX_DATE.getPrefix()));
+        return hasLessonFieldPrefix ? feedback + "\n" + MESSAGE_SEARCH_SYNTAX_HINT : feedback;
     }
 
     /** Formats matches in view order without renumbering gaps left by non-matching records. */

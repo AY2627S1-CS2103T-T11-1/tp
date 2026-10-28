@@ -224,6 +224,10 @@ Results retain full-history `view` numbers and order, with the same empty-histor
 message as `view`. No student filter or saved data changes. Lesson mutations can
 change later numbers, so search again before reusing an old result.
 
+If records exist but a lesson search finds no matches and a keyword starts with
+lowercase `c/` or `date/`, append `To search by date, use from/ and to/. Content keywords need no prefix.`
+on a new line. Keywords remain literal; successful searches and empty histories get no hint.
+
 **Follow-up flags (#142):** `flag` and `unflag` use the current displayed index
 and retain the active filter. A flag may omit its reason. Flagging an already
 flagged student without `r/` preserves its reason and reports `{NAME} is already

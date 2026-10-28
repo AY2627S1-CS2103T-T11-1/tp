@@ -382,6 +382,10 @@ Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
   date can change them; run the search or `view` again before acting on an older result.
 * An empty history gives `No lessons logged yet for NAME.`. If records exist but
   none match, the message is `No matching lesson records found for NAME.`.
+  If a keyword starts with lowercase `c/` or `date/`, a no-match result adds
+  `To search by date, use from/ and to/. Content keywords need no prefix.`
+  For example, use `findlesson 1 algebra`, not `findlesson 1 c/algebra`.
+  These keywords remain literal text: successful matches do not show the hint.
 * This is a one-off result, not a saved lesson filter. The matches appear in the
   result box, and the student opens in the details panel with their complete
   history. The student list and stored data do not change.

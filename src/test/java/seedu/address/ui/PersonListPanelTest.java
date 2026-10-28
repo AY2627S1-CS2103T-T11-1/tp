@@ -1192,6 +1192,31 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void commandBox_lessonSearchSyntaxHint_keepsStudentAndRecovers(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                root.resize(700, 560);
+                for (String keyword : List.of("c/algebra", "date/01/01/2020")) {
+                    assertFeedback(root, "findlesson 1 " + keyword,
+                            "No matching lesson records found for Amy.\n"
+                                    + "To search by date, use from/ and to/. Content keywords need no prefix.", false);
+                    assertDetail(root, "Amy", "Lessons (3)");
+                }
+                assertFeedback(root, "findlesson 1 algebra", "Matching lesson records for Amy (2):"
+                        + "\n1. (undated): Algebra\n3. (undated): Algebra", false);
+                assertEquals(3, model.getFilteredPersonList().getFirst().getLessonCount());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void commandBox_addUnsupportedPrefix_keepsInputAndStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();

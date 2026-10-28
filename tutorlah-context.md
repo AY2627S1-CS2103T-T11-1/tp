@@ -149,6 +149,10 @@ Results keep their original `view` numbers for editing or deletion, but those
 numbers can change after a lesson mutation. The search is a one-off result and
 changes neither stored data nor the student filter.
 
+When a lesson search finds no matches for keywords starting with `c/` or `date/`,
+the feedback explains date boundaries and plain content keywords. Searches still
+match literal text; no hint is added to successful results or empty histories.
+
 `summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
 
 `unlogged` lists students with empty lesson histories across the complete collection, including unflagged students. An undated record still counts as history. Matches retain their original order and are renumbered from 1; logging a first lesson removes the student and renumbers the remaining matches. The details panel still shows the just-logged student, without highlighting another card. `list` restores all students, other list filters replace this filter, and `summary` still counts everyone. It takes no arguments, changes no data and does not save; the filter is not persisted.
