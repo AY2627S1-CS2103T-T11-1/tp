@@ -642,7 +642,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 **MSS**
 
-1.  Tutor <u>views a student's lesson records (UC05)</u>.
+1.  Tutor <u>views a student's lesson records (UC05)</u> or <u>searches them (UC12)</u>.
 2.  Tutor requests to edit a specific lesson record, providing new content, a new date or both.
 3.  TutorLah updates the lesson, moves it to its place in date order if its date changed, and shows its old and current lesson numbers together with the updated record.
 
@@ -686,7 +686,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 **MSS**
 
-1.  Tutor views a student list.
+1.  Tutor <u>lists students (UC02)</u> or <u>finds students (UC10)</u>.
 2.  Tutor requests to search a specific displayed student's lesson records, providing content keywords, an inclusive date range or both.
 3.  TutorLah shows the matching lesson records newest first with their complete-history lesson numbers, and opens the student's complete history in the details panel.
 
@@ -749,7 +749,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 **MSS**
 
-1.  Tutor views a student list.
+1.  Tutor <u>lists students (UC02)</u> or <u>finds students (UC10)</u>.
 2.  Tutor requests to remove the follow-up flag from a specific displayed student.
 3.  TutorLah removes the flag and reason, opens the student in the details panel and shows a confirmation.
 
