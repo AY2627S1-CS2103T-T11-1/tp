@@ -22,7 +22,7 @@ public class LogCommandParser implements Parser<LogCommand> {
      */
     public LogCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = LessonArgumentTokenizer.tokenize(args);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_CONTENT, PREFIX_DATE);
 
         if (argMultimap.getValue(PREFIX_CONTENT).isEmpty() || argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE));
@@ -34,7 +34,7 @@ public class LogCommandParser implements Parser<LogCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_CONTENT, PREFIX_DATE);
         Lesson lesson = ParserUtil.parseLessonContent(argMultimap.getValue(PREFIX_CONTENT).get());
         if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
-            lesson = lesson.withDate(ParserUtil.parseLessonDate(argMultimap.getValue(PREFIX_DATE).get()));
+            lesson = lesson.withDate(ParserUtil.parseLessonDateWithNotesHint(argMultimap.getValue(PREFIX_DATE).get()));
         }
 
         return new LogCommand(index, lesson);

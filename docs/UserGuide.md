@@ -89,6 +89,15 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
   between the command word, indexes and prefixed fields, just like ordinary spaces.
   Pasted tabs and line breaks become spaces rather than joining words. Paste one
   command at a time, check it in the command box, then press Enter to run it.
+
+* A prefix used by the command you are typing starts a new field wherever it follows whitespace
+  (an ordinary space, a non-breaking space or a tab). Other slashes are ordinary text, so `a/l` in a
+  name or `d/dx` in lesson notes is kept. If your text contains one of that command's prefixes after a
+  space, such as `c/o` in `log` notes, reword it, for example `care of`. When this causes an error,
+  such as `Multiple values specified for the following single-valued field(s): c/`, the message adds
+  `A recognised prefix after a space starts another field. If it was part of your text, please reword it.`
+  A command that is still valid is not detected: `edit 1 addr/Unit l/2` changes the address to `Unit`
+  and the level to `2`.
 </box>
 
 ### Viewing help: `help`
@@ -188,7 +197,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 * Matching ignores uppercase/lowercase. `find TAN` and `find sub/physics` match `Tan` and `Physics`.
 * Every keyword must occur somewhere in its field, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`. `l/Sec 3` needs both `Sec` and `3` in the level.
 * When several fields are given, a student must match all of them. `find sub/Physics l/Sec 3` shows only Sec 3 students taking Physics.
-* Each field can be given at most once. `find sub/Math sub/Physics` is rejected with `Multiple values specified for the following single-valued field(s): sub/`.
+* Each field can be given at most once. `find sub/Math sub/Physics` is rejected with `Multiple values specified for the following single-valued field(s): sub/`, followed by the hint to reword prefix text.
 * A field cannot be blank. `find sub/` is rejected with the same message as an invalid subject in `add`, and likewise for `n/` and `l/`.
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no wildcard matching or spelling correction. Punctuation and accented characters must match as entered, ignoring case.
 * Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
@@ -391,9 +400,9 @@ Format: `log INDEX c/CONTENT [date/DATE]`
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces. Internal spaces and formatting characters used in real text are kept.
+* `c/` and `date/` after a space always start a field, even inside your notes. Write `care of` instead of `c/o` and `date and time` instead of `date/time`. For example, `log 1 c/Worksheet collected care of Mum` works, while `log 1 c/Worksheet collected c/o Mum` is rejected as a repeated `c/`. An invalid date in `log` or `editlesson` also says `If "date/" was part of your lesson notes, please reword it, for example "date and time".`
 * `DATE` is the day the lesson was taught, as `DD/MM/YYYY`, for example `21/10/2026`. Single-digit days and months such as `1/2/2026` are also accepted. Without `date/`, the lesson is dated with today's date on your computer.
 * `DATE` must be a real date from 01/01/2000 up to today: future dates and dates such as `31/02/2026` are rejected. The day and month have one or two digits, and the year has exactly four.
-* Only the first `c/` starts the content, so later text such as `c/o Mum` is kept as part of it. Inside the content, `date/` is read as the lesson date only when a digit follows it, so text such as `date/time` is kept, while `date/21/10/2026` sets the date. To write `date/` followed by a number in a note, add a word in between, e.g. `date/ on 2 methods`.
 * Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
 * Lessons are kept in date order, so a lesson logged later for an earlier date takes its place by date. Lessons on the same date keep the order they were logged in. Logging the same content twice records two lessons.
 * To correct a logged lesson's content or date, use `editlesson`. To remove an incorrect record, use `deletelesson`. Both are described below.
@@ -402,7 +411,6 @@ Examples:
 * `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
 * `log 1 c/Electric circuits: series and parallel, Q1-5 for homework` logs a lesson for the 1st student in the list.
 * `log 2 c/Surds and indices date/20/10/2026` logs a lesson taught on 20 October 2026 for the 2nd student, placed among their records by that date.
-* `log 1 c/Worksheet collected c/o Mum` logs a lesson whose content is `Worksheet collected c/o Mum`.
 
 **Screenshot example:** after `list`, the command `log 1 c/Trigonometry: solved right-angled triangle problems. date/18/10/2026` records an earlier lesson for Alex Tan. The confirmation includes the lesson date and content:
 
@@ -448,7 +456,7 @@ Format: `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`
 
 * `STUDENT_INDEX` and `LESSON_INDEX` work as in `deletelesson`: the student's number in the displayed student list, and the lesson's current number shown by `view STUDENT_INDEX`, where lesson 1 is the most recent.
 * Give at least one of `c/` and `date/`. Without either, the command reports `At least one field to edit must be provided.`
-* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today. Text such as `c/o` or `date/time` inside the content is kept, as in `log`.
+* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today. As in `log`, reword `c/` or `date/` inside the content, for example `care of` and `date and time`.
 * Changing only the content keeps the lesson's number.
 * Changing the date moves the lesson to its place in date order, so its number can change. On a date that already has lessons, the edited lesson goes after them, so `view` shows it first among that date's lessons. The confirmation gives the new number to use in later `editlesson` and `deletelesson` commands.
 * Lessons saved before v1.4 have no date and show `(undated)`. Editing only their content keeps them undated, and giving `date/` dates them. A date cannot be removed from a dated lesson.

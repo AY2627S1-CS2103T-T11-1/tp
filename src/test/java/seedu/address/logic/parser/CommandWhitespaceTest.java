@@ -61,7 +61,7 @@ public class CommandWhitespaceTest {
         List<String> commands = List.of("view|0", "view|-1", "view|01", "view|2147483648", "view|+1",
                 "view|1|extra", "deletelesson|1|0", "deletelesson|01|1", "deletelesson|1|1|extra",
                 "editlesson|1|01|c/Algebra", "edit|1|l/", "log|1|c/",
-                "edit|1|l/Sec3|l/Sec4", "log|1|c/Algebra|date/20/10/2026|date/21/10/2026",
+                "edit|1|l/Sec3|l/Sec4", "log|1|c/Algebra|c/Geometry",
                 "log|1|c/Algebra|date/31/02/2026", "list|extra", "flagged|extra", "summary|extra",
                 "add|n/Amy|p/81230001|a/Road|l/Sec3|sub/Math");
         for (String command : commands) {

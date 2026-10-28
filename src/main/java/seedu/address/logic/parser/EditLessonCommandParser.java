@@ -26,7 +26,7 @@ public class EditLessonCommandParser implements Parser<EditLessonCommand> {
     @Override
     public EditLessonCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = LessonArgumentTokenizer.tokenize(args);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_CONTENT, PREFIX_DATE);
 
         String[] indexes = argMultimap.getPreamble().split("(?U)\\s+");
         if (indexes.length != 2) {
@@ -44,7 +44,8 @@ public class EditLessonCommandParser implements Parser<EditLessonCommand> {
                     ParserUtil.parseLessonContent(argMultimap.getValue(PREFIX_CONTENT).get()).content);
         }
         if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
-            editLessonDescriptor.setDate(ParserUtil.parseLessonDate(argMultimap.getValue(PREFIX_DATE).get()));
+            editLessonDescriptor.setDate(
+                    ParserUtil.parseLessonDateWithNotesHint(argMultimap.getValue(PREFIX_DATE).get()));
         }
 
         if (!editLessonDescriptor.isAnyFieldEdited()) {
