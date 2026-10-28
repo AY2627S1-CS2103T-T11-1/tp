@@ -432,6 +432,57 @@ public class PersonListPanelTest {
         });
     }
 
+    @Test
+    public void start_startupFailure_showsErrorWithoutMainWindow() throws Exception {
+        runOnJavaFxThread(() -> {
+            Stage stage = new Stage();
+            List<String> shownFailure = new ArrayList<>();
+            UiManager ui = new UiManager("Another copy is open") {
+                @Override
+                void showAlertDialogAndWait(AlertType type, String title, String header, String content) {
+                    shownFailure.addAll(List.of(type.name(), title, header, content,
+                            Boolean.toString(stage.isShowing())));
+                }
+            };
+
+            ui.start(stage);
+
+            assertEquals(List.of("ERROR", "TutorLah could not start",
+                    "TutorLah is already open or its data folder is unavailable", "Another copy is open", "false"),
+                    shownFailure);
+        });
+    }
+
+    @Test
+    public void start_startupFailure_realDialogSupportsOwnerWithOrWithoutScene() throws Exception {
+        runOnJavaFxThread(() -> {
+            for (boolean hasScene : List.of(false, true)) {
+                Stage stage = new Stage();
+                if (hasScene) {
+                    stage.setScene(new Scene(new StackPane(), 100, 100));
+                }
+                AtomicReference<Throwable> closeFailure = new AtomicReference<>();
+                Platform.runLater(() -> {
+                    try {
+                        Window dialog = Window.getWindows().stream()
+                                .filter(candidate -> candidate instanceof Stage alert
+                                        && "TutorLah could not start".equals(alert.getTitle()))
+                                .findFirst().orElseThrow();
+                        dialog.hide();
+                    } catch (Throwable throwable) {
+                        closeFailure.set(throwable);
+                    }
+                });
+
+                new UiManager("Another copy is open").start(stage);
+
+                assertTrue(closeFailure.get() == null, () ->
+                        "Could not close startup dialog: " + closeFailure.get());
+                assertFalse(stage.isShowing());
+            }
+        });
+    }
+
     /**
      * Starts JavaFX and waits until its application thread is ready.
      *

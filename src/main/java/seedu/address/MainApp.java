@@ -2,6 +2,7 @@ package seedu.address;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,6 +40,10 @@ public class MainApp extends Application {
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
     private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "addressbook.json");
+    private static final String ALREADY_RUNNING_MESSAGE = "Another copy of TutorLah is already using this data "
+            + "folder. Close the other copy before starting TutorLah again.";
+    private static final String LOCK_FAILURE_MESSAGE = "TutorLah could not secure exclusive access to the student "
+            + "data folder. No student data was loaded or changed.";
 
     protected Ui ui;
     protected Logic logic;
@@ -47,6 +52,8 @@ public class MainApp extends Application {
     private final Path userPrefsFilePath;
     private final Path addressBookFilePath;
     private String startupWarning;
+    private String startupFailure;
+    private Closeable applicationLock;
 
     /** Creates the application with its normal preference and student data paths. */
     public MainApp() {
@@ -64,16 +71,50 @@ public class MainApp extends Application {
         logger.info("=============================[ Initializing TutorLah ]===========================");
         super.init();
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
-        UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
-        storage = new StorageManager(addressBookStorage, userPrefsStorage);
+        if (!acquireApplicationLock()) {
+            ui = new UiManager(startupFailure);
+            return;
+        }
 
-        model = initModelManager(storage, userPrefs);
+        try {
+            JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(userPrefsFilePath);
+            UserPrefs userPrefs = initPrefs(userPrefsStorage);
+            JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFilePath);
+            storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        logic = new LogicManager(model, storage);
+            model = initModelManager(storage, userPrefs);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath(), startupWarning);
+            logic = new LogicManager(model, storage);
+
+            ui = new UiManager(logic, storage.getAddressBookFilePath(), startupWarning);
+        } catch (Exception | Error e) {
+            releaseApplicationLock();
+            throw e;
+        }
+    }
+
+    private boolean acquireApplicationLock() {
+        startupFailure = null;
+        try {
+            Optional<? extends Closeable> acquiredLock = tryAcquireDataFolderLock();
+            if (acquiredLock.isEmpty()) {
+                startupFailure = ALREADY_RUNNING_MESSAGE;
+                logger.warning(startupFailure);
+                return false;
+            }
+            applicationLock = acquiredLock.get();
+            return true;
+        } catch (IOException e) {
+            startupFailure = LOCK_FAILURE_MESSAGE + "\n\nData folder: "
+                    + addressBookFilePath.toAbsolutePath().normalize().getParent();
+            logger.severe(startupFailure + "\n" + StringUtil.getDetails(e));
+            return false;
+        }
+    }
+
+    /** Tries to acquire exclusive use of the student data folder. */
+    Optional<? extends Closeable> tryAcquireDataFolderLock() throws IOException {
+        return ApplicationLock.tryAcquire(addressBookFilePath);
     }
 
     /**
@@ -111,6 +152,11 @@ public class MainApp extends Application {
     /** Returns the recovery warning prepared during model initialization, if loading failed. */
     Optional<String> getStartupWarning() {
         return Optional.ofNullable(startupWarning);
+    }
+
+    /** Returns the fatal startup explanation, if this instance could not lock its data folder. */
+    Optional<String> getStartupFailure() {
+        return Optional.ofNullable(startupFailure);
     }
 
     /**
@@ -155,9 +201,26 @@ public class MainApp extends Application {
     public void stop() {
         logger.info("============================ [ Stopping TutorLah ] =============================");
         try {
-            storage.saveUserPrefs(model.getUserPrefs());
+            if (storage != null && model != null) {
+                storage.saveUserPrefs(model.getUserPrefs());
+            }
         } catch (IOException e) {
             logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+        } finally {
+            releaseApplicationLock();
+        }
+    }
+
+    private void releaseApplicationLock() {
+        if (applicationLock == null) {
+            return;
+        }
+        try {
+            applicationLock.close();
+        } catch (IOException e) {
+            logger.warning("Failed to release the TutorLah data-folder lock " + StringUtil.getDetails(e));
+        } finally {
+            applicationLock = null;
         }
     }
 }

@@ -124,7 +124,7 @@ The following diagram focuses on parser selection and command creation:
 
 <a href="diagrams/ParserClasses.png" no-validation><puml src="diagrams/ParserClasses.puml" alt="Partial parser class diagram showing selection of lesson parsers and creation of their commands" width="520" /></a>
 
-[`AddressBookParser`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/parser/AddressBookParser.java) separates the command word from its arguments and creates the matching parser. Command-specific parsers implement the generic `Parser` interface: for example, `LogCommandParser` implements `Parser<LogCommand>` and returns a `LogCommand`. The type parameter and common `Command` superclass are omitted from this diagram. Dashed arrows labelled `<<create>>` show object creation, not held references. Other command parsers are omitted; `help` and `exit` are created directly without separate parsers.
+[`AddressBookParser`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/parser/AddressBookParser.java) separates the command word from its arguments and creates the matching parser. It lowercases only the command word with `Locale.ROOT`, so command selection ignores case without depending on the system locale. Arguments are unchanged, so prefixes remain case-sensitive and must use their documented lowercase forms. Command-specific parsers implement the generic `Parser` interface: for example, `LogCommandParser` implements `Parser<LogCommand>` and returns a `LogCommand`. The type parameter and common `Command` superclass are omitted from this diagram. Dashed arrows labelled `<<create>>` show object creation, not held references. Other command parsers are omitted; `help` and `exit` are created directly without separate parsers.
 
 The helper dependencies are shown separately to keep the overview readable. Pale grey-blue boxes identify helpers within the same parser package.
 
@@ -173,6 +173,8 @@ The `Storage` component,
 Loading reverses this conversion. Each `toModelType` method checks that required fields are present and passes every value through the model's validators, such as `Name#isValidName` and `Lesson#isValidContent`, so a value that breaks any of them makes the whole file fail to load. Rules that are applied only when parsing commands are not checked on loading: lesson dates are not checked against 01/01/2000 or today's date, and names are not trimmed or their repeated spaces collapsed. So a file can contain values that no command could create, such as a lesson dated 2030 or a second `Amy  Tan` (with two spaces) alongside `Amy Tan`. `JsonSerializableAddressBook` also rejects duplicate students. Older files stay readable: a student without `lessons` loads with no lessons, a lesson without `date` loads as an undated `Lesson` (records saved by v1.3), and a student without `flag` loads unflagged. Lessons are rebuilt in file order and are not re-sorted on loading.
 
 If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions; `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
+
+Before loading preferences or student data, `MainApp` asks `ApplicationLock` to obtain an operating-system lock on `data/.tutorlah.lock`. The channel and lock remain open for the application's lifetime and are released in `MainApp#stop`; the lock file itself may remain. If another process or application object already holds the lock, initialization stops before creating `Storage`, `Model`, `Logic` or the main window, and a failure-only `UiManager` shows an error. A failure to create or lock the file is also fatal rather than allowing an instance to save without exclusive access. This prevents two copies from loading the same snapshot and silently overwriting each other's later changes.
 
 ### Common classes
 
@@ -302,7 +304,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which tokenizes the `n/`, `sub/` and `l/` prefixes. It first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space, because `ArgumentTokenizer` only recognises a prefix after an ASCII space; otherwise a pasted `sub/math l/sec` with a non-breaking space would read `l/sec` as more subject keywords. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on Unicode whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
 
-`StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched, and `isNameSearchOnly()` reports when only name keywords were given, so that `FindCommand` can add a hint about `sub/` and `l/` when such a search finds no one. All three fields share `StringUtil#containsIgnoreCase`, which compares each candidate substring with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
+`StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched, and `isNameSearchOnly()` reports when only name keywords were given, so that `FindCommand` can add a hint about `sub/` and `l/` when such a search finds no one. Because every word after `sub/` or `l/` belongs to that field, a name typed afterwards, as in `find sub/Physics ng`, makes the search find no one. `withTrailingFieldWordsAsNames()` therefore returns the searches that move the last one or more words of a multi-word subject or level search to the names, fewest words first (subject before level for the same number of words) and keeping at least one word in each field. When a search that used `sub/` or `l/` finds no one, `FindCommand` tests these alternatives against `Model#getAddressBook`, without changing the displayed list, and suggests the first one that matches, written with name keywords first. Moving words is only a suggestion, never applied automatically, because multi-word values such as `Sec 3` and `H2 Math` are valid. All three fields share `StringUtil#containsIgnoreCase`, which compares each candidate substring with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
 
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
@@ -649,6 +651,176 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
       Use case ends.
 
+**Use case: UC11 - Edit a lesson record**
+
+**Guarantees:** Only the chosen lesson record is changed. The student, their other lesson records, other students and the current student filter are kept.
+
+**MSS**
+
+1.  Tutor <u>views a student's lesson records (UC05)</u> or <u>searches them (UC12)</u>.
+2.  Tutor requests to edit a specific lesson record, providing new content, a new date or both.
+3.  TutorLah updates the lesson, moves it to its place in date order if its date changed, and shows its old and current lesson numbers together with the updated record.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The student has no lesson records, or the given lesson index is invalid.
+
+    * 2b1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2c. Tutor provides neither new content nor a new date.
+
+    * 2c1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2d. The new content is blank or too long, or the new date is invalid or in the future.
+
+    * 2d1. TutorLah shows an error message describing the relevant rule.
+
+      Use case resumes at step 2.
+
+* 2e. The supplied content and date are the same as the lesson's existing details.
+
+    * 2e1. TutorLah informs Tutor that the lesson already has those details and makes no change.
+
+      Use case ends.
+
+**Use case: UC12 - Search a student's lesson records**
+
+**Guarantees:** No student or lesson data is changed. The displayed student list and its numbering are kept, and matching lessons retain their numbers from the student's complete history.
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u> or <u>finds students (UC10)</u>.
+2.  Tutor requests to search a specific displayed student's lesson records, providing content keywords, an inclusive date range or both.
+3.  TutorLah shows the matching lesson records newest first with their complete-history lesson numbers, and opens the student's complete history in the details panel.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. Tutor provides no search criterion, provides a malformed date or duplicate date prefix, puts a keyword after a date, or gives a lower date after the upper date.
+
+    * 2b1. TutorLah shows an error message describing the expected search format or date rule.
+
+      Use case resumes at step 2.
+
+* 3a. The student has no lesson records.
+
+    * 3a1. TutorLah informs Tutor that no lessons have been logged for the student.
+
+      Use case ends.
+
+* 3b. The student has lesson records, but none matches every given content and date criterion.
+
+    * 3b1. TutorLah informs Tutor that no matching lesson records were found.
+
+      Use case ends.
+
+**Use case: UC13 - View the student and lesson summary**
+
+**Guarantees:** No student or lesson data is changed. The current student filter and displayed numbering are kept; totals cover the complete saved collection.
+
+**MSS**
+
+1.  Tutor requests to view the summary.
+2.  TutorLah shows the total number of students, the total number of lesson records and how many students have no lesson records.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. Tutor supplies an extra parameter.
+
+    * 1a1. TutorLah shows an error message with the expected format.
+
+      Use case resumes at step 1.
+
+* 2a. There are no students.
+
+    * 2a1. TutorLah explains that there are no students yet and suggests adding one.
+
+      Use case ends.
+
+**Use case: UC14 - Remove a student's follow-up flag**
+
+**Guarantees:** Only the selected student's flag and its reason are removed. Their details and lesson records, other students and the current student filter are kept.
+
+**MSS**
+
+1.  Tutor <u>lists students (UC02)</u> or <u>finds students (UC10)</u>.
+2.  Tutor requests to remove the follow-up flag from a specific displayed student.
+3.  TutorLah removes the flag and reason, opens the student in the details panel and shows a confirmation.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The student is not flagged.
+
+    * 2b1. TutorLah informs Tutor that no change was made.
+
+      Use case ends.
+
+* 3a. Tutor is viewing only flagged students.
+
+    * 3a1. The unflagged student leaves the displayed list but remains open in the details panel.
+
+      Use case ends.
+
+**Use case: UC15 - List students flagged for follow-up**
+
+**Guarantees:** No student or lesson data is changed. The results come from the complete saved collection and retain the students' original order.
+
+**MSS**
+
+1.  Tutor requests to view all students flagged for follow-up.
+2.  TutorLah shows the flagged students, numbers the results from 1 and reports how many were found.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. Tutor supplies an extra parameter.
+
+    * 1a1. TutorLah shows an error message.
+
+      Use case resumes at step 1.
+
+* 2a. No students are flagged.
+
+    * 2a1. TutorLah shows an empty list and explains how to show all students again.
+
+      Use case ends.
+
+* \*a. At any time after step 2, Tutor wants to see all students again.
+
+    * \*a1. Tutor <u>lists students (UC02)</u>.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 These are product requirements, not a claim that every target has been verified.
@@ -858,6 +1030,17 @@ Use a separate test directory containing two fictional students. Enter the follo
 Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
 
 ### Saving data
+
+#### Preventing concurrent copies
+
+Use a separate test folder with a valid `data/addressbook.json` containing `{"persons": []}`.
+
+1. Launch TutorLah and add Ben Lim, but leave that copy open.
+1. From the same working folder, launch the same JAR again. Expected: the second copy reports that another copy is already using the data folder and exits without showing the main window or changing the JSON file.
+1. In the first copy, add Amy Tan and exit. Expected: both students are saved.
+1. Launch TutorLah again. Expected: it starts normally and lists both students. The presence of `data/.tutorlah.lock` does not block startup after the first process releases its operating-system lock.
+
+`ApplicationLockTest` covers unavailable and failed lock attempts and verifies that their channels are closed. `MainAppTest` acquires the same folder lock from two application objects, verifies that the second initialization creates no logic, releases the first lock and verifies that a new application can start. `PersonListPanelTest` verifies that the failure-only UI reports the problem without showing the main window.
 
 #### Recovering from a failed save
 
