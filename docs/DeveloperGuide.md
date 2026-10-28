@@ -243,7 +243,14 @@ Failed commands skip these rules, so an error never changes the panel. A failed 
 
 `view` numbers lessons newest first, whereas `Person#getLessons` stores them oldest first. `Person#withLessonAdded` inserts each lesson in date order, keeping same-date records in logging order. The command therefore converts a one-based displayed lesson number to a zero-based stored position using `lessons.size() - lessonIndex.getOneBased()`. An assertion protects this internal conversion after the user-supplied index has been validated. Removing by position deletes only the selected occurrence even when two lessons have identical content and dates.
 
-`Person#withLessonRemoved` returns a new student with the selected record omitted and every student field and remaining lesson preserved. `Model#setPerson` replaces the old value in the backing `UniquePersonList`; the active filtered view continues to show the same matching students. The command then returns a confirmation containing the displayed lesson number, student name and deleted content. `LogicManager` persists the updated address book through the normal save path shown in the architecture sequence diagram.
+`Person#withLessonRemoved` returns a new student with the selected record omitted
+and every student field and remaining lesson preserved. `Model#setPerson` replaces
+the old value in the backing `UniquePersonList`; the active filtered view continues
+to show the same matching students.
+The confirmation includes the displayed lesson number, student name, lesson date
+and deleted content. `Messages#formatLessonDate` supplies the date, shown in parentheses,
+or `(undated)` for a legacy record. `LogicManager` persists the updated address book
+through the normal save path shown in the architecture sequence diagram.
 
 Deleting the final lesson therefore leaves the student present with an empty history. A later deletion attempt stops before mutation and reports `No lessons logged yet for NAME.`.
 
@@ -1126,18 +1133,22 @@ Use a separate test directory with `data/addressbook.json` containing `{"persons
 ```text
 add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
 add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
-log 1 c/Algebra
-log 1 c/Geometry
-log 1 c/Algebra
-log 2 c/Calculus
+log 1 c/Algebra date/18/10/2026
+log 1 c/Geometry date/19/10/2026
+log 1 c/Algebra date/20/10/2026
+log 2 c/Calculus date/20/10/2026
 ```
 
 1. Enter `view 1`.<br>
-   Expected: Amy's three records appear as `1. DD/MM/YYYY: Algebra`, `2. DD/MM/YYYY: Geometry`, `3. DD/MM/YYYY: Algebra`, each with today's date.
+   Expected: Amy's records appear as `1. 20/10/2026: Algebra`,
+   `2. 19/10/2026: Geometry`, `3. 18/10/2026: Algebra`.
 1. Enter `deletelesson 1 1`, then `view 1`.<br>
-   Expected: `Deleted lesson 1 for Amy Tan: Algebra`, followed by Geometry as lesson 1 and the older Algebra as lesson 2. This proves that only the newest duplicate was removed.
+   Expected: `Deleted lesson 1 for Amy Tan (20/10/2026): Algebra`, followed by
+   Geometry as lesson 1 and the older Algebra as lesson 2. Only the newest duplicate
+   was removed, and the confirmation identifies its date.
 1. Enter `deletelesson 1 2`, then `view 1`.<br>
-   Expected: `Deleted lesson 2 for Amy Tan: Algebra`, then only Geometry remains. Amy's details and Ben's Calculus record are unchanged.
+   Expected: `Deleted lesson 2 for Amy Tan (18/10/2026): Algebra`, then only Geometry
+   remains. Amy's details and Ben's Calculus record are unchanged.
 1. Try `deletelesson 1 0`, `deletelesson 1 01`, `deletelesson 1 2`, `deletelesson 0 1`, `deletelesson`, `deletelesson 1` and `deletelesson 1 1 extra`.<br>
    Expected: the relevant lesson-index, student-index or usage error appears. Amy's remaining Geometry record is unchanged after every rejected command.
 1. Exit and restart, enter `view 1`, then `deletelesson 1 1` and `view 1`.<br>
@@ -1145,7 +1156,13 @@ log 2 c/Calculus
 1. Enter `deletelesson 1 1` while Amy's history is empty.<br>
    Expected: `No lessons logged yet for Amy Tan.`, with both students and saved data unchanged.
 1. Enter `find ben`, then `deletelesson 1 1` and `view 1`.<br>
-   Expected: `Deleted lesson 1 for Ben Lim: Calculus`, while only Ben's card remains displayed. The view reports `No lessons logged yet for Ben Lim.`. Enter `list` to confirm both students remain; the search filter was retained during deletion and no unrelated student changed.
+   Expected: `Deleted lesson 1 for Ben Lim (20/10/2026): Calculus`, while only Ben's
+   card remains displayed. The view reports `No lessons logged yet for Ben Lim.`.
+   Enter `list` to confirm both students remain; deletion retained the filter and
+   no unrelated student changed.
+
+For a legacy record without a date, the confirmation uses `(undated)` once, for
+example `Deleted lesson 1 for Amy Tan (undated): Algebra`.
 
 Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
 

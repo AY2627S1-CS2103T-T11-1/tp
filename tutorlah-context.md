@@ -168,6 +168,7 @@ students. Flag state is persisted; filter state is not.
 
 `deletelesson` removes one record using the lesson number shown by `view`
 (newest first). The student and their other lesson records are kept.
+The confirmation includes the lesson date, or `(undated)` for a legacy record.
 An empty history reports `No lessons logged yet for NAME.`.
 
 Added in v1.5:
