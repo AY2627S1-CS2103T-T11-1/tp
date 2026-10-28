@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 28, 2026, for command whitespace handling.
+Last updated: Oct 28, 2026, for issue #185 (case-insensitive command words).
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -111,6 +111,9 @@ ask the team. Do not guess.
 | Summary | `summary` | `Summary:` then a single summary paragraph on the next line |
 | Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
+
+Command words ignore case, so `list`, `LIST` and `LiSt` select the same command.
+Prefixes remain case-sensitive and must be typed in lowercase as documented.
 
 **Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
 
