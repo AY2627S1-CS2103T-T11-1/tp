@@ -54,6 +54,8 @@ recorded about them, not building a new kind of app.
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
 
+TutorLah allows only one running copy per data folder. It keeps an operating-system lock on `data/.tutorlah.lock` for the whole session; a second copy explains the conflict and exits before loading or changing student data.
+
 If a command cannot be saved, TutorLah restores its preceding in-memory student data and active filter, then reports the save error. Retrying uses the original displayed indexes; a later command cannot silently persist a failed mutation.
 
 If an existing student file cannot be loaded, including a null JSON root or null student entry, the app shows recovery instructions and disables saving for that session. Commands cannot overwrite the unreadable file. Read-only commands, help and exit still work; a data-changing command is rejected and rolled back. The tutor exits, backs up and repairs or restores the file, then restarts to resume normal use. A genuinely missing file still loads sample students. Student data is saved only when a command changes it, so read-only commands do not rewrite the file.
@@ -102,6 +104,11 @@ whitespace, including non-breaking spaces. Pasted tabs and line breaks become
 spaces so words do not join. Tutors check the pasted command and press Enter
 to run it; meaningful spacing inside addresses and lesson content is kept.
 
+A prefix the command uses always starts a new field after whitespace, so text
+such as `c/o` or `date/time` cannot appear after whitespace inside lesson notes. Tutors reword
+it (`care of`, `date and time`); the duplicate-field and `log`/`editlesson`
+date errors say so. This is a deliberate, documented limitation.
+
 ## MVP commands
 
 | Command | Format | Example |
@@ -128,6 +135,7 @@ Added in v1.5:
 | Remove a flag | `unflag INDEX` | `unflag 2` |
 | List flagged students | `flagged` | `flagged` |
 | Summarize students and lessons | `summary` | `summary` |
+| List students without lesson records | `unlogged` | `unlogged` |
 | Search a student's lessons | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | `findlesson 2 algebra from/01/10/2026` |
 
 `findlesson` searches one displayed student's lesson content, an inclusive date
@@ -138,6 +146,8 @@ numbers can change after a lesson mutation. The search is a one-off result and
 changes neither stored data nor the student filter.
 
 `summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
+
+`unlogged` lists students with empty lesson histories across the complete collection, including unflagged students. An undated record still counts as history. Matches retain their original order and are renumbered from 1; logging a first lesson removes the student and renumbers the remaining matches. The details panel still shows the just-logged student, without highlighting another card. `list` restores all students, other list filters replace this filter, and `summary` still counts everyone. It takes no arguments, changes no data and does not save; the filter is not persisted.
 
 Flags mark unresolved follow-up without changing student identity or lesson
 history. The reason is optional and can be replaced by flagging again with a

@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
@@ -27,6 +29,8 @@ public class UiManager implements Ui {
     private Path dataFilePath;
     private MainWindow mainWindow;
     private final String startupWarning;
+    private final String startupFailure;
+    private Stage primaryStage;
 
     /**
      * Creates a {@code UiManager} with the given {@code Logic} and the data file path
@@ -45,10 +49,23 @@ public class UiManager implements Ui {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
         this.startupWarning = startupWarning;
+        this.startupFailure = null;
+    }
+
+    /** Creates a UI that only explains why TutorLah could not start. */
+    public UiManager(String startupFailure) {
+        this.startupWarning = null;
+        this.startupFailure = requireNonNull(startupFailure);
     }
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        if (startupFailure != null) {
+            showAlertDialogAndWait(AlertType.ERROR, "TutorLah could not start",
+                    "TutorLah is already open or its data folder is unavailable", startupFailure);
+            return;
+        }
         logger.info("Starting UI...");
 
         //Set the application icon.
@@ -74,7 +91,7 @@ public class UiManager implements Ui {
     }
 
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {
-        showAlertDialogAndWait(mainWindow.getPrimaryStage(), type, title, headerText, contentText);
+        showAlertDialogAndWait(primaryStage, type, title, headerText, contentText);
     }
 
     /**
@@ -85,7 +102,9 @@ public class UiManager implements Ui {
                                                String contentText) {
         final Alert alert = new Alert(type);
         alert.getDialogPane().getStylesheets().add("view/DarkTheme.css");
-        alert.initOwner(owner);
+        if (owner.getScene() != null) {
+            alert.initOwner(owner);
+        }
         alert.setTitle(title);
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);

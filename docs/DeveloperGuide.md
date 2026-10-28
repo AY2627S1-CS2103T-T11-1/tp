@@ -16,7 +16,7 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
-* OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries and per-student lesson counts.
+* OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries, per-student lesson counts and listing students without recorded lessons.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, safe JSON replacement, their tests and documentation.
@@ -130,7 +130,7 @@ The helper dependencies are shown separately to keep the overview readable. Pale
 
 <a href="diagrams/ParserHelpers.png" no-validation><puml src="diagrams/ParserHelpers.puml" alt="Partial parser helper diagram showing tokenization for logging and shared validation for both lesson parsers" width="500" /></a>
 
-* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date.
+* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date; `log` and `editlesson` use `ParserUtil#parseLessonDateWithNotesHint`, described in [Prefix text inside values](#prefix-text-inside-values).
 * `DeleteLessonCommandParser` splits two positional indexes on whitespace, without using the tokenizer. It shares `ParserUtil`'s index validation, using the appropriate student- or lesson-index error message.
 
 The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
@@ -174,6 +174,8 @@ Loading reverses this conversion. Each `toModelType` method checks that required
 `JsonUtil` serializes the complete object before calling `FileUtil#writeToFile`. `AtomicFileWriter` creates a unique temporary file in the destination directory, writes UTF-8 content and uses `Files.move` with `ATOMIC_MOVE` and `REPLACE_EXISTING`. Both student data and preferences use this path, including first saves with missing parent directories. The destination is never pre-created or truncated. If writing or replacement fails, the original file is retained and the temporary file is removed where possible; cleanup errors are suppressed on the original save exception. With `ATOMIC_MOVE`, the other options are ignored and replacement of an existing target is filesystem-provider-specific. We rely on a provider that supports atomic replacement; a provider that cannot do so reports a save failure, with no non-atomic fallback. An abrupt process termination between staging and replacement can bypass cleanup and leave a `.tutorlah-*.tmp` file in the same directory. Startup does not load or remove these files; users may remove them after closing all TutorLah instances. This protects against incomplete writes, but does not provide a second-instance lock or a guarantee against power loss. `AtomicFileWriterTest` injects partial-write, replacement and cleanup failures, while the storage round-trip tests cover both JSON callers.
 
 If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions; `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
+
+Before loading preferences or student data, `MainApp` asks `ApplicationLock` to obtain an operating-system lock on `data/.tutorlah.lock`. The channel and lock remain open for the application's lifetime and are released in `MainApp#stop`; the lock file itself may remain. If another process or application object already holds the lock, initialization stops before creating `Storage`, `Model`, `Logic` or the main window, and a failure-only `UiManager` shows an error. A failure to create or lock the file is also fatal rather than allowing an instance to save without exclusive access. This prevents two copies from loading the same snapshot and silently overwriting each other's later changes.
 
 ### Common classes
 
@@ -260,6 +262,22 @@ The command keeps each student's lessons in date order with one of two operation
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
+### Prefix text inside values
+
+`ArgumentTokenizer` starts a new field at every prefix the command recognises when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `log 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `log 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
+
+We keep this rule for every command rather than special-casing lesson content:
+
+* It is the same rule for every command, so users learn one rule. Exceptions for `c/o` or `date/time` would invite the same request for `n/a` in addresses, `r/` in flag reasons and many other abbreviations.
+* Duplicate-field and strict date validation stay unchanged. Guessing whether a prefix was meant as text could store a mistyped date or a pasted second field as notes without any error.
+
+Instead, the error messages explain the limitation:
+
+* `Messages#getErrorMessageForDuplicatePrefixes` adds `MESSAGE_PREFIX_TEXT_HINT` on a new line, so every command's duplicate-field error suggests rewording prefix text. The first line still names the repeated prefixes.
+* `LogCommandParser` and `EditLessonCommandParser` call `ParserUtil#parseLessonDateWithNotesHint` for `date/`. It calls `parseLessonDate` and, on failure, throws a new `ParseException` with the original message, `MESSAGE_LESSON_DATE_TEXT_HINT` on a new line, and the original exception as its cause. Only the date call is wrapped, so index and content errors have no date hint, and `findlesson` keeps using `parseLessonDate` without the hint.
+
+The UG asks users to reword such text, for example `care of` and `date and time`. Hints appear only when the input is invalid. A valid command with a different meaning, such as `edit 1 addr/Unit l/2`, which sets the level to `2`, cannot be detected; this is a documented limitation. A general quoting or escaping syntax for literal prefix text is a possible future enhancement.
+
 ### Searching lesson histories
 
 `FindLessonCommandParser` tokenizes `from/` and `to/` after normalizing Unicode whitespace.
@@ -286,6 +304,12 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 `Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the level and subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
 
 `StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, unavailable saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
+
+### Listing students without recorded lessons
+
+`AddressBookParser` routes `unlogged` to `UnloggedCommandParser`, which accepts only Unicode whitespace as arguments. `UnloggedCommand` applies an empty-history predicate through `Model#updateFilteredPersonList`, replacing the previous filter over the full backing collection. It does not mutate students or save data. An undated lesson still makes a history nonempty. The existing `FilteredList` responds to immutable student replacements, so logging a first lesson removes its student automatically; displayed indexes are recalculated by the existing list. The normal `CommandResult` panel rules retain a just-logged student outside the filter and clear the list highlight, as with `unflag` in a flagged view.
+
+`UnloggedCommandTest`, `UnloggedCommandParserTest`, `UnloggedCommandIntegrationTest` and `PersonListPanelTest` cover empty/one/many results, dated and legacy history, filter replacement/restoration, read-only operation, invalid arguments, logging with displayed indexes, persistence and failed-save rollback. Summary totals continue to use the complete collection.
 
 ### Finding students by name, subject and level
 
@@ -357,6 +381,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.5) | tutor | search a student's lessons by topic or date range | find when a topic was covered and review work over a period |
 | `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
 | `* *` | No | Implemented (v1.5) | tutor | see total students and lesson records and each student's lesson count | review my recorded workload and spot students without lessons |
+| `* *` | No | Implemented (v1.5) | tutor | list students with no recorded lessons | identify whose lesson records I need to follow up on |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
 | `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
 | `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
@@ -1016,7 +1041,27 @@ Use a separate test directory containing two fictional students. Enter the follo
 
 Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
 
+### Listing students without recorded lessons
+
+Use a separate test folder containing a saved empty address book, then add Amy Tan and Ben Lim with different phone numbers. Log one lesson for Amy.
+
+1. Enter `find amy`, then `unlogged`. Expected: only Ben is displayed as student 1, with `Listed 1 student with no recorded lessons.`.
+1. Enter `summary`. Expected: totals for both students and Amy's lesson, with only Ben still displayed. Try `unlogged 1`; the parameter error keeps this list.
+1. Enter `view 1`, then `log 1 c/Algebra`. Expected: Ben's panel shows his new lesson, no card is highlighted, and the filtered student list becomes empty. Amy's lesson is unchanged.
+1. Enter `list`. Expected: both students return. Restart: both remain visible, since the filter is not persisted. `unlogged` now reports no matches.
+
 ### Saving data
+
+#### Preventing concurrent copies
+
+Use a separate test folder with a valid `data/addressbook.json` containing `{"persons": []}`.
+
+1. Launch TutorLah and add Ben Lim, but leave that copy open.
+1. From the same working folder, launch the same JAR again. Expected: the second copy reports that another copy is already using the data folder and exits without showing the main window or changing the JSON file.
+1. In the first copy, add Amy Tan and exit. Expected: both students are saved.
+1. Launch TutorLah again. Expected: it starts normally and lists both students. The presence of `data/.tutorlah.lock` does not block startup after the first process releases its operating-system lock.
+
+`ApplicationLockTest` covers unavailable and failed lock attempts and verifies that their channels are closed. `MainAppTest` acquires the same folder lock from two application objects, verifies that the second initialization creates no logic, releases the first lock and verifies that a new application can start. `PersonListPanelTest` verifies that the failure-only UI reports the problem without showing the main window.
 
 #### Recovering from a failed save
 
@@ -1118,7 +1163,7 @@ add n/Alicia Lim p/81230003 addr/30 Example Street l/JC1 sub/H2 Math
 1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students. To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`. The hint appears because the search used names only; `find sub/chemistry` gives the message without it. The empty panel offers both `list` and the add-command format and example.
 1. Enter `find sub/math`. Expected: all three students, with `Found 3 students.`, because `E-Math`, `A-Math` and `H2 Math` all contain `math`.
 1. Enter `find sub/math l/sec`. Expected: only the two Wei students. Then enter `find tan l/4`. Expected: only `Tan Wei Jie`, combining a bare name keyword with a level.
-1. Enter `find sub/math sub/h2`. Expected: `Multiple values specified for the following single-valued field(s): sub/` and the previous results stay displayed. Enter `find l/`. Expected: the level constraint message, also without changing the displayed list.
+1. Enter `find sub/math sub/h2`. Expected: `Multiple values specified for the following single-valued field(s): sub/`, then the hint to reword prefix text, and the previous results stay displayed. Enter `find l/`. Expected: the level constraint message, also without changing the displayed list.
 1. Enter `list`. Expected: `Listed 3 students.` and all three students in their original order, with Alicia numbered 3. Press Alicia's card once: her empty-history message appears and her card is highlighted.
 1. Enter `find WEI`, then exit and restart. Expected: all three students return; searching did not remove hidden students or persist the filter.
 
@@ -1166,7 +1211,11 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 1. Log `Vectors` for a test student, then `log INDEX c/Surds date/DD/MM/YYYY` with yesterday's date, and view the student.
    Expected: `Vectors` is listed first with today's date, then `Surds` with yesterday's date. Enter `deletelesson INDEX 2`: `Surds` is deleted.
 1. Try `date/` with tomorrow's date, `31/02/2026`, `2026-10-20`, `1/1/-2026`, `31/12/1999` and an empty value.
-   Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...`. No lesson is added.
+   Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...` followed by `If "date/" was part of your lesson notes, please reword it, for example "date and time".` No lesson is added.
+1. Enter `log INDEX c/Worksheet collected c/o Mum` and `log INDEX c/Revised date/time conversions`.
+   Expected: the first gives the repeated `c/` error with the hint to reword prefix text, and the second gives the date error with the `date/` hint. No lesson is added. Then enter `log INDEX c/Worksheet collected care of Mum`: the lesson is logged as typed.
+1. Enter `findlesson INDEX from/31/02/2026`.
+   Expected: only the lesson-date message, without the `date/` notes hint.
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
