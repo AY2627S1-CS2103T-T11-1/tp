@@ -32,6 +32,9 @@ public class NameTest {
         assertFalse(Name.isValidName("12345")); // numbers only
         assertFalse(Name.isValidName("peter the 2nd")); // contains a digit
         assertFalse(Name.isValidName("a".repeat(101))); // longer than 100 characters
+        assertFalse(Name.isValidName("-")); // no letters
+        assertFalse(Name.isValidName("...")); // no letters
+        assertFalse(Name.isValidName("- -")); // no letters
 
         // valid name
         assertTrue(Name.isValidName("peter jack")); // alphabets only

@@ -119,7 +119,7 @@ Adds a student to the end of the student list.
 Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 
 * All five fields are required.
-* `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar`, `Muthu a/l Raju` and `Siti a/p Ahmad` work.
+* `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with at least one letter and no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar`, `Muthu a/l Raju` and `Siti a/p Ahmad` work.
 * The address prefix is `addr/`, not `a/`, so `a/l` and `a/p` in a name are kept as part of the name. If you type `a/` and leave out `addr/`, the error message reminds you to use `addr/`.
 * `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
