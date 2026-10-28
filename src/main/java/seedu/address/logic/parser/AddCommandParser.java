@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
@@ -35,7 +36,7 @@ public class AddCommandParser implements Parser<AddCommand> {
             + " and " + PREFIX_SUBJECT + ".";
 
     private static final String OLD_ADDRESS_PREFIX = "a/";
-    private static final Pattern PREFIX_LIKE_TOKEN = Pattern.compile("(?U)(?<!\\S)[A-Za-z]+/");
+    private static final Pattern PREFIX_LIKE_TOKEN = Pattern.compile("(?U)(?<=\\s)[A-Za-z]+/");
 
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
@@ -56,9 +57,9 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         argMultimap.verifyNoDuplicatePrefixesFor(
                 PREFIX_NAME, PREFIX_PHONE, PREFIX_ADDRESS, PREFIX_LEVEL, PREFIX_SUBJECT);
-        Name name = parseField(argMultimap.getValue(PREFIX_NAME).get(), ParserUtil::parseName);
+        Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = parseField(argMultimap.getValue(PREFIX_PHONE).get(), ParserUtil::parsePhone);
-        Address address = parseField(argMultimap.getValue(PREFIX_ADDRESS).get(), ParserUtil::parseAddress);
+        Address address = ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get());
         Level level = parseField(argMultimap.getValue(PREFIX_LEVEL).get(), ParserUtil::parseLevel);
         Subject subject = parseField(argMultimap.getValue(PREFIX_SUBJECT).get(), ParserUtil::parseSubject);
 
@@ -67,20 +68,22 @@ public class AddCommandParser implements Parser<AddCommand> {
         return new AddCommand(person);
     }
 
-    /** Parses a field normally, adding conditional prefix guidance only after validation fails. */
+    /** Adds guidance only for an invalid slash-restricted field with a valid value before the extra token. */
     private <T> T parseField(String value, FieldParser<T> parser) throws ParseException {
         try {
             return parser.parse(value);
         } catch (ParseException e) {
             Matcher matcher = PREFIX_LIKE_TOKEN.matcher(value);
             while (matcher.find()) {
-                String candidate = matcher.group();
-                boolean isSupported = Stream.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_ADDRESS, PREFIX_LEVEL, PREFIX_SUBJECT)
-                        .anyMatch(prefix -> prefix.getPrefix().equals(candidate));
-                if (!isSupported) {
-                    throw new ParseException(e.getMessage() + "\n"
-                            + String.format(MESSAGE_UNSUPPORTED_PREFIX_HINT, candidate), e);
+                // Recognised prefixes have already been separated by the tokenizer.
+                String precedingValue = StringUtil.stripUnicodeWhitespace(value.substring(0, matcher.start()));
+                try {
+                    parser.parse(precedingValue);
+                } catch (ParseException invalidPrecedingValue) {
+                    continue;
                 }
+                throw new ParseException(e.getMessage() + "\n"
+                        + String.format(MESSAGE_UNSUPPORTED_PREFIX_HINT, matcher.group()), e);
             }
             throw e;
         }

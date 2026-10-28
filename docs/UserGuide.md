@@ -125,9 +125,11 @@ Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 20 characters of letters, digits and spaces, such as `Sec 3` or `JC1`.
 * `SUBJECT` is 1 to 50 characters of letters, digits, spaces and hyphens, such as `E-Math`, `Physics` or `H2 Chemistry`.
-* If an invalid field contains unsupported prefix-like text, such as `sub/Math t/friend`, the field error
-  adds `If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.` Valid slash-containing
-  names and addresses are kept; this hint does not introduce extra fields or change validation.
+* If a phone, level or subject fails validation, a separate prefix-like token after an otherwise valid
+  value, such as `sub/Math t/friend`, adds the hint
+  `If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
+  `sub/Physics/Chemistry` and invalid names or addresses keep their normal errors. This hint does not
+  introduce extra fields or change validation.
 * A student with the same phone number and the same name as an existing student, ignoring case, is a duplicate and is rejected with `This student already exists in the list.`
 
 Examples:

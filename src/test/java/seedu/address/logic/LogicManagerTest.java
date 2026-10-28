@@ -41,6 +41,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Subject;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -79,6 +80,14 @@ public class LogicManagerTest {
         assertParseException("add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend",
                 Subject.MESSAGE_CONSTRAINTS + "\n"
                         + String.format(AddCommandParser.MESSAGE_UNSUPPORTED_PREFIX_HINT, "t/"));
+        for (String subject : List.of("Physics/Chemistry", "Math/Science", "Math! t/friend")) {
+            assertParseException("add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/" + subject,
+                    Subject.MESSAGE_CONSTRAINTS);
+            assertEquals(before, model.getAddressBook());
+            assertArrayEquals(savedBefore, Files.readAllBytes(dataFile));
+        }
+        assertParseException("add n/Ramesh s/o Kumar2 p/81230015 addr/6 St l/Sec 3 sub/Math",
+                Name.MESSAGE_CONSTRAINTS);
 
         assertEquals(before, model.getAddressBook());
         assertEquals(List.of(visibleBefore), model.getFilteredPersonList());

@@ -278,9 +278,11 @@ Instead, the error messages explain the limitation:
 
 The UG asks users to reword such text, for example `care of` and `date and time`. Hints appear only when the input is invalid. A valid command with a different meaning, such as `edit 1 addr/Unit l/2`, which sets the level to `2`, cannot be detected; this is a documented limitation. A general quoting or escaping syntax for literal prefix text is a possible future enhancement.
 
-`AddCommandParser` also preserves each field's validation error and cause, appending conditional guidance
-when that failing value contains an unsupported ASCII-letter prefix at its start or after Unicode
-whitespace. Valid slash text is not scanned or rejected, and missing/duplicate fields retain their errors.
+`AddCommandParser` appends conditional guidance to invalid phones, levels and subjects only when an
+unsupported ASCII-letter prefix follows Unicode whitespace and an otherwise valid field value.
+The existing field parser validates that preceding value. Names and addresses permit slashes and keep
+their normal errors. Parsing, validation and missing/duplicate-field handling remain unchanged; an added
+hint preserves the original exception as its cause.
 
 ### Searching lesson histories
 

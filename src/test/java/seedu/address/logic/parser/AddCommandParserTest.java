@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -60,7 +61,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, " sub/Math t/friend" + LEVEL_DESC_BOB + ADDRESS_DESC_BOB
                 + PHONE_DESC_BOB + NAME_DESC_BOB, Subject.MESSAGE_CONSTRAINTS + "\n" + hint);
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
-                + " sub/x/extra", Subject.MESSAGE_CONSTRAINTS + "\n"
+                + " sub/Math x/extra", Subject.MESSAGE_CONSTRAINTS + "\n"
                 + String.format(AddCommandParser.MESSAGE_UNSUPPORTED_PREFIX_HINT, "x/"));
 
         ParseException error = assertThrows(ParseException.class, () -> parser.parse(NAME_DESC_BOB
@@ -69,18 +70,35 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextInOtherInvalidFields_addsHintToFirstError() {
+    public void parse_prefixLikeText_respectsFieldRulesAndFirstError() {
         String hint = "\n" + String.format(AddCommandParser.MESSAGE_UNSUPPORTED_PREFIX_HINT, "x/");
         assertParseFailure(parser, " n/Bob x/1" + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
-                + SUBJECT_DESC_BOB, Name.MESSAGE_CONSTRAINTS + hint);
+                + SUBJECT_DESC_BOB, Name.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, NAME_DESC_BOB + " p/22222222 x/extra" + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
                 + SUBJECT_DESC_BOB, Phone.MESSAGE_CONSTRAINTS + hint);
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " addr/" + "A".repeat(Address.MAX_LENGTH)
-                + " x/extra" + LEVEL_DESC_BOB + SUBJECT_DESC_BOB, Address.MESSAGE_CONSTRAINTS + hint);
+                + " x/extra" + LEVEL_DESC_BOB + SUBJECT_DESC_BOB, Address.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + " l/Sec 3 x/extra"
                 + SUBJECT_DESC_BOB, Level.MESSAGE_CONSTRAINTS + hint);
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
                 + " sub/Math x/extra", Name.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_ordinarySlashTextOrInvalidPrecedingValue_omitsHint() {
+        for (String subject : new String[]{"Physics/Chemistry", "Math/Science", "x/extra", "Math! t/friend",
+            "Math! t/friend x/extra"}) {
+            ParseException error = assertThrows(ParseException.class, () -> parser.parse(NAME_DESC_BOB
+                    + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB + " sub/" + subject));
+            assertEquals(Subject.MESSAGE_CONSTRAINTS, error.getMessage());
+            assertNull(error.getCause());
+        }
+        assertParseFailure(parser, " n/Ramesh s/o Kumar2" + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                + SUBJECT_DESC_BOB, Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + " p/123 t/friend" + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
+                + SUBJECT_DESC_BOB, Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + " l/Sec! t/friend"
+                + SUBJECT_DESC_BOB, Level.MESSAGE_CONSTRAINTS);
     }
 
     @Test

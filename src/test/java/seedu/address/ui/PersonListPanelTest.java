@@ -1230,6 +1230,12 @@ public class PersonListPanelTest {
                 assertFeedback(root, "add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend",
                         Subject.MESSAGE_CONSTRAINTS + "\n"
                                 + "If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.", true);
+                for (String subject : List.of("Physics/Chemistry", "Math/Science", "Math! t/friend")) {
+                    assertFeedback(root, "add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/" + subject,
+                            Subject.MESSAGE_CONSTRAINTS, true);
+                }
+                assertFeedback(root, "add n/Ramesh s/o Kumar2 p/81230015 addr/6 St l/Sec 3 sub/Math",
+                        Name.MESSAGE_CONSTRAINTS, true);
                 assertEquals(2, model.getAddressBook().getPersonList().size());
                 assertDetail(root, "Amy", "Lessons (3)");
                 assertFeedback(root, "list", "Listed 2 students.", false);
