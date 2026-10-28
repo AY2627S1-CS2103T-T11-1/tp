@@ -515,7 +515,11 @@ An abrupt shutdown, such as force-quitting TutorLah before the replacement finis
 
 TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
 
-In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. A date in any other format makes the data file invalid.
+In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. Stored dates must be real dates from `2000-01-01` onwards. Earlier dates, impossible dates and dates in another format make the data file invalid. Existing future dates are kept when loading, so a system-clock correction does not make saved records unreadable; `log` and date changes through `editlesson` still reject future dates.
+
+On loading, names have surrounding whitespace removed and repeated whitespace collapsed to one space, as with `add` and `edit`. If this reveals two students with the same phone and name ignoring case, the file is invalid. TutorLah does not merge their lessons or flags; back up the file and correct the duplicate entries before restarting.
+
+Lessons are loaded in date order and displayed newest first, with undated lessons last. Records on the same date, and undated records, retain their saved order internally; the display reverses that order, as it does for normally logged lessons. No records are removed, even when content and dates repeat. Loading and read-only commands do not rewrite the original file; the normalized data is saved after the next successful data-changing command.
 
 A flagged student with a reason stores `"flag" : { "reason" : "REASON" }`; a flag without a reason stores `"flag" : { }`. An unflagged student has no `flag` property. Data files created before flags were introduced therefore continue to load every student as unflagged.
 
@@ -524,7 +528,7 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `unlogged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
+If the data file cannot be loaded, TutorLah shows a startup warning with its location and the loading error, such as `Phone numbers should be exactly 8 digits.`, and starts with an empty student list. Use the reported reason to identify what needs repairing; if the error has no explanation, the warning asks you to check that the file is readable and contains valid student data. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `unlogged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
 Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
@@ -537,7 +541,13 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorLah home folder.
+**A**: Install TutorLah on the other computer, then:
+
+1. Close TutorLah on both computers.
+1. Find `data/addressbook.json` in the working folder from which you launched the old copy.
+1. In the working folder from which you will launch the new copy, create a `data/` directory if it does not exist. With the Quick start instructions, this is the folder containing the JAR. A fresh launch that only displays sample students does not create `addressbook.json`.
+1. Copy the old `addressbook.json` into that `data/` directory, keeping the filename. If a destination file already exists, back it up before replacing it. Copy the file while TutorLah is closed so that a running session cannot overwrite the transferred data.
+1. Start TutorLah from that same working folder. Use `list` and `view INDEX` to check that your students, lesson records and flags have loaded.
 
 --------------------------------------------------------------------------------------------------------------------
 

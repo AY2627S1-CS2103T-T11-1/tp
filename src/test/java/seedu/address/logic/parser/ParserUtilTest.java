@@ -125,6 +125,12 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseName_unicodeWhitespace_returnsSameNormalizedNameAsStorage() throws Exception {
+        assertEquals(new Name("Amy Tan"), ParserUtil.parseName("\u00a0Amy\u2003\tTan\u00a0"));
+        assertEquals(new Name("Amy Tan"), ParserUtil.parseName(" ".repeat(Name.MAX_LENGTH) + "Amy Tan"));
+    }
+
+    @Test
     public void parsePhone_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parsePhone((String) null));
     }

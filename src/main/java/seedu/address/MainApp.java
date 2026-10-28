@@ -138,8 +138,12 @@ public class MainApp extends Application {
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Saving is disabled for this session.");
+            String reason = Optional.ofNullable(e.getCause()).map(Throwable::getMessage)
+                    .filter(message -> !message.isBlank())
+                    .orElse("Check that the file is readable and contains valid student data.");
             startupWarning = "The student data file could not be loaded:\n"
                     + storage.getAddressBookFilePath().toAbsolutePath().normalize()
+                    + "\n\nReason: " + reason
                     + "\n\nThe original file has not been changed. No students were loaded, and changes in this "
                     + "session cannot be saved. You can still use help and exit normally.\n\n"
                     + JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED;
