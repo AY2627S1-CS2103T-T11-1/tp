@@ -42,7 +42,7 @@ public class AddCommandParser implements Parser<AddCommand> {
                 || !argMultimap.getPreamble().isEmpty()) {
             String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
             boolean usesOldAddressPrefix = argMultimap.getValue(PREFIX_ADDRESS).isEmpty()
-                    && args.matches("(?s).*(^|\\s)" + OLD_ADDRESS_PREFIX + ".*");
+                    && args.matches("(?Us).*(^|\\s)" + OLD_ADDRESS_PREFIX + ".*");
             throw new ParseException(usesOldAddressPrefix ? usage + "\n" + MESSAGE_ADDRESS_PREFIX_HINT : usage);
         }
 

@@ -36,7 +36,7 @@ public class FindCommandParser implements Parser<FindCommand> {
      */
     public FindCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        // The tokenizer only recognises a prefix after an ASCII space, so treat all whitespace the same way first.
+        // Search keywords treat all Unicode whitespace as word separators.
         String normalisedArgs = args.replaceAll(UNICODE_WHITESPACE_REGEX, " ");
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(normalisedArgs, PREFIX_NAME, PREFIX_SUBJECT, PREFIX_LEVEL);

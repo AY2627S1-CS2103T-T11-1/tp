@@ -6,7 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 27, 2026, for the split-view GUI with the student details panel (#155).
+Last updated: Oct 28, 2026, for command whitespace handling.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
 in the same PR that changes a decision, message or interface, and refresh
@@ -222,6 +222,11 @@ student.
 ---
 
 ## 3. Fields and validation
+
+Command words, indexes and prefix boundaries accept Unicode whitespace,
+including non-breaking spaces. Trim surrounding field whitespace but keep
+meaningful internal spacing and joiners. Pasted tabs and line breaks become
+spaces before the command box removes them; pasting never executes a command.
 
 | Field | Prefix | Accepted | Invalid-value message |
 |---|---|---|---|

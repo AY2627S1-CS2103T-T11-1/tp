@@ -5,6 +5,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.DeleteLessonCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -20,7 +21,7 @@ public class DeleteLessonCommandParser implements Parser<DeleteLessonCommand> {
     @Override
     public DeleteLessonCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        String[] indexes = args.trim().split("\\s+");
+        String[] indexes = StringUtil.stripUnicodeWhitespace(args).split("(?U)\\s+");
         if (indexes.length != 2) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteLessonCommand.MESSAGE_USAGE));
         }
