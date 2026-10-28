@@ -6,8 +6,7 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 28, 2026, for single-instance locking (#184), find search
-suggestions (#187), and case-insensitive command words (#185).
+Last updated: Oct 28, 2026, for find search suggestions (#187) and case-insensitive command words (#185).
 
 Do not update the "Last updated" line in feature PRs; keeping it stable avoids
 merge conflicts between concurrent branches.
