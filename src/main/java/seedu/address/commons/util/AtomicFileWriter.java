@@ -46,6 +46,8 @@ class AtomicFileWriter {
 
     /** Replaces the destination only if the filesystem supports an atomic move. */
     void replaceFile(Path temporaryFile, Path target) throws IOException {
+        // ATOMIC_MOVE ignores the other options; replacing an existing target is provider-specific.
+        // We rely on providers that support atomic replacement and do not fall back to a non-atomic write.
         Files.move(temporaryFile, target, ATOMIC_MOVE, REPLACE_EXISTING);
     }
 

@@ -74,7 +74,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `Tan Wei Ming`.
 
-* Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
+* Command words ignore uppercase/lowercase, so `list`, `LIST` and `LiSt` work the same way.
+  Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
 
 * Parameters with prefixes can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
@@ -84,7 +85,10 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 * Extraneous parameters for `help` and `exit` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
+* Non-breaking spaces copied from websites or documents work as separators
+  between the command word, indexes and prefixed fields, just like ordinary spaces.
+  Pasted tabs and line breaks become spaces rather than joining words. Paste one
+  command at a time, check it in the command box, then press Enter to run it.
 </box>
 
 ### Viewing help: `help`
@@ -180,6 +184,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 
 * At least one keyword or field is required. `find` on its own shows the invalid command format message and usage; the displayed list is unchanged.
 * Keywords typed before any prefix search names, as do the keywords after `n/`. `sub/` searches subjects and `l/` searches levels. `find tan`, `find n/tan` and `find tan n/wei` all search names.
+* Every word after `sub/` or `l/`, up to the next prefix, searches that field, so put name keywords first. `find ng sub/Physics` finds Chloe Ng taking Physics, while `find sub/Physics ng` looks for a subject containing both `Physics` and `ng`.
 * Matching ignores uppercase/lowercase. `find TAN` and `find sub/physics` match `Tan` and `Physics`.
 * Every keyword must occur somewhere in its field, in any order. With `Alex Tan` and `Ethan Tan` saved, `find tan` shows both students, while `find alex tan` shows only `Alex Tan`. `l/Sec 3` needs both `Sec` and `3` in the level.
 * When several fields are given, a student must match all of them. `find sub/Physics l/Sec 3` shows only Sec 3 students taking Physics.
@@ -188,7 +193,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no wildcard matching or spelling correction. Punctuation and accented characters must match as entered, ignoring case.
 * Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
 * Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
-* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels.
+* With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels. If moving the last words after `sub/` or `l/` to the names would find someone, the message adds `Words after sub/ or l/ search only that field. Did you mean: find ng sub/Physics?` with the suggested search.
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
 * Adding or editing a student also restores the full list. Viewing, logging and deleting use the current filter.
@@ -463,7 +468,9 @@ Format: `exit`
 
 TutorLah automatically saves after a successful command changes student or lesson data. Commands that only display or filter data, open help or exit do not rewrite the student data file. You do not need to save manually.
 
-If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry. Student data and preferences are written to a temporary file before replacing the previous file. If the write or replacement fails, the previous saved file is kept; a failed first save leaves no empty data file. Saving requires a folder that supports atomic file replacement.
+If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry. Student data and preferences are written to a temporary file before replacing the previous file. If the write or replacement fails, the previous saved file is kept; a failed first save leaves no empty data file. Saving requires a folder that supports atomic replacement of an existing file; otherwise, saving reports an error.
+
+An abrupt shutdown, such as force-quitting TutorLah before the replacement finishes, may leave a hidden `.tutorlah-*.tmp` file beside the data or preferences file. These temporary files are not loaded as student data and are not automatically removed on restart. After closing all copies of TutorLah, you may delete these temporary files; keep `addressbook.json` and `preferences.json`.
 
 ### Editing the data file
 

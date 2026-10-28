@@ -28,7 +28,7 @@ public class FindLessonCommandParser implements Parser<FindLessonCommand> {
     @Override
     public FindLessonCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        // The tokenizer recognises prefixes after ASCII spaces; pasted Unicode whitespace must work too.
+        // Search keywords treat all Unicode whitespace as word separators.
         String normalisedArgs = " " + args.replaceAll("(?U)\\s", " ");
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(normalisedArgs, PREFIX_FROM, PREFIX_TO);
         String[] preamble = arguments.getPreamble().split("\\s+", 2);

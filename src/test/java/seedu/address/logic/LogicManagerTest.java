@@ -59,6 +59,20 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_nbspFieldBoundaries_savesSeparateFieldsAndPreservesHistory() throws Exception {
+        logic.execute("add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math");
+        logic.execute("log 1\u00a0c/Quadratic\u00a0  inequalities date/21/10/2026");
+        logic.execute("edit 1 addr/New Rd\u00a0l/Sec 4");
+
+        Person student = model.getFilteredPersonList().getFirst();
+        assertEquals("New Rd", student.getAddress().value);
+        assertEquals("Sec 4", student.getLevel().value);
+        assertEquals("Quadratic\u00a0  inequalities", student.getLessons().getFirst().content);
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void execute_lessonSequences_returnsLatestStudentsHistory() throws Exception {
         model.addPerson(AMY);
         Person otherStudent = new PersonBuilder().withName("Ben Tan").withPhone("81234567").build();

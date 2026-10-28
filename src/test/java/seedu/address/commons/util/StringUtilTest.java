@@ -1,5 +1,6 @@
 package seedu.address.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -10,6 +11,16 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class StringUtilTest {
+
+    @Test
+    public void stripUnicodeWhitespace_preservesInternalWhitespaceAndJoiners() {
+        assertEquals("New\u00a0  Road", StringUtil.stripUnicodeWhitespace("\u0085\u00a0New\u00a0  Road\u3000"));
+        assertEquals("क्\u200dष 👩\u200d🏫", StringUtil.stripUnicodeWhitespace(" क्\u200dष 👩\u200d🏫 "));
+        assertEquals("\u200b", StringUtil.stripUnicodeWhitespace("\u200b"));
+        assertEquals("", StringUtil.stripUnicodeWhitespace(" \t\r\n\u00a0\u2003\u202f\u3000"));
+        assertEquals("", StringUtil.stripUnicodeWhitespace(""));
+        assertThrows(NullPointerException.class, () -> StringUtil.stripUnicodeWhitespace(null));
+    }
 
     @Test
     public void isBlankOrInvisible_nullText_throwsNullPointerException() {
