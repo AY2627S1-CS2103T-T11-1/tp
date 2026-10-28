@@ -636,6 +636,176 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
       Use case ends.
 
+**Use case: UC11 - Edit a lesson record**
+
+**Guarantees:** Only the chosen lesson record is changed. The student, their other lesson records, other students and the current student filter are kept.
+
+**MSS**
+
+1.  Tutor <u>views a student's lesson records (UC05)</u>.
+2.  Tutor requests to edit a specific lesson record, providing new content, a new date or both.
+3.  TutorLah updates the lesson, moves it to its place in date order if its date changed, and shows its old and current lesson numbers together with the updated record.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The student has no lesson records, or the given lesson index is invalid.
+
+    * 2b1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2c. Tutor provides neither new content nor a new date.
+
+    * 2c1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2d. The new content is blank or too long, or the new date is invalid or in the future.
+
+    * 2d1. TutorLah shows an error message describing the relevant rule.
+
+      Use case resumes at step 2.
+
+* 2e. The supplied content and date are the same as the lesson's existing details.
+
+    * 2e1. TutorLah informs Tutor that the lesson already has those details and makes no change.
+
+      Use case ends.
+
+**Use case: UC12 - Search a student's lesson records**
+
+**Guarantees:** No student or lesson data is changed. The displayed student list and its numbering are kept, and matching lessons retain their numbers from the student's complete history.
+
+**MSS**
+
+1.  Tutor views a student list.
+2.  Tutor requests to search a specific displayed student's lesson records, providing content keywords, an inclusive date range or both.
+3.  TutorLah shows the matching lesson records newest first with their complete-history lesson numbers, and opens the student's complete history in the details panel.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. Tutor provides no search criterion, provides a malformed date or duplicate date prefix, puts a keyword after a date, or gives a lower date after the upper date.
+
+    * 2b1. TutorLah shows an error message describing the expected search format or date rule.
+
+      Use case resumes at step 2.
+
+* 3a. The student has no lesson records.
+
+    * 3a1. TutorLah informs Tutor that no lessons have been logged for the student.
+
+      Use case ends.
+
+* 3b. The student has lesson records, but none matches every given content and date criterion.
+
+    * 3b1. TutorLah informs Tutor that no matching lesson records were found.
+
+      Use case ends.
+
+**Use case: UC13 - View the student and lesson summary**
+
+**Guarantees:** No student or lesson data is changed. The current student filter and displayed numbering are kept; totals cover the complete saved collection.
+
+**MSS**
+
+1.  Tutor requests to view the summary.
+2.  TutorLah shows the total number of students, the total number of lesson records and how many students have no lesson records.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. Tutor supplies an extra parameter.
+
+    * 1a1. TutorLah shows an error message with the expected format.
+
+      Use case resumes at step 1.
+
+* 2a. There are no students.
+
+    * 2a1. TutorLah explains that there are no students yet and suggests adding one.
+
+      Use case ends.
+
+**Use case: UC14 - Remove a student's follow-up flag**
+
+**Guarantees:** Only the selected student's flag and its reason are removed. Their details and lesson records, other students and the current student filter are kept.
+
+**MSS**
+
+1.  Tutor views a student list.
+2.  Tutor requests to remove the follow-up flag from a specific displayed student.
+3.  TutorLah removes the flag and reason, opens the student in the details panel and shows a confirmation.
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The given student index is invalid.
+
+    * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The student is not flagged.
+
+    * 2b1. TutorLah informs Tutor that no change was made.
+
+      Use case ends.
+
+* 3a. Tutor is viewing only flagged students.
+
+    * 3a1. The unflagged student leaves the displayed list but remains open in the details panel.
+
+      Use case ends.
+
+**Use case: UC15 - List students flagged for follow-up**
+
+**Guarantees:** No student or lesson data is changed. The results come from the complete saved collection and retain the students' original order.
+
+**MSS**
+
+1.  Tutor requests to view all students flagged for follow-up.
+2.  TutorLah shows the flagged students, numbers the results from 1 and reports how many were found.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. Tutor supplies an extra parameter.
+
+    * 1a1. TutorLah shows an error message.
+
+      Use case resumes at step 1.
+
+* 2a. No students are flagged.
+
+    * 2a1. TutorLah shows an empty list and explains how to show all students again.
+
+      Use case ends.
+
+* \*a. At any time after step 2, Tutor wants to see all students again.
+
+    * \*a1. Tutor <u>lists students (UC02)</u>.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 These are product requirements, not a claim that every target has been verified.
