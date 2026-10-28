@@ -24,13 +24,20 @@ public class Messages {
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+    /** Shown after a duplicate-field error, since prefix-like text in a value starts another field. */
+    public static final String MESSAGE_PREFIX_TEXT_HINT = "A recognised prefix after a space starts another field. "
+            + "If it was part of your text, please reword it.";
+    /** Shown after an invalid date in {@code log} or {@code editlesson}, where date/ may have been meant as notes. */
+    public static final String MESSAGE_LESSON_DATE_TEXT_HINT =
+            "If \"date/\" was part of your lesson notes, please reword it, for example \"date and time\".";
 
     /** Day, month and four-digit year, as Singapore users write dates, e.g. 18/10/2026. */
     public static final DateTimeFormatter LESSON_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/uuuu");
     public static final String UNDATED_LESSON = "(undated)";
 
     /**
-     * Returns an error message indicating the duplicate prefixes.
+     * Returns an error message indicating the duplicate prefixes, followed by a hint to reword text that
+     * contains one of them.
      */
     public static String getErrorMessageForDuplicatePrefixes(Prefix... duplicatePrefixes) {
         assert duplicatePrefixes.length > 0;
@@ -38,7 +45,7 @@ public class Messages {
         Set<String> duplicateFields =
                 Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
 
-        return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+        return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields) + "\n" + MESSAGE_PREFIX_TEXT_HINT;
     }
 
     /**

@@ -130,7 +130,7 @@ The helper dependencies are shown separately to keep the overview readable. Pale
 
 <a href="diagrams/ParserHelpers.png" no-validation><puml src="diagrams/ParserHelpers.puml" alt="Partial parser helper diagram showing tokenization for logging and shared validation for both lesson parsers" width="500" /></a>
 
-* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date.
+* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date; `log` and `editlesson` use `ParserUtil#parseLessonDateWithNotesHint`, described in [Prefix text inside values](#prefix-text-inside-values).
 * `DeleteLessonCommandParser` splits two positional indexes on whitespace, without using the tokenizer. It shares `ParserUtil`'s index validation, using the appropriate student- or lesson-index error message.
 
 The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
@@ -259,6 +259,22 @@ The command keeps each student's lessons in date order with one of two operation
 * If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `log` uses for a backdated lesson.
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
+
+### Prefix text inside values
+
+`ArgumentTokenizer` starts a new field at every prefix the command recognises when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `log 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `log 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
+
+We keep this rule for every command rather than special-casing lesson content:
+
+* It is the same rule for every command, so users learn one rule. Exceptions for `c/o` or `date/time` would invite the same request for `n/a` in addresses, `r/` in flag reasons and many other abbreviations.
+* Duplicate-field and strict date validation stay unchanged. Guessing whether a prefix was meant as text could store a mistyped date or a pasted second field as notes without any error.
+
+Instead, the error messages explain the limitation:
+
+* `Messages#getErrorMessageForDuplicatePrefixes` adds `MESSAGE_PREFIX_TEXT_HINT` on a new line, so every command's duplicate-field error suggests rewording prefix text. The first line still names the repeated prefixes.
+* `LogCommandParser` and `EditLessonCommandParser` call `ParserUtil#parseLessonDateWithNotesHint` for `date/`. It calls `parseLessonDate` and, on failure, throws a new `ParseException` with the original message, `MESSAGE_LESSON_DATE_TEXT_HINT` on a new line, and the original exception as its cause. Only the date call is wrapped, so index and content errors have no date hint, and `findlesson` keeps using `parseLessonDate` without the hint.
+
+The UG asks users to reword such text, for example `care of` and `date and time`. Hints appear only when the input is invalid. A valid command with a different meaning, such as `edit 1 addr/Unit l/2`, which sets the level to `2`, cannot be detected; this is a documented limitation. A general quoting or escaping syntax for literal prefix text is a possible future enhancement.
 
 ### Searching lesson histories
 
@@ -1145,7 +1161,7 @@ add n/Alicia Lim p/81230003 addr/30 Example Street l/JC1 sub/H2 Math
 1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students. To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`. The hint appears because the search used names only; `find sub/chemistry` gives the message without it. The empty panel offers both `list` and the add-command format and example.
 1. Enter `find sub/math`. Expected: all three students, with `Found 3 students.`, because `E-Math`, `A-Math` and `H2 Math` all contain `math`.
 1. Enter `find sub/math l/sec`. Expected: only the two Wei students. Then enter `find tan l/4`. Expected: only `Tan Wei Jie`, combining a bare name keyword with a level.
-1. Enter `find sub/math sub/h2`. Expected: `Multiple values specified for the following single-valued field(s): sub/` and the previous results stay displayed. Enter `find l/`. Expected: the level constraint message, also without changing the displayed list.
+1. Enter `find sub/math sub/h2`. Expected: `Multiple values specified for the following single-valued field(s): sub/`, then the hint to reword prefix text, and the previous results stay displayed. Enter `find l/`. Expected: the level constraint message, also without changing the displayed list.
 1. Enter `list`. Expected: `Listed 3 students.` and all three students in their original order, with Alicia numbered 3. Press Alicia's card once: her empty-history message appears and her card is highlighted.
 1. Enter `find WEI`, then exit and restart. Expected: all three students return; searching did not remove hidden students or persist the filter.
 
@@ -1193,7 +1209,11 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 1. Log `Vectors` for a test student, then `log INDEX c/Surds date/DD/MM/YYYY` with yesterday's date, and view the student.
    Expected: `Vectors` is listed first with today's date, then `Surds` with yesterday's date. Enter `deletelesson INDEX 2`: `Surds` is deleted.
 1. Try `date/` with tomorrow's date, `31/02/2026`, `2026-10-20`, `1/1/-2026`, `31/12/1999` and an empty value.
-   Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...`. No lesson is added.
+   Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...` followed by `If "date/" was part of your lesson notes, please reword it, for example "date and time".` No lesson is added.
+1. Enter `log INDEX c/Worksheet collected c/o Mum` and `log INDEX c/Revised date/time conversions`.
+   Expected: the first gives the repeated `c/` error with the hint to reword prefix text, and the second gives the date error with the `date/` hint. No lesson is added. Then enter `log INDEX c/Worksheet collected care of Mum`: the lesson is logged as typed.
+1. Enter `findlesson INDEX from/31/02/2026`.
+   Expected: only the lesson-date message, without the `date/` notes hint.
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.

@@ -116,6 +116,19 @@ ask the team. Do not guess.
 Command words ignore case, so `list`, `LIST` and `LiSt` select the same command.
 Prefixes remain case-sensitive and must be typed in lowercase as documented.
 
+**Prefix text inside values (#174, #175):** a prefix the command recognises
+starts a new field wherever it follows whitespace, in every command; values
+cannot contain it after a space. We do not special-case `c/o` or `date/time`
+or guess intent. Instead, `Messages#getErrorMessageForDuplicatePrefixes` adds
+`A recognised prefix after a space starts another field. If it was part of your text, please reword it.`
+on a new line to every duplicate-field error, and `log` and `editlesson` parse
+`date/` with `ParserUtil#parseLessonDateWithNotesHint`, which adds
+`If "date/" was part of your lesson notes, please reword it, for example "date and time".`
+on a new line and keeps the original exception as the cause. `findlesson` dates
+and index or content errors get no date hint. The UG suggests `care of` and
+`date and time`. Valid commands with a different meaning, such as
+`edit 1 addr/Unit l/2`, are a documented limitation; escaping is future work.
+
 **Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
 
 **Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the command changes no student data and does not attempt to save.

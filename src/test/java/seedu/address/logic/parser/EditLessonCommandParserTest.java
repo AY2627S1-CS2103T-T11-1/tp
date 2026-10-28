@@ -27,6 +27,8 @@ public class EditLessonCommandParserTest {
     private static final Index SECOND = Index.fromOneBased(2);
     private static final Index FIRST = Index.fromOneBased(1);
     private static final LocalDate OCT_21 = LocalDate.of(2026, 10, 21);
+    private static final String MESSAGE_DATE_WITH_HINT =
+            Lesson.MESSAGE_DATE_CONSTRAINTS + "\n" + Messages.MESSAGE_LESSON_DATE_TEXT_HINT;
 
     private final EditLessonCommandParser parser = new EditLessonCommandParser();
 
@@ -100,7 +102,30 @@ public class EditLessonCommandParserTest {
 
         // dates that do not exist, are in the wrong format or are before the earliest date
         for (String date : new String[]{"", "31/02/2026", "2026-10-21", "21/10/26", "1/1/-2026", "31/12/1999"}) {
-            assertParseFailure(parser, "1 1 date/" + date, Lesson.MESSAGE_DATE_CONSTRAINTS);
+            assertParseFailure(parser, "1 1 date/" + date, MESSAGE_DATE_WITH_HINT);
+        }
+    }
+
+    @Test
+    public void parse_prefixTextInContent_failureWithRewordingHint() {
+        // c/ and date/ inside the notes still start fields, so the errors suggest rewording
+        assertParseFailure(parser, "1 1 c/Notes collected c/o tutor",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT));
+        assertParseFailure(parser, "1 1 c/Revised date/time conversions", MESSAGE_DATE_WITH_HINT);
+    }
+
+    @Test
+    public void parse_nonDateErrors_omitDateHint() {
+        // the indexes and content are checked before the date, so their errors have no date hint
+        assertParseFailure(parser, "1 0 c/Revised date/time", MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+        assertParseFailure(parser, "1 1 c/  date/time", Lesson.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_rewordedNotes_success() {
+        for (String content : new String[]{"Notes collected care of tutor", "Revised date and time conversions"}) {
+            assertParseSuccess(parser, "1 1 c/" + content, new EditLessonCommand(FIRST, FIRST,
+                    descriptor(content, null)));
         }
     }
 
