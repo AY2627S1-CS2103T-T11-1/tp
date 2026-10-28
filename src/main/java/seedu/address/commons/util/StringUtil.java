@@ -13,6 +13,15 @@ import java.util.Arrays;
 public class StringUtil {
 
     /**
+     * Returns {@code text} without surrounding Unicode whitespace, including non-breaking spaces.
+     * Internal whitespace and format characters such as zero-width joiners are kept.
+     */
+    public static String stripUnicodeWhitespace(String text) {
+        requireNonNull(text);
+        return text.replaceAll("(?U)^\\s+|\\s+$", "");
+    }
+
+    /**
      * Returns true if {@code text} is empty or contains only Unicode whitespace and format characters.
      * Does not trim or modify the text.
      *

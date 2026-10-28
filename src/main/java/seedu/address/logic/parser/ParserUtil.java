@@ -43,7 +43,7 @@ public class ParserUtil {
      * @throws ParseException if the specified index is not a positive integer without leading zeros.
      */
     public static Index parseIndex(String oneBasedIndex) throws ParseException {
-        String trimmedIndex = oneBasedIndex.trim();
+        String trimmedIndex = StringUtil.stripUnicodeWhitespace(oneBasedIndex);
         if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex) || trimmedIndex.startsWith("0")) {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
@@ -76,7 +76,7 @@ public class ParserUtil {
         requireNonNull(commandUsage);
         requireNonNull(invalidIndexMessage);
 
-        String trimmedIndex = oneBasedIndex.trim();
+        String trimmedIndex = StringUtil.stripUnicodeWhitespace(oneBasedIndex);
         if (!trimmedIndex.matches("-?\\d+")) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, commandUsage));
         }
@@ -172,34 +172,11 @@ public class ParserUtil {
      */
     public static Flag parseFlagReason(String reason) throws ParseException {
         requireNonNull(reason);
-        String trimmedReason = stripUnicodeWhitespace(reason);
+        String trimmedReason = StringUtil.stripUnicodeWhitespace(reason);
         if (!Flag.isValidReason(trimmedReason)) {
             throw new ParseException(Flag.MESSAGE_REASON_CONSTRAINTS);
         }
         return new Flag(trimmedReason);
-    }
-
-    /**
-     * Removes Unicode whitespace, including non-breaking spaces, from both ends of {@code value}.
-     */
-    private static String stripUnicodeWhitespace(String value) {
-        int start = 0;
-        int end = value.length();
-        while (start < end) {
-            int codePoint = value.codePointAt(start);
-            if (!Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint)) {
-                break;
-            }
-            start += Character.charCount(codePoint);
-        }
-        while (start < end) {
-            int codePoint = value.codePointBefore(end);
-            if (!Character.isWhitespace(codePoint) && !Character.isSpaceChar(codePoint)) {
-                break;
-            }
-            end -= Character.charCount(codePoint);
-        }
-        return value.substring(start, end);
     }
 
     /**

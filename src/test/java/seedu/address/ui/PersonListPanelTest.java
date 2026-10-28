@@ -12,7 +12,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +41,9 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -54,6 +59,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.FindLessonCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ViewCommand;
@@ -94,6 +100,86 @@ public class PersonListPanelTest {
 
     @TempDir
     public Path temporaryFolder;
+
+    @Test
+    public void commandBox_clipboardPaste_preservesWordsAndUpdatesSeparateFields(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
+            MainWindow window = createClickableWindow(clickTestLogic(model, storage, directory), directory);
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            Map<DataFormat, Object> previousClipboard = new HashMap<>();
+            clipboard.getContentTypes().forEach(format -> previousClipboard.put(format, clipboard.getContent(format)));
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                TextField input = (TextField) root.lookup("#commandTextField");
+                assertFeedback(root, "edit 1 addr/New Rd\u00a0l/Sec 4",
+                        "Edited student: Amy; Phone: 81234567; Address: New Rd; Level: Sec 4; Subject: E-Math", false);
+                assertEquals("New Rd", model.getFilteredPersonList().getFirst().getAddress().value);
+                assertEquals("Sec 4", model.getFilteredPersonList().getFirst().getLevel().value);
+
+                for (String separator : List.of("\t", "\n", "\r\n", "\u0085", "\u2028", "\u2029")) {
+                    int count = model.getFilteredPersonList().get(1).getLessons().size();
+                    String pasted = "log 2 c/Quadratic" + separator + "inequalities";
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString(pasted);
+                    assertTrue(clipboard.setContent(content));
+                    input.clear();
+                    input.paste();
+                    assertEquals("log 2 c/Quadratic inequalities", input.getText());
+                    assertEquals(count, model.getFilteredPersonList().get(1).getLessons().size());
+                    input.fireEvent(new ActionEvent());
+                    assertEquals("", input.getText());
+                    assertEquals(count + 1, model.getFilteredPersonList().get(1).getLessons().size());
+                    TextArea result = (TextArea) root.lookup("#resultDisplay");
+                    assertEquals("Logged lesson for Ben on " + todayText() + ": Quadratic inequalities",
+                            result.getText());
+                }
+                assertFeedback(root, "log 1\u00a0c/Algebra",
+                        "Logged lesson for Amy on " + todayText() + ": Algebra", false);
+                try {
+                    assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+                } catch (Exception exception) {
+                    throw new AssertionError(exception);
+                }
+            } finally {
+                clipboard.setContent(previousClipboard);
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void commandBox_replacingText_keepsCaretUndoAndExplicitSubmission() throws Exception {
+        runOnJavaFxThread(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Done");
+            });
+            TextField input = (TextField) box.getRoot().lookup("#commandTextField");
+            input.setText("find old name");
+            input.selectRange(5, input.getLength());
+            input.replaceSelection("Amy\tTan");
+            assertEquals("find Amy Tan", input.getText());
+            assertEquals(input.getLength(), input.getCaretPosition());
+            assertTrue(executed.isEmpty());
+            input.undo();
+            assertEquals("find old name", input.getText());
+            input.redo();
+            assertEquals("find Amy Tan", input.getText());
+            input.fireEvent(new ActionEvent());
+            assertEquals(List.of("find Amy Tan"), executed);
+            assertEquals("", input.getText());
+
+            input.replaceText(0, 0, "log 1 c/New\u00a0  text क्\u200dष 👩\u200d🏫\r\nnext");
+            assertEquals("log 1 c/New\u00a0  text क्\u200dष 👩\u200d🏫 next", input.getText());
+            input.selectAll();
+            input.replaceSelection("\t\r\n");
+            assertEquals(" ", input.getText());
+        });
+    }
 
     @Test
     public void commandBox_findLesson_keepsNumbersAndSupportsEditing(@TempDir Path directory)

@@ -28,7 +28,7 @@ public class EditLessonCommandParser implements Parser<EditLessonCommand> {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_CONTENT, PREFIX_DATE);
 
-        String[] indexes = argMultimap.getPreamble().trim().split("\\s+");
+        String[] indexes = argMultimap.getPreamble().split("(?U)\\s+");
         if (indexes.length != 2) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditLessonCommand.MESSAGE_USAGE));
         }

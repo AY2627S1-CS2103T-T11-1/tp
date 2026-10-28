@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class ArgumentTokenizerTest {
@@ -13,6 +15,27 @@ public class ArgumentTokenizerTest {
     private final Prefix pSlash = new Prefix("p/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+
+    @Test
+    public void tokenize_unicodeBoundaries_preservesValuesAndRepeatedPrefixes() {
+        for (String separator : List.of(" ", "\t", "\r\n", "\u0085", "\u00a0", "\u2003", "\u202f", "\u3000")) {
+            ArgumentMultimap arguments = ArgumentTokenizer.tokenize(separator + "1" + separator
+                    + "p/First\u00a0  value" + separator + "^QSecond" + separator + "p/" + separator,
+                    pSlash, hatQ);
+            assertPreamblePresent(arguments, "1");
+            assertArgumentPresent(arguments, pSlash, "First\u00a0  value", "");
+            assertArgumentPresent(arguments, hatQ, "Second");
+        }
+    }
+
+    @Test
+    public void tokenize_nonWhitespaceAndUnrecognisedPrefixes_remainLiteral() {
+        String input = " p/Algebrap/notes\u200bp/more\u2060p/end q/unknown";
+        assertArgumentPresent(ArgumentTokenizer.tokenize(input, pSlash), pSlash,
+                "Algebrap/notes\u200bp/more\u2060p/end q/unknown");
+        assertPreamblePresent(ArgumentTokenizer.tokenize("p/no preceding separator", pSlash),
+                "p/no preceding separator");
+    }
 
     @Test
     public void tokenize_emptyArgsString_noValues() {

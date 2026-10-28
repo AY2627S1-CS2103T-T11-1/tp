@@ -1,6 +1,9 @@
 # TutorLah: context
 
-Last updated: Oct 28, 2026, for v1.5.
+Last updated: Oct 28, 2026, for find search suggestions (#187) and case-insensitive command words (#185).
+
+Do not update the "Last updated" line in feature PRs; keeping it stable avoids
+merge conflicts between concurrent branches.
 
 ## What it is
 
@@ -46,7 +49,8 @@ recorded about them, not building a new kind of app.
 - **Architecture:** UI, Logic, Model and Storage, connected through interfaces.
 - **Choosing by index:** `delete 3` targets the 3rd *displayed* student, the
   same as AB3's commands.
-- **Command style:** a command word, an index, then `prefix/value` parameters
+- **Command style:** a case-insensitive command word, an index, then lowercase
+  `prefix/value` parameters
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
 
@@ -90,6 +94,11 @@ formatting characters, such as non-breaking spaces and zero-width spaces.
 Commands and JSON loading use the same validation. Real text keeps its
 internal spaces and formatting, including joiners used in written languages
 and emoji sequences.
+
+Command words, indexes and prefixed fields can be separated by Unicode
+whitespace, including non-breaking spaces. Pasted tabs and line breaks become
+spaces so words do not join. Tutors check the pasted command and press Enter
+to run it; meaningful spacing inside addresses and lesson content is kept.
 
 ## MVP commands
 
@@ -155,7 +164,10 @@ given for that field, ignoring case and keyword order; partial words are
 accepted. Bare keywords and `n/` search names, `sub/` subjects and `l/`
 levels, and every given field must match, so a tutor can bring up all Sec 3
 Physics students at once. It searches all students each time and uses literal
-keywords without spelling correction.
+keywords without spelling correction. Every word after `sub/` or `l/` belongs
+to that field, so names go first; if a search such as `find sub/Physics ng`
+finds no one but `find ng sub/Physics` would, TutorLah suggests that search
+without changing the list (#187).
 Results keep their original order and are renumbered from 1. Commands and
 card clicks use these displayed indexes. `list` restores the full list.
 Adding or editing also restores it; viewing, logging and deleting students
