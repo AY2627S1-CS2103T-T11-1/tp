@@ -95,7 +95,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_invalidFieldWithoutUnsupportedToken_keepsOriginalError() {
-        for (String subject : new String[]{"Math!", "Maths+Physics", "sub/Math", "Math (x/extra)"}) {
+        for (String subject : new String[]{"Math!", "Maths@Physics", "sub/Math", "Math (x/extra)"}) {
             assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + ADDRESS_DESC_BOB + LEVEL_DESC_BOB
                     + " sub/" + subject, Subject.MESSAGE_CONSTRAINTS);
         }
