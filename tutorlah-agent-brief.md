@@ -387,6 +387,8 @@ accepted by the parser. Commands apply these errors consistently:
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.
 
+Student data and preferences are serialized completely, written to a unique temporary file beside the destination and replaced atomically. A write or replacement failure keeps the previous saved file; failed first saves leave no empty destination. Temporary files are cleaned up where possible. Abrupt termination may leave a hidden `.tutorlah-*.tmp` file that is not loaded or cleaned up on restart; it can be removed after closing all copies of TutorLah. Unsupported atomic replacement is a save error, with no non-atomic fallback. This does not add a second-instance lock or guarantee recovery from power loss.
+
 ---
 
 ## 6. Known gaps on `master` (Oct 15)

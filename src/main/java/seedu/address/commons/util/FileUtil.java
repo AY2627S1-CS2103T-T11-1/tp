@@ -44,11 +44,11 @@ public class FileUtil {
     }
 
     /**
-     * Writes given string to a file.
-     * Will create the file if it does not exist yet.
+     * Writes UTF-8 content to a sibling temporary file, then atomically replaces the destination.
+     * Creates missing parent directories. An unsupported atomic move fails without replacing the destination.
      */
     public static void writeToFile(Path file, String content) throws IOException {
-        Files.write(file, content.getBytes(CHARSET));
+        new AtomicFileWriter().write(file, content);
     }
 
 }
