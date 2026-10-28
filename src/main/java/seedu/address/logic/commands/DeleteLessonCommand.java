@@ -25,7 +25,7 @@ public class DeleteLessonCommand extends Command {
             + "Parameters: STUDENT_INDEX LESSON_INDEX (both positive integers without leading zeros)\n"
             + "Use view STUDENT_INDEX to check the current lesson numbers (newest first).\n"
             + "Example: " + COMMAND_WORD + " 2 1";
-    public static final String MESSAGE_DELETE_LESSON_SUCCESS = "Deleted lesson %1$d for %2$s: %3$s";
+    public static final String MESSAGE_DELETE_LESSON_SUCCESS = "Deleted lesson %1$d for %2$s %3$s: %4$s";
 
     private static final Logger logger = LogsCenter.getLogger(DeleteLessonCommand.class);
 
@@ -68,8 +68,10 @@ public class DeleteLessonCommand extends Command {
         model.setPerson(student, studentWithoutLesson);
         logger.fine("Removed lesson " + lessonIndex.getOneBased()
                 + " from displayed student " + studentIndex.getOneBased());
+        String lessonDate = Messages.formatLessonDate(deletedLesson);
+        String dateLabel = deletedLesson.getDate().isPresent() ? "(" + lessonDate + ")" : lessonDate;
         return new CommandResult(String.format(MESSAGE_DELETE_LESSON_SUCCESS,
-                lessonIndex.getOneBased(), student.getName(), deletedLesson), studentWithoutLesson);
+                lessonIndex.getOneBased(), student.getName(), dateLabel, deletedLesson), studentWithoutLesson);
     }
 
     /**

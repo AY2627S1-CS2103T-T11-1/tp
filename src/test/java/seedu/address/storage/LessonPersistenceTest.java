@@ -172,7 +172,7 @@ public class LessonPersistenceTest {
     public void restart_afterDeletingLesson_selectedOccurrenceRemovedOthersKept() throws Exception {
         startWith(new PersonBuilder(ALEX).withLessons("Algebra", "Geometry", "Algebra").build(),
                 new PersonBuilder(BEA).withLessons("Calculus").build());
-        assertEquals("Deleted lesson 1 for Alex Lim: Algebra",
+        assertEquals("Deleted lesson 1 for Alex Lim (undated): Algebra",
                 logic.execute("deletelesson 1 1").getFeedbackToUser());
         ReadOnlyAddressBook reloaded = restart();
         assertEquals(new PersonBuilder(ALEX).withLessons("Algebra", "Geometry").build(),
