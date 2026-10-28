@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -19,7 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
@@ -66,6 +71,28 @@ public class StudentDataLoadingTest {
     public void load_invalidPhone_reportsConstraintInStartupWarning() throws Exception {
         assertProtectedRecovery("{\"persons\":[" + studentJson("Amy Tan", "1234", "[]") + "]}",
                 Phone.MESSAGE_CONSTRAINTS);
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> load_malformedJson_reportsLocationWithoutQuotingStudentData() throws Exception {
+        String student = studentJson("Private Example", "81234567", "[]");
+        return Stream.of("{\"persons\":[\n" + student, "{\"persons\":[" + student + ",]}",
+                "\ufeff{\"persons\":[" + student + "]}").map(contents -> DynamicTest.dynamicTest(contents, () -> {
+                    String warning = assertProtectedRecovery(contents, "Reason: The file is not valid JSON (line ");
+                    assertTrue(Pattern.compile("Reason: The file is not valid JSON \\(line [1-9][0-9]*, "
+                            + "column [1-9][0-9]*\\)\\.").matcher(warning).find(), warning);
+                    assertSanitizedWarning(warning);
+                }));
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> load_invalidJsonStructure_showsSafeRecoveryGuidance() {
+        return Stream.of("{\"persons\":null}", "{}", "null", "[]",
+                "{\"persons\":\"Private Example 81234567\"}").map(contents -> DynamicTest.dynamicTest(contents, () -> {
+                    String warning = assertProtectedRecovery(contents,
+                            "Reason: Check that the file is readable and contains valid student data.");
+                    assertSanitizedWarning(warning);
+                }));
     }
 
     @Test
@@ -138,8 +165,10 @@ public class StudentDataLoadingTest {
     }
 
     @Test
-    public void initModelManager_errorWithoutMessage_showsRecoveryGuidance() {
-        for (Exception cause : new Exception[]{null, new IOException(), new IOException("   ")}) {
+    public void initModelManager_unrecognisedOrEmptyError_showsRecoveryGuidance() {
+        for (Exception cause : new Exception[]{null, new IOException(), new IOException("   "),
+            new IOException("Private Example 81234567 [Source: file contents]"),
+            new IllegalValueException(null), new IllegalValueException("   ")}) {
             StorageManager storage = new StorageManager(
                     new JsonAddressBookStorage(temporaryFolder.resolve("students.json")),
                     new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))) {
@@ -155,6 +184,30 @@ public class StudentDataLoadingTest {
             assertTrue(warning.contains("Reason: Check that the file is readable and contains valid student data."));
             assertFalse(warning.contains("null"));
             assertTrue(warning.contains(JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED));
+            assertSanitizedWarning(warning);
+        }
+    }
+
+    @Test
+    public void initModelManager_jsonErrorWithoutKnownLocation_omitsInvalidCoordinatesAndRawMessage() {
+        for (JsonLocation location : new JsonLocation[]{null, JsonLocation.NA, new JsonLocation(null, -1L, 1, -1)}) {
+            StorageManager storage = new StorageManager(
+                    new JsonAddressBookStorage(temporaryFolder.resolve("students.json")),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))) {
+                @Override
+                public Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException {
+                    throw new DataLoadingException(new JsonParseException(null,
+                            "Private Example 81234567 [Source: file contents]", location));
+                }
+            };
+            MainApp app = new MainApp();
+            app.initModelManager(storage, new UserPrefs());
+
+            String warning = app.getStartupWarning().orElseThrow();
+            assertTrue(warning.contains("Reason: The file is not valid JSON.\n"), warning);
+            assertFalse(warning.contains("line -1"));
+            assertFalse(warning.contains("column -1"));
+            assertSanitizedWarning(warning);
         }
     }
 
@@ -189,7 +242,7 @@ public class StudentDataLoadingTest {
         assertArrayEquals(original, Files.readAllBytes(destination));
     }
 
-    private void assertProtectedRecovery(String contents, String reason) throws Exception {
+    private String assertProtectedRecovery(String contents, String reason) throws Exception {
         Path file = Files.createTempDirectory(temporaryFolder, "recovery-").resolve("students.json");
         Files.writeString(file, contents);
         byte[] original = Files.readAllBytes(file);
@@ -220,6 +273,14 @@ public class StudentDataLoadingTest {
         new LogicManager(repairedModel, restarted).execute(
                 "add n/Ben Lim p/81230002 addr/2 Example Street l/Sec 3 sub/Math");
         assertEquals(repairedModel.getAddressBook(), restarted.readAddressBook().orElseThrow());
+        return warning;
+    }
+
+    private void assertSanitizedWarning(String warning) {
+        for (String internalText : List.of("[Source:", "seedu.address", "java.lang", "NullPointerException",
+            "JsonSerializableAddressBook", "Private Example", "81234567", "0xfeff")) {
+            assertFalse(warning.contains(internalText), warning);
+        }
     }
 
     private StorageManager storage(Path file) {
