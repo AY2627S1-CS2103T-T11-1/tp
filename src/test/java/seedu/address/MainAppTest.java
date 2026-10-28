@@ -7,10 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -88,7 +92,7 @@ public class MainAppTest {
         try {
             secondApp.init();
             assertTrue(secondApp.getStartupFailure().orElseThrow().contains("already using this data folder"));
-            assertTrue(secondApp.ui == null);
+            assertNotNull(secondApp.ui);
             assertTrue(secondApp.logic == null);
         } finally {
             secondApp.stop();
@@ -114,7 +118,7 @@ public class MainAppTest {
 
         app.init();
         assertTrue(app.getStartupFailure().orElseThrow().contains("could not secure exclusive access"));
-        assertTrue(app.ui == null);
+        assertNotNull(app.ui);
         assertTrue(app.logic == null);
         app.stop();
     }
@@ -140,6 +144,28 @@ public class MainAppTest {
         } finally {
             restartedApp.stop();
         }
+    }
+
+    @Test
+    public void stop_lockReleaseFails_logsFailureAndClearsLock() throws Exception {
+        Path file = temporaryFolder.resolve("data").resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        AtomicInteger closeAttempts = new AtomicInteger();
+        MainApp app = new MainApp(preferences, file) {
+            @Override
+            Optional<? extends Closeable> tryAcquireDataFolderLock() {
+                return Optional.of(() -> {
+                    closeAttempts.incrementAndGet();
+                    throw new IOException("simulated release failure");
+                });
+            }
+        };
+
+        app.init();
+        app.stop();
+        app.stop();
+
+        assertEquals(1, closeAttempts.get());
     }
 
     @Test

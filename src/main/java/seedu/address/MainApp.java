@@ -2,6 +2,7 @@ package seedu.address;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,8 +10,6 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -54,7 +53,7 @@ public class MainApp extends Application {
     private final Path addressBookFilePath;
     private String startupWarning;
     private String startupFailure;
-    private ApplicationLock applicationLock;
+    private Closeable applicationLock;
 
     /** Creates the application with its normal preference and student data paths. */
     public MainApp() {
@@ -73,6 +72,7 @@ public class MainApp extends Application {
         super.init();
 
         if (!acquireApplicationLock()) {
+            ui = new UiManager(startupFailure);
             return;
         }
 
@@ -96,7 +96,7 @@ public class MainApp extends Application {
     private boolean acquireApplicationLock() {
         startupFailure = null;
         try {
-            Optional<ApplicationLock> acquiredLock = ApplicationLock.tryAcquire(addressBookFilePath);
+            Optional<? extends Closeable> acquiredLock = tryAcquireDataFolderLock();
             if (acquiredLock.isEmpty()) {
                 startupFailure = ALREADY_RUNNING_MESSAGE;
                 logger.warning(startupFailure);
@@ -110,6 +110,11 @@ public class MainApp extends Application {
             logger.severe(startupFailure + "\n" + StringUtil.getDetails(e));
             return false;
         }
+    }
+
+    /** Tries to acquire exclusive use of the student data folder. */
+    Optional<? extends Closeable> tryAcquireDataFolderLock() throws IOException {
+        return ApplicationLock.tryAcquire(addressBookFilePath);
     }
 
     /**
@@ -188,12 +193,6 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        if (startupFailure != null) {
-            UiManager.showAlertDialogAndWait(primaryStage, AlertType.ERROR, "TutorLah could not start",
-                    "TutorLah is already open or its data folder is unavailable", startupFailure);
-            Platform.exit();
-            return;
-        }
         logger.info("Starting TutorLah " + MainApp.VERSION);
         ui.start(primaryStage);
     }

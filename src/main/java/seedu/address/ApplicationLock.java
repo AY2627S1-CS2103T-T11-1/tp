@@ -1,5 +1,6 @@
 package seedu.address;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -10,7 +11,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 /** Holds an operating-system lock that allows only one TutorLah instance per data folder. */
-final class ApplicationLock implements AutoCloseable {
+final class ApplicationLock implements Closeable {
+
+    @FunctionalInterface
+    interface LockAttempt {
+        FileLock tryLock(FileChannel channel) throws IOException;
+    }
 
     static final String LOCK_FILE_NAME = ".tutorlah.lock";
 
@@ -28,13 +34,18 @@ final class ApplicationLock implements AutoCloseable {
      * @return an acquired lock, or an empty result when another instance holds it
      */
     static Optional<ApplicationLock> tryAcquire(Path dataFilePath) throws IOException {
+        return tryAcquire(dataFilePath, FileChannel::tryLock);
+    }
+
+    /** Tries to acquire the application lock using {@code lockAttempt}. */
+    static Optional<ApplicationLock> tryAcquire(Path dataFilePath, LockAttempt lockAttempt) throws IOException {
         Path dataFolder = dataFilePath.toAbsolutePath().normalize().getParent();
         Files.createDirectories(dataFolder);
         Path lockFile = dataFolder.resolve(LOCK_FILE_NAME);
         FileChannel channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 
         try {
-            FileLock lock = channel.tryLock();
+            FileLock lock = lockAttempt.tryLock(channel);
             if (lock == null) {
                 channel.close();
                 return Optional.empty();
