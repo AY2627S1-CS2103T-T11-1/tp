@@ -128,6 +128,7 @@ Added in v1.5:
 | Remove a flag | `unflag INDEX` | `unflag 2` |
 | List flagged students | `flagged` | `flagged` |
 | Summarize students and lessons | `summary` | `summary` |
+| List students without lesson records | `unlogged` | `unlogged` |
 | Search a student's lessons | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | `findlesson 2 algebra from/01/10/2026` |
 
 `findlesson` searches one displayed student's lesson content, an inclusive date
@@ -138,6 +139,8 @@ numbers can change after a lesson mutation. The search is a one-off result and
 changes neither stored data nor the student filter.
 
 `summary` counts all students, all lesson occurrences and students with no lessons, even when `find` or `flagged` filters the visible list. It keeps that filter and shows a single short paragraph explaining the totals and any students without records. Cards show a lesson count and the most recent recorded date, or `No lessons yet` / `N lessons (undated)` where appropriate. The line refreshes when lesson records change. These values are derived from existing data and introduce no JSON fields.
+
+`unlogged` lists students with empty lesson histories across the complete collection, including unflagged students. An undated record still counts as history. Matches retain their original order and are renumbered from 1; logging a first lesson removes the student and renumbers the remaining matches. The details panel still shows the just-logged student, without highlighting another card. `list` restores all students, other list filters replace this filter, and `summary` still counts everyone. It takes no arguments, changes no data and does not save; the filter is not persisted.
 
 Flags mark unresolved follow-up without changing student identity or lesson
 history. The reason is optional and can be replaced by flagging again with a

@@ -16,7 +16,7 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
-* OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries and per-student lesson counts.
+* OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries, per-student lesson counts and listing students without recorded lessons.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, its review fixes, tests and documentation.
@@ -287,6 +287,12 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 `StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, unavailable saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
 
+### Listing students without recorded lessons
+
+`AddressBookParser` routes `unlogged` to `UnloggedCommandParser`, which accepts only Unicode whitespace as arguments. `UnloggedCommand` applies an empty-history predicate through `Model#updateFilteredPersonList`, replacing the previous filter over the full backing collection. It does not mutate students or save data. An undated lesson still makes a history nonempty. The existing `FilteredList` responds to immutable student replacements, so logging a first lesson removes its student automatically; displayed indexes are recalculated by the existing list. The normal `CommandResult` panel rules retain a just-logged student outside the filter and clear the list highlight, as with `unflag` in a flagged view.
+
+`UnloggedCommandTest`, `UnloggedCommandParserTest`, `UnloggedCommandIntegrationTest` and `PersonListPanelTest` cover empty/one/many results, dated and legacy history, filter replacement/restoration, read-only operation, invalid arguments, logging with displayed indexes, persistence and failed-save rollback. Summary totals continue to use the complete collection.
+
 ### Finding students by name, subject and level
 
 `AddressBookParser` routes `find` input to `FindCommandParser`, which tokenizes the `n/`, `sub/` and `l/` prefixes. It first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space, because `ArgumentTokenizer` only recognises a prefix after an ASCII space; otherwise a pasted `sub/math l/sec` with a non-breaking space would read `l/sec` as more subject keywords. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on Unicode whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
@@ -357,6 +363,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 | `* *` | No | Implemented (v1.5) | tutor | search a student's lessons by topic or date range | find when a topic was covered and review work over a period |
 | `* *` | No | Implemented (v1.5) | tutor | flag a student who needs follow-up and optionally note why | keep unresolved concerns visible and find those students again quickly |
 | `* *` | No | Implemented (v1.5) | tutor | see total students and lesson records and each student's lesson count | review my recorded workload and spot students without lessons |
+| `* *` | No | Implemented (v1.5) | tutor | list students with no recorded lessons | identify whose lesson records I need to follow up on |
 | `* *` | No | Proposed | tutor | archive a former student | remove them from the active list without losing their history |
 | `*` | No | Proposed | tutor | store multiple contact methods for a student | contact the appropriate person when needed |
 | `*` | No | Proposed | tutor | manage multiple weekly slots, one-off lessons, and rescheduling | represent lesson arrangements more accurately |
@@ -1015,6 +1022,15 @@ Use a separate test directory containing two fictional students. Enter the follo
 1. Edit the remaining flagged student, log and delete one lesson, then exit and restart. Expected: the student's flag icon and reason remain, while the active `flagged` filter is not restored. Enter `unflag INDEX`, exit and restart again; the student remains unflagged and their JSON object has no `flag` property.
 
 Automated coverage is in `FlagTest`, the three flag command and parser test classes, `FlagPersistenceTest`, `JsonAdaptedFlagTest`, `JsonAdaptedPersonTest`, `PersonTest`, `AddressBookParserTest` and the flag UI cases in `PersonListPanelTest`.
+
+### Listing students without recorded lessons
+
+Use a separate test folder containing a saved empty address book, then add Amy Tan and Ben Lim with different phone numbers. Log one lesson for Amy.
+
+1. Enter `find amy`, then `unlogged`. Expected: only Ben is displayed as student 1, with `Listed 1 student with no recorded lessons.`.
+1. Enter `summary`. Expected: totals for both students and Amy's lesson, with only Ben still displayed. Try `unlogged 1`; the parameter error keeps this list.
+1. Enter `view 1`, then `log 1 c/Algebra`. Expected: Ben's panel shows his new lesson, no card is highlighted, and the filtered student list becomes empty. Amy's lesson is unchanged.
+1. Enter `list`. Expected: both students return. Restart: both remain visible, since the filter is not persisted. `unlogged` now reports no matches.
 
 ### Saving data
 

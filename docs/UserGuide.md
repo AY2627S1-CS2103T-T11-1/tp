@@ -40,6 +40,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
    * `list` : Lists all students.
 
    * `summary` : Shows a short paragraph summarising all students and lesson records.
+   * `unlogged` : Shows students with no recorded lessons.
 
    * `find wei` : Shows students with `wei` anywhere in their name. Use `list` to show all students again.
 
@@ -131,7 +132,7 @@ Shows all students and reports the number displayed.
 
 Format: `list`
 
-* Restores the full student list after a `find` or `flagged` command.
+* Restores the full student list after a `find`, `flagged` or `unlogged` command.
 * With students: `Listed {COUNT} students.`, for example `Listed 3 students.`
 * With one student: `Listed 1 student.`
 * Without students: `No students found. Use add to create a student.`
@@ -156,7 +157,7 @@ You have 3 students and 3 lesson records in total. 1 student has no lessons reco
 ```
 
 * A short paragraph describes the collection and highlights students without recorded lessons. With no students, it suggests adding a student.
-* Totals include **all saved students**, even after `find` or `flagged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
+* Totals include **all saved students**, even after `find`, `flagged` or `unlogged` hides some cards. The current filter and displayed student numbers are kept. Use `list` to restore all cards.
 * Every lesson record counts, including undated records saved before v1.4 and separate records with identical content. These totals describe recorded history, not scheduled lessons or teaching hours.
 * `summary` accepts no parameters. For example, `summary 1` shows the summary usage and keeps the current list.
 * The command introduces no new saved fields and does not change students or lessons. It does not attempt to save, so it also works while saving is unavailable.
@@ -176,6 +177,23 @@ Each student card also shows a lesson-status line below the subject:
 
 `last` means the most recent **recorded lesson date**, rather than when a command was typed. When dated and undated lessons coexist, all records count and the most recent dated lesson supplies the date. The line refreshes after `log`, `editlesson` and `deletelesson`, and a flagged student's flag icon remains visible.
 
+### Listing students without lesson records: `unlogged`
+
+Shows students who have no lesson records, so you can follow up on the summary's count of students without recorded lessons.
+
+Format: `unlogged`
+
+* Checks **all students**, replacing any previous `find`, `flagged` or `unlogged` filter. Matches keep their original order and are numbered from 1. Other commands use these displayed student numbers.
+* A student with even one undated lesson has recorded history and is not included. This identifies missing records, not whether teaching has taken place.
+* Feedback is `Listed 1 student with no recorded lessons.` or `Listed N students with no recorded lessons.`. With no matches, including when no students are saved, it says `No students without lesson records found. Use list to show all students.`
+* Logging a first lesson removes that student from the results automatically. The remaining students are renumbered, so check the displayed list before the next command. The details panel still shows the student whose lesson you just logged.
+* `list` restores all students; `find` and `flagged` replace this filter. `summary` still counts all students and keeps the filter. Filters are not saved across restarts.
+* `unlogged` changes no student or lesson data and does not attempt to save, including while saving is disabled. Extra arguments such as `unlogged 1` are rejected with `The unlogged command does not accept parameters.` and keep the current filter.
+
+**Screenshot example:** Amy Tan has a recorded lesson and Ben Lim has none. After `unlogged`, only Ben is displayed, renumbered to student 1:
+
+<a href="images/unlogged.png"><img src="images/unlogged.png" alt="One student without lesson records after unlogged, with Ben Lim numbered 1" width="726"></a>
+
 ### Finding students: `find`
 
 Shows students whose name, subject or level contain the search keywords, for example to bring up every Sec 3 Physics student before preparing material for them. You can use part of a word instead of typing it in full.
@@ -192,7 +210,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 * A field cannot be blank. `find sub/` is rejected with the same message as an invalid subject in `add`, and likewise for `n/` and `l/`.
 * Leading, trailing and repeated whitespace is ignored. Keywords are literal text, with no wildcard matching or spelling correction. Punctuation and accented characters must match as entered, ignoring case.
 * Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
-* Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
+* Each search checks all saved students, replacing the previous `find`, `flagged` or `unlogged` filter. The matches keep their original list order.
 * With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels. If moving the last words after `sub/` or `l/` to the names would find someone, the message adds `Words after sub/ or l/ search only that field. Did you mean: find ng sub/Physics?` with the suggested search.
 * Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
@@ -485,7 +503,7 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
+If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `unlogged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
 Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
@@ -527,5 +545,6 @@ Action     | Format, Examples
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
 **Unflag** | `unflag INDEX`<br> e.g., `unflag 2`
+**Unlogged** | `unlogged` (use `list` to show all students again)
 **Help**   | `help`
 **Exit**   | `exit`
