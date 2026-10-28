@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -200,7 +201,7 @@ public class PersonListPanelTest {
                 assertEquals(0, list.getSelectionModel().getSelectedIndex());
                 assertFeedback(root, "editlesson 1 3 c/Algebra revised",
                         "Edited lesson 3 for Amy (now lesson 3). (undated): Algebra revised", false);
-                assertFeedback(root, "deletelesson 1 1", "Deleted lesson 1 for Amy: Algebra", false);
+                assertFeedback(root, "deletelesson 1 1", "Deleted lesson 1 for Amy (undated): Algebra", false);
                 assertFeedback(root, "findlesson 1 alg",
                         "Matching lesson records for Amy (1):\n2. (undated): Algebra revised", false);
                 assertFeedback(root, "view 1",
@@ -919,6 +920,44 @@ public class PersonListPanelTest {
     }
 
     /**
+     * Shows the selected duplicate's date in the real command box and saves the remaining history.
+     */
+    @Test
+    public void commandBox_deleteLesson_reportsDatedAndUndatedRecords(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Person amy = model.getFilteredPersonList().getFirst();
+            Person ben = model.getFilteredPersonList().get(1);
+            Lesson newer = new Lesson("Fractions", LocalDate.of(2026, 10, 21));
+            Person datedAmy = new PersonBuilder(amy).withLessons("Legacy").withFlag("Bring worksheet").build()
+                    .withLessonAdded(new Lesson("Fractions", LocalDate.of(2026, 10, 20)))
+                    .withLessonAdded(newer);
+            model.setPerson(amy, datedAmy);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
+            Logic logic = clickTestLogic(model, storage, directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                enterClickTestCommand(root, "find amy");
+                assertFeedback(root, "deletelesson 1 2",
+                        "Deleted lesson 2 for Amy (20/10/2026): Fractions", false);
+                assertDetail(root, "Amy", "Lessons (2)");
+                assertEquals(List.of("1. 21/10/2026 Fractions", "2. (undated) Legacy"), lessonRows(root));
+                assertFeedback(root, "deletelesson 1 2", "Deleted lesson 2 for Amy (undated): Legacy", false);
+                Person expected = new PersonBuilder(datedAmy).withLessons().build().withLessonAdded(newer);
+                assertDetail(root, "Amy", "Lessons (1)");
+                assertEquals(List.of("1. 21/10/2026 Fractions"), lessonRows(root));
+                assertEquals(List.of(expected), model.getFilteredPersonList());
+                assertEquals(List.of(expected, ben), model.getAddressBook().getPersonList());
+                assertEquals(List.of(expected, ben),
+                        assertDoesNotThrow(() -> storage.readAddressBook().orElseThrow()).getPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
      * Deletes through the command box and verifies that typed views and card clicks show the updated history.
      */
     @Test
@@ -933,7 +972,7 @@ public class PersonListPanelTest {
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 enterClickTestCommand(root, "view 1");
                 enterClickTestCommand(root, "deletelesson 1 1");
-                assertEquals("Deleted lesson 1 for Amy: Algebra", result.getText());
+                assertEquals("Deleted lesson 1 for Amy (undated): Algebra", result.getText());
                 String historyAfterDelete = "Lesson records for Amy (2):\n1. (undated): Geometry"
                         + "\n2. (undated): Algebra";
                 enterClickTestCommand(root, "view 1");

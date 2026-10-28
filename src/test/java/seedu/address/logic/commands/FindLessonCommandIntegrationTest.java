@@ -135,7 +135,7 @@ public class FindLessonCommandIntegrationTest {
                 model.getFilteredPersonList().getFirst().getLessons().get(1));
         assertEquals(new Lesson("Algebra", DAY.plusDays(2)),
                 model.getFilteredPersonList().getFirst().getLessons().get(3));
-        assertEquals("Deleted lesson 2 for Amy Tan: Algebra", feedback("deletelesson 1 2"));
+        assertEquals("Deleted lesson 2 for Amy Tan (04/01/2020): Algebra", feedback("deletelesson 1 2"));
         assertEquals("Matching lesson records for Amy Tan (2):"
                 + "\n3. 02/01/2020: Algebra corrected\n4. (undated): Algebra legacy",
                 feedback("findlesson 1 algebra"));

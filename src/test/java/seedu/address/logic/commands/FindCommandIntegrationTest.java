@@ -157,7 +157,7 @@ public class FindCommandIntegrationTest {
     @Test
     public void execute_findThenDeleteLesson_keepsStudentFilterAndOtherSavedStudents() throws Exception {
         logic.execute("find ali");
-        assertEquals("Deleted lesson 1 for Alicia Lim: Calculus",
+        assertEquals("Deleted lesson 1 for Alicia Lim (undated): Calculus",
                 logic.execute("deletelesson 1 1").getFeedbackToUser());
         Person aliciaWithoutLessons = new PersonBuilder(ALICIA).withLessons().build();
         assertEquals(List.of(aliciaWithoutLessons), logic.getFilteredPersonList());

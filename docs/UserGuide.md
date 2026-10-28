@@ -454,7 +454,9 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 * Both indexes must be positive whole numbers without leading zeros. Exactly two arguments are required, in the order shown.
 * Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson, or changing a lesson's date with `editlesson`, can change them. Running `view` first is recommended, not required.
 * Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
-* Confirmation: `Deleted lesson LESSON_INDEX for NAME: CONTENT`. The details panel shows the remaining records, renumbered from 1.
+* Confirmation: `Deleted lesson LESSON_INDEX for NAME (DD/MM/YYYY): CONTENT`.
+  Older records without a date show `(undated)` instead. The details panel shows
+  the remaining records, renumbered from 1.
 * Student details, other students' records and the current student filter are unchanged. Deleting the final lesson keeps the student with an empty history.
 * Missing arguments, non-integers such as `abc`, `+1` or `1.5`, and extra
   arguments produce an invalid-command-format message with usage. Zero,
@@ -465,7 +467,11 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
   `No lessons logged yet for NAME.`. Nothing is deleted.
 * Deletion is saved automatically and cannot be undone in the app. `delete INDEX` still deletes the entire student and all their lessons; it is a different command.
 
-Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026, `view 2` shows `1. 18/10/2026: Geometry` and `2. 18/10/2026: Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. 18/10/2026: Algebra`.
+Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026,
+`view 2` shows `1. 18/10/2026: Geometry` and `2. 18/10/2026: Algebra`.
+`deletelesson 2 1` deletes Geometry and confirms
+`Deleted lesson 1 for NAME (18/10/2026): Geometry`. A subsequent `view 2` shows
+only `1. 18/10/2026: Algebra`.
 
 **Screenshot example:** after the past-date logging example above, `view 1` shows Alex Tan's four lessons in date order. The Trigonometry lesson dated 18/10/2026 is lesson 2:
 
