@@ -103,7 +103,7 @@ spaces so words do not join. Tutors check the pasted command and press Enter
 to run it; meaningful spacing inside addresses and lesson content is kept.
 
 A prefix the command uses always starts a new field after whitespace, so text
-such as `c/o` or `date/time` cannot appear inside lesson notes. Tutors reword
+such as `c/o` or `date/time` cannot appear after whitespace inside lesson notes. Tutors reword
 it (`care of`, `date and time`); the duplicate-field and `log`/`editlesson`
 date errors say so. This is a deliberate, documented limitation.
 
