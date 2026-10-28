@@ -6,11 +6,13 @@ it). If your tool reads neither, paste this file in before your task. It
 replaces the "Shared rules" and "Shared conventions and agreed interfaces"
 sections of the Oct 5 work plan.
 
-Last updated: Oct 28, 2026, for name, level and subject validation.
+Last updated: Oct 28, 2026, for find search suggestions (#187) and case-insensitive command words (#185).
+
+Do not update the "Last updated" line in feature PRs; keeping it stable avoids
+merge conflicts between concurrent branches.
 
 **Owner:** aerodart (Git expert). Update this file and `tutorlah-context.md`
-in the same PR that changes a decision, message or interface, and refresh
-the date above.
+in the same PR that changes a decision, message or interface.
 
 **Order of authority:** course rules (section 9) come first, then this
 file, then older team documents, then the agent's own defaults. If this
@@ -23,8 +25,6 @@ ask the team. Do not guess.
 
 - Changes reach `master` only through a reviewed PR. Never push to the
   team repo (`upstream`).
-- **Agents do not commit, push, or post issues, PRs, comments, reviews or
-  releases.** The human does that after reading the change.
 - No `Co-Authored-By:` trailers or "Generated with" lines for AI tools in
   commits or PR text. Credit AI use in the DG Acknowledgements instead, as
   the course's [reuse policy][reuse] requires for widespread use.
@@ -103,18 +103,37 @@ ask the team. Do not guess.
 | Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
-| Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given |
+| Find | `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]` | `Found {COUNT} students.` (`Found 1 student.` for one) or `No matching students found. Use list to show all students.`, followed by `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.` when only name keywords were given, or by `Words after sub/ or l/ search only that field. Did you mean: {FIND_COMMAND}?` when a search using `sub/` or `l/` finds no one but moving the last words of that field to the names would (#187) |
 | Find lesson | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | Header `Matching lesson records for {NAME} ({COUNT}):` then matching `view` lines, or `No matching lesson records found for {NAME}.` |
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
 | Summary | `summary` | `Summary:` then a single summary paragraph on the next line |
 | Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
+| Unlogged | `unlogged` | `Listed {COUNT} students with no recorded lessons.`, `Listed 1 student with no recorded lessons.`, or `No students without lesson records found. Use list to show all students.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
+
+Command words ignore case, so `list`, `LIST` and `LiSt` select the same command.
+Prefixes remain case-sensitive and must be typed in lowercase as documented.
+
+**Prefix text inside values (#174, #175):** a prefix the command recognises
+starts a new field wherever it follows whitespace, in every command; values
+cannot contain it after a space. We do not special-case `c/o` or `date/time`
+or guess intent. Instead, `Messages#getErrorMessageForDuplicatePrefixes` adds
+`A recognised prefix after a space starts another field. If it was part of your text, please reword it.`
+on a new line to every duplicate-field error, and `log` and `editlesson` parse
+`date/` with `ParserUtil#parseLessonDateWithNotesHint`, which adds
+`If "date/" was part of your lesson notes, please reword it, for example "date and time".`
+on a new line and keeps the original exception as the cause. `findlesson` dates
+and index or content errors get no date hint. The UG suggests `care of` and
+`date and time`. Valid commands with a different meaning, such as
+`edit 1 addr/Unit l/2`, are a documented limitation; escaping is future work.
 
 **Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
 
 **Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the command changes no student data and does not attempt to save.
+
+**Students without recorded lessons (#171):** `unlogged` replaces the active filter over all students with an empty-history predicate, keeping original order and renumbering matches from 1. Undated records count as history. Logging a first lesson removes its student and renumbers the remaining matches, while the details panel keeps the just-logged student without highlighting another card. `list` restores all students; `find` and `flagged` replace the filter; `summary` keeps the filter and still counts everyone. `UnloggedCommandParser` accepts only Unicode whitespace; arguments give `The unlogged command does not accept parameters.` without changing the filter. No data changes, save attempts or new JSON fields are introduced. The filter is not persisted.
 
 **Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep the flag icon independent.
 
@@ -290,6 +309,8 @@ accepted by the parser. Commands apply these errors consistently:
 
 - If reading a student data file fails (including a null JSON root or null student entry), that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location. The original student file is preserved. Read-only commands still work; changed student data is rejected by the guard and rolled back. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples. `MainApp` and `UiManager` store the warning as a nullable string; `MainApp#getStartupWarning()` returns an `Optional<String>`.
 
+- At startup, `ApplicationLock` takes an operating-system lock on `data/.tutorlah.lock` before preferences or student data are loaded. `MainApp` retains it until `stop`. A second copy using the same data folder stops initialization before storage, model, logic or the main window is created; a failure-only `UiManager` explains the conflict. Failure to create or lock the lock file is also fatal. The lock file may remain after exit; only the operating-system lock indicates a running instance.
+
 - `seedu.address.model.person.Level` and `Subject`: same shape as
   `Address` (public `value`, `isValidLevel` / `isValidSubject`,
   `MESSAGE_CONSTRAINTS`, `MAX_LENGTH`).
@@ -361,10 +382,12 @@ accepted by the parser. Commands apply these errors consistently:
   student and lesson index validation. `parseStudentIndex` delegates to it
   with the student-index error message.
 - `EditCommand(Index, EditPersonDescriptor)` edits name, phone, address, level and subject. It rebuilds the student with the 6-argument `Person` constructor, carrying `getLessons()` across, so lessons are never lost on edit.
-- `FindCommand(StudentContainsKeywordsPredicate)` replaces the displayed filter. The predicate takes name, subject and level keyword lists, needs at least one keyword in total and no blank keyword, and keeps immutable copies as typed. Each keyword matches a literal substring of its own field through `StringUtil#containsIgnoreCase`, which uses locale-independent `String#regionMatches(true, ...)` without lowercasing the text or keywords. An empty list means the field is not searched. Predicate equality and hashing use all three lists. `FindCommandParser` tokenizes only `n/`, `sub/` and `l/`; the preamble and `n/` value are name keywords.
+- `FindCommand(StudentContainsKeywordsPredicate)` replaces the displayed filter. The predicate takes name, subject and level keyword lists, needs at least one keyword in total and no blank keyword, and keeps immutable copies as typed. Each keyword matches a literal substring of its own field through `StringUtil#containsIgnoreCase`, which uses locale-independent `String#regionMatches(true, ...)` without lowercasing the text or keywords. An empty list means the field is not searched. Predicate equality and hashing use all three lists. `FindCommandParser` tokenizes only `n/`, `sub/` and `l/`; the preamble and `n/` value are name keywords. The predicate exposes `getNameKeywords()`, `getSubjectKeywords()` and `getLevelKeywords()`, and `withTrailingFieldWordsAsNames()` returns the searches that move the last 1, 2, ... words of a multi-word subject or level search to the names: fewest words first, subject before level for the same count, keeping at least one word per field. When a search using `sub/` or `l/` finds no one, `FindCommand` tests these alternatives against `Model#getAddressBook` without changing the displayed filter and suggests the first that matches, written as `find {names} sub/{subject} l/{level}` (#187).
 - **Any code that rebuilds a `Person`** (for example an edit command) must
   carry `getLessons()` across. The 5-argument constructor starts with no
   lessons and would silently delete them.
+
+Student data and preferences are serialized completely, written to a unique temporary file beside the destination and replaced atomically. A write or replacement failure keeps the previous saved file; failed first saves leave no empty destination. Temporary files are cleaned up where possible. Abrupt termination may leave a hidden `.tutorlah-*.tmp` file that is not loaded or cleaned up on restart; it can be removed after closing all copies of TutorLah. Unsupported atomic replacement is a save error, with no non-atomic fallback. This does not add a second-instance lock or guarantee recovery from power loss.
 
 ---
 
@@ -470,8 +493,7 @@ From [Appendix E][appendix-e] and the [SE-EDU review guide][reviewing].
 - Point out overlaps with other open PRs, and say whether a conflict was
   actually checked.
 - Approve only after your earlier comments are addressed.
-- Use plain English with no slang. Agents may draft review comments, but
-  the reviewer reads, edits and posts them.
+- Use plain English with no slang.
 
 ---
 

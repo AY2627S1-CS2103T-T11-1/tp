@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
@@ -255,6 +256,23 @@ public class ParserUtilTest {
     @Test
     public void parseLessonDate_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parseLessonDate(null));
+    }
+
+    @Test
+    public void parseLessonDateWithNotesHint_validValue_returnsDate() throws Exception {
+        assertEquals(LocalDate.of(2026, 10, 21), ParserUtil.parseLessonDateWithNotesHint("  21/10/2026  "));
+    }
+
+    @Test
+    public void parseLessonDateWithNotesHint_invalidValue_addsHintAndKeepsCause() {
+        for (String date : new String[]{"time conversions", "31/02/2026", ""}) {
+            ParseException thrown = org.junit.jupiter.api.Assertions.assertThrows(ParseException.class, ()
+                    -> ParserUtil.parseLessonDateWithNotesHint(date));
+            assertEquals(Lesson.MESSAGE_DATE_CONSTRAINTS + "\n" + Messages.MESSAGE_LESSON_DATE_TEXT_HINT,
+                    thrown.getMessage());
+            // the original date error is kept as the cause
+            assertEquals(Lesson.MESSAGE_DATE_CONSTRAINTS, thrown.getCause().getMessage());
+        }
     }
 
     @Test
