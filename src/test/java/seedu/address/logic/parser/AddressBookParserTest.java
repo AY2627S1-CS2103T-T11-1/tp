@@ -131,6 +131,19 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_mixedCaseCommandWords_accepted() throws Exception {
+        assertTrue(parser.parseCommand("LiSt") instanceof ListCommand);
+
+        Person person = new PersonBuilder().build();
+        AddCommand command = (AddCommand) parser.parseCommand(
+                PersonUtil.getAddCommand(person).replaceFirst(AddCommand.COMMAND_WORD, "aDd"));
+        assertEquals(new AddCommand(person), command);
+
+        String commandWithUppercasePrefix = PersonUtil.getAddCommand(person).replaceFirst(" n/", " N/");
+        assertThrows(ParseException.class, () -> parser.parseCommand(commandWithUppercasePrefix));
+    }
+
+    @Test
     public void parseCommand_listWithArguments_throwsParseException() {
         assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_ARGUMENTS, ()
                 -> parser.parseCommand(ListCommand.COMMAND_WORD + " 3"));

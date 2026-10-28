@@ -74,7 +74,8 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `Tan Wei Ming`.
 
-* Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
+* Command words ignore uppercase/lowercase, so `list`, `LIST` and `LiSt` work the same way.
+  Prefixes such as `n/`, `p/` and `c/` are lowercase and must be typed exactly as shown.
 
 * Parameters with prefixes can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.

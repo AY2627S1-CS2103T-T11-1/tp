@@ -1,6 +1,6 @@
 # TutorLah: context
 
-Last updated: Oct 28, 2026, for find search suggestions (#187).
+Last updated: Oct 28, 2026, for find search suggestions (#187) and case-insensitive command words (#185).
 
 ## What it is
 
@@ -46,7 +46,8 @@ recorded about them, not building a new kind of app.
 - **Architecture:** UI, Logic, Model and Storage, connected through interfaces.
 - **Choosing by index:** `delete 3` targets the 3rd *displayed* student, the
   same as AB3's commands.
-- **Command style:** a command word, an index, then `prefix/value` parameters
+- **Command style:** a case-insensitive command word, an index, then lowercase
+  `prefix/value` parameters
   in any order.
 - **Storage:** JSON on disk. AB3 currently saves to `data/addressbook.json`.
 
