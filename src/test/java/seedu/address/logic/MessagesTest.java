@@ -40,29 +40,27 @@ public class MessagesTest {
         AddressBook book = new AddressBook();
         Person student = new PersonBuilder().build();
         book.addPerson(student);
-        assertEquals("You have 1 student and 0 lesson records in total. 1 student has no lessons recorded.",
+        assertEquals("You have 1 student and 0 lesson records in total.",
                 Messages.formatSummaryParagraph(new StudentSummary(book)));
         book.setPerson(student, student.withLessonAdded(new Lesson("Algebra")));
-        assertEquals("You have 1 student and 1 lesson record in total. "
-                + "Every student has at least one lesson recorded.",
+        assertEquals("You have 1 student and 1 lesson record in total.",
                 Messages.formatSummaryParagraph(new StudentSummary(book)));
     }
 
     @Test
-    public void formatSummaryParagraph_multipleStudents_usesPluralAndCountsEmptyHistories() {
+    public void formatSummaryParagraph_multipleStudents_usesPluralTotals() {
         AddressBook book = new AddressBook();
         Person amy = new PersonBuilder().withName("Amy Tan").build();
         Person ben = new PersonBuilder().withName("Ben Lim").build();
         book.addPerson(amy);
         book.addPerson(ben);
-        assertEquals("You have 2 students and 0 lesson records in total. 2 students have no lessons recorded.",
+        assertEquals("You have 2 students and 0 lesson records in total.",
                 Messages.formatSummaryParagraph(new StudentSummary(book)));
         book.setPerson(amy, amy.withLessonAdded(new Lesson("Algebra")));
-        assertEquals("You have 2 students and 1 lesson record in total. 1 student has no lessons recorded.",
+        assertEquals("You have 2 students and 1 lesson record in total.",
                 Messages.formatSummaryParagraph(new StudentSummary(book)));
         book.setPerson(ben, ben.withLessonAdded(new Lesson("Geometry")));
-        assertEquals("You have 2 students and 2 lesson records in total. "
-                + "Every student has at least one lesson recorded.",
+        assertEquals("You have 2 students and 2 lesson records in total.",
                 Messages.formatSummaryParagraph(new StudentSummary(book)));
     }
 

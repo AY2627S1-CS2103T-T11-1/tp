@@ -310,37 +310,25 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void commandBox_unlogged_keepsPanelAndDisplayedIndexesInSync(@TempDir Path directory) throws Exception {
+    public void commandBox_unknownCommand_keepsPanelFilterAndSelection(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            model.addPerson(new PersonBuilder().withName("Carol Ng").withPhone("81230009").build());
             Logic logic = clickTestLogic(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
+                enterClickTestCommand(root, "find ben");
                 enterClickTestCommand(root, "view 1");
-                assertFeedback(root, "unlogged", "Listed 2 students with no recorded lessons.", false);
-                assertTrue(root.lookup("#noStudentState").isVisible());
-                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
-                assertEquals("Ben", label(cellAt(list, 0), "name").getText());
-                enterClickTestCommand(root, "view 1");
-                assertDetail(root, "Ben", "Lessons (0)");
-                enterClickTestCommand(root, "log 1 c/Vectors date/1/1/2020");
-                assertDetail(root, "Ben", "Lessons (1)");
-                assertEquals(-1, list.getSelectionModel().getSelectedIndex());
-                assertEquals(1, list.getItems().size());
-                assertEquals("Carol Ng", label(cellAt(list, 0), "name").getText());
-                enterClickTestCommand(root, "view 1");
-                assertDetail(root, "Carol Ng", "Lessons (0)");
-                enterClickTestCommand(root, "log 1 c/Calculus date/2/1/2020");
-                assertDetail(root, "Carol Ng", "Lessons (1)");
-                assertTrue(list.getItems().isEmpty());
-                enterClickTestCommand(root, "list");
-                assertEquals(3, list.getItems().size());
-                assertDetail(root, "Carol Ng", "Lessons (1)");
-                assertEquals(2, list.getSelectionModel().getSelectedIndex());
+                List<Person> before = List.copyOf(model.getAddressBook().getPersonList());
+                for (String command : List.of("unknownCommand", "UNKNOWNCOMMAND", "unknownCommand 1")) {
+                    assertFeedback(root, command, Messages.MESSAGE_UNKNOWN_COMMAND, true);
+                    assertDetail(root, "Ben", "Lessons (0)");
+                    assertEquals(1, list.getItems().size());
+                    assertEquals(0, list.getSelectionModel().getSelectedIndex());
+                    assertEquals(before, model.getAddressBook().getPersonList());
+                }
             } finally {
                 window.getPrimaryStage().close();
             }
@@ -361,8 +349,8 @@ public class PersonListPanelTest {
                 assertEquals("3 lessons (undated)", label(cellAt(list, 0), "lessonStatus").getText());
                 enterClickTestCommand(root, "flag 2 r/Call parent");
                 enterClickTestCommand(root, "flagged");
-                assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
-                        + "1 student has no lessons recorded.", false);
+                assertFeedback(root, "summary", "Summary:\n"
+                        + "You have 2 students and 3 lesson records in total.", false);
                 assertEquals(1, list.getItems().size());
                 assertEquals("Ben", label(cellAt(list, 0), "name").getText());
                 assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
@@ -379,8 +367,8 @@ public class PersonListPanelTest {
                 assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
                 assertTrue(flagIcon(cellAt(list, 0)).isVisible());
                 assertEquals("Call parent", ((Label) root.lookup("#flagBanner")).getText());
-                assertFeedback(root, "summary", "Summary:\nYou have 2 students and 3 lesson records in total. "
-                        + "1 student has no lessons recorded.", false);
+                assertFeedback(root, "summary", "Summary:\n"
+                        + "You have 2 students and 3 lesson records in total.", false);
                 assertEquals(1, list.getItems().size());
             } finally {
                 window.getPrimaryStage().close();

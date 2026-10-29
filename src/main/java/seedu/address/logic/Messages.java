@@ -89,7 +89,7 @@ public class Messages {
     }
 
     /**
-     * Describes the complete collection and highlights students without recorded lessons.
+     * Describes the complete collection's student and lesson totals.
      */
     public static String formatSummaryParagraph(StudentSummary summary) {
         int students = summary.getStudentCount();
@@ -97,14 +97,8 @@ public class Messages {
             return "No students yet. Add a student to start recording lessons.";
         }
         long lessons = summary.getLessonCount();
-        String overview = "You have " + students + (students == 1 ? " student" : " students")
-                + " and " + lessons + (lessons == 1 ? " lesson record" : " lesson records") + " in total. ";
-        int withoutLessons = summary.getStudentsWithoutLessons();
-        if (withoutLessons == 0) {
-            return overview + "Every student has at least one lesson recorded.";
-        }
-        return overview + withoutLessons + (withoutLessons == 1 ? " student has" : " students have")
-                + " no lessons recorded.";
+        return "You have " + students + (students == 1 ? " student" : " students")
+                + " and " + lessons + (lessons == 1 ? " lesson record" : " lesson records") + " in total.";
     }
 
 }
