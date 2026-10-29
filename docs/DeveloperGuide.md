@@ -17,7 +17,7 @@
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
 * OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries, per-student lesson counts and listing students without recorded lessons.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date and editing lesson records.
+* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date, editing lesson records and name, level and subject validation, and with the Developer Guide's architecture, common classes and lesson-logging sections.
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, safe JSON replacement, their tests and documentation.
 * OpenAI Codex, used by cibichandar, assisted with the implementation, tests,
@@ -37,9 +37,9 @@ Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
 ### Architecture
 
-<puml src="diagrams/ArchitectureDiagram.puml" width="280" />
+<puml src="diagrams/ArchitectureDiagram.puml" width="280" alt="Architecture diagram showing Main, UI, Logic, Model, Storage and Commons, the dependencies between them, the user and the data file" />
 
-The ***Architecture Diagram*** given above explains the high-level design of the App.
+The ***Architecture Diagram*** given above explains the high-level design of the App. Each arrow shows a dependency: UI uses Logic and Model, Logic uses Model and Storage, Storage uses Model, and Main sets up all four. Logic, Model and Storage do not depend on UI. Every component also uses Commons; those arrows are left out to keep the diagram readable.
 
 The following provides a quick overview of the main components and their interactions.
 
@@ -71,7 +71,7 @@ Each of the four main components (also shown in the diagram above),
 
 For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram. For example, `UiManager` holds a `Logic`, not a `LogicManager`, and `LogicManager` holds a `Model` and a `Storage`.
 
-<puml src="diagrams/ComponentManagers.puml" width="300" />
+<puml src="diagrams/ComponentManagers.puml" width="300" alt="Partial class diagram showing the Ui, Logic, Model and Storage interfaces, the Manager class that implements each, and the references between them" />
 
 The sections below give more details of each component.
 
@@ -187,13 +187,37 @@ Before loading preferences or student data, `MainApp` asks `ApplicationLock` to 
 
 ### Common classes
 
-Classes used by multiple components are in the `seedu.address.commons` package.
+Classes used by multiple components are in the `seedu.address.commons` package:
+
+* `core`: `LogsCenter` gives each class its logger, `GuiSettings` holds the saved window size and position, and `Index` converts between the one-based indexes users type and the zero-based indexes the code uses.
+* `exceptions`: `IllegalValueException` reports an invalid stored value, and `DataLoadingException` reports a data file that cannot be read or loaded.
+* `util`: `StringUtil` has the text checks shared by commands and the data file, such as `isBlankOrInvisible`, `stripUnicodeWhitespace` and the case-insensitive `containsIgnoreCase` used by the searches. `AppUtil#checkArgument` and `CollectionUtil` check arguments, `JsonUtil` and `FileUtil` read and write JSON files, `AtomicFileWriter` replaces a file in one step so that a failed save cannot leave it half-written, and `ToStringBuilder` formats `toString` output.
 
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Logging a lesson
+
+`log INDEX c/CONTENT [date/DATE]` adds one dated lesson record to a student. The activity diagram below shows its steps. A failed save is left out; `LogicManager` then restores the previous data, as described in the [Logic component](#logic-component).
+
+<puml src="diagrams/LogActivityDiagram.puml" width="300" alt="Activity diagram of log: parsing, checking the index, using the given date or today's date, rejecting a future date, inserting the lesson by date and saving" />
+
+* **Parsing:** `LogCommandParser` tokenizes only `c/` and `date/`. It rejects a missing index or content, a repeated prefix, invalid content and an invalid date. `ParserUtil#parseLessonDate` accepts `D/M/YYYY` or `DD/MM/YYYY` with a four-digit year, and rejects dates that do not exist, such as `31/02/2026`, and dates before `Lesson.EARLIEST_DATE` (01/01/2000). `log` and `editlesson` call it through `parseLessonDateWithNotesHint`, which adds a hint to reword `date/` if it was part of the lesson notes. `findlesson` gives the date error without the hint.
+* **Today's date by default:** `LogCommand` gets today's date from a `Clock`: the system clock in the app, and a fixed clock in tests. A lesson without `date/` is dated today, and a date after today is rejected with `Lesson dates cannot be in the future. ...`. The parser does not check for future dates, so that every check uses the same clock.
+* **Date order:** each student's lessons are stored oldest first. `Person#withLessonAdded` steps back from the newest end past every lesson dated after the new one, and inserts it there. A lesson logged for a date that already has lessons therefore goes after them, and `view`, which lists the stored order in reverse, shows it first among that day's lessons. `deletelesson` and `editlesson` use `view`'s numbering, so no command needs to sort.
+* **Undated records:** lessons saved before v1.4 have no date, and `view` shows them as `(undated)`. They are kept at the oldest end, so `view` lists them last. When the data file is loaded, `JsonAdaptedPerson` stably sorts each student's lessons by date, with undated lessons first and lessons on the same date in their saved order, as described in the [Storage component](#storage-component). `withLessonAdded` never steps past an undated lesson, so a new lesson always goes after them. `JsonAdaptedLesson` stores a date as `"date" : "YYYY-MM-DD"` and leaves the field out for an undated lesson.
+
+**Design considerations: when lessons are ordered**
+
+* **Alternative 1 (current choice):** insert each lesson in date order when it is logged.
+  * Pros: `view`, `deletelesson` and `editlesson` all number lessons by reversing the stored order, so they share one numbering without sorting, and the data file reads chronologically.
+  * Cons: every command that adds or redates a lesson must insert it correctly.
+* **Alternative 2:** store lessons in logging order and sort them by date when displaying.
+  * Pros: adding a lesson is a plain append.
+  * Cons: every command that takes a lesson number must repeat the same sort, or its numbers would not match `view`.
 
 ### Viewing lesson history
 
@@ -346,7 +370,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 ### Finding students by name, subject and level
 
-`AddressBookParser` routes `find` input to `FindCommandParser`, which tokenizes the `n/`, `sub/` and `l/` prefixes. It first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space, because `ArgumentTokenizer` only recognises a prefix after an ASCII space; otherwise a pasted `sub/math l/sec` with a non-breaking space would read `l/sec` as more subject keywords. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on Unicode whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
+`AddressBookParser` routes `find` input to `FindCommandParser`, which first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space so that search keywords use a consistent separator. It then passes the normalized text to `ArgumentTokenizer` for the `n/`, `sub/` and `l/` prefixes. The shared tokenizer itself recognises a configured prefix after Unicode whitespace, as described in [Prefix text inside values](#prefix-text-inside-values); the normalization is specific to how `find` prepares its keywords, not a requirement for prefix recognition. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
 
 `StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched, and `isNameSearchOnly()` reports when only name keywords were given, so that `FindCommand` can add a hint about `sub/` and `l/` when such a search finds no one. Because every word after `sub/` or `l/` belongs to that field, a name typed afterwards, as in `find sub/Physics ng`, makes the search find no one. `withTrailingFieldWordsAsNames()` therefore returns the searches that move the last one or more words of a multi-word subject or level search to the names, fewest words first (subject before level for the same number of words) and keeping at least one word in each field. When a search that used `sub/` or `l/` finds no one, `FindCommand` tests these alternatives against `Model#getAddressBook`, without changing the displayed list, and suggests the first one that matches, written with name keywords first. Moving words is only a suggestion, never applied automatically, because multi-word values such as `Sec 3` and `H2 Math` are valid. All three fields share `StringUtil#containsIgnoreCase`, which compares each candidate substring with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
 
@@ -1296,8 +1320,10 @@ Use a separate test folder and fictional students only.
 
 ### Lesson dates and data saved by v1.3
 
-1. Log `Vectors` for a test student, then `log INDEX c/Surds date/DD/MM/YYYY` with yesterday's date, and view the student.
-   Expected: `Vectors` is listed first with today's date, then `Surds` with yesterday's date. Enter `deletelesson INDEX 2`: `Surds` is deleted.
+Use a separate test folder whose `data/addressbook.json` contains `{"persons": []}`, and add one fictional student with `add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math`. `INDEX` below is 1.
+
+1. Log `Vectors` for the student, then `log INDEX c/Surds date/DD/MM/YYYY` and `log INDEX c/Matrices date/DD/MM/YYYY`, both with yesterday's date, and view the student.
+   Expected: `Vectors` is listed first with today's date, then `Matrices` and `Surds` with yesterday's date. `Matrices` comes before `Surds` because it was logged later on the same date. Enter `deletelesson INDEX 3`: `Surds` is deleted.
 1. Try `date/` with tomorrow's date, `31/02/2026`, `2026-10-20`, `1/1/-2026`, `31/12/1999` and an empty value.
    Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...` followed by `If "date/" was part of your lesson notes, please reword it, for example "date and time".` No lesson is added.
 1. Enter `log INDEX c/Worksheet collected c/o Mum` and `log INDEX c/Revised date/time conversions`.
@@ -1307,7 +1333,7 @@ Use a separate test folder and fictional students only.
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
-1. Exit, keep a copy of the data file, and remove the `date` field from one lesson, as in a file saved by v1.3. Start the app and view the student.
-   Expected: that lesson shows `(undated)` in place of the date, in its original position.
+1. Exit, keep a copy of the data file, and remove the `date` field from a lesson that is not already the oldest, as in a file saved by v1.3. Ensure that the student also has multiple dated lessons, including two with the same date, and at least one other lesson without a date. Start the app and view the student.
+   Expected: every undated lesson appears after all dated lessons. Dated lessons are newest first; among lessons on the same date and among undated lessons, the record saved later appears first. The lesson whose date was removed appears within the undated group according to that order, rather than necessarily last. No lesson is lost.
 1. Exit, and change a lesson's date to `18/10/2026` in the data file. Start the app.
    Expected: the data file is treated as invalid and the app starts with no students, as for other invalid fields. Restore your copy afterwards.
