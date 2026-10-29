@@ -8,10 +8,10 @@ Participant ":Logic" as logic LOGIC_COLOR
 Participant ":Model" as model MODEL_COLOR
 Participant ":Storage" as storage STORAGE_COLOR
 
-user -[USER_COLOR]> ui : "log 1 c/Vectors"
+user -[USER_COLOR]> ui : "loglesson 1 c/Vectors"
 activate ui UI_COLOR
 
-ui -[UI_COLOR]> logic : execute("log 1 c/Vectors")
+ui -[UI_COLOR]> logic : execute("loglesson 1 c/Vectors")
 activate logic LOGIC_COLOR
 
 logic -[LOGIC_COLOR]> model : setPerson(...)

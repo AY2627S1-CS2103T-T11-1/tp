@@ -76,7 +76,7 @@ public class UnicodeBlankInputIntegrationTest {
     @Test
     public void execute_logBlankContent_keepsLessonsFilterAndSavedData() throws Exception {
         for (String blank : BLANK_VALUES) {
-            assertRejectedAndUnchanged("log 1 c/" + blank, Lesson.MESSAGE_CONSTRAINTS);
+            assertRejectedAndUnchanged("loglesson 1 c/" + blank, Lesson.MESSAGE_CONSTRAINTS);
         }
     }
 
@@ -85,7 +85,7 @@ public class UnicodeBlankInputIntegrationTest {
         String address = "碧山街\u3000十号\u00a0#01-23";
         String content = "代数\u2003复习\u00a0Q1-5   完成 👩\u200d🏫";
         logic.execute("add n/小明 Tan p/81234569 addr/" + address + " l/Sec 2 sub/E-Math");
-        logic.execute("log 3 c/" + content);
+        logic.execute("loglesson 3 c/" + content);
         String editedAddress = "خیابان\u200cشمالی\u300012\u00a0#02-34";
         logic.execute("edit 3 addr/" + editedAddress);
         List<Person> savedStudents = storage.readAddressBook().orElseThrow().getPersonList();

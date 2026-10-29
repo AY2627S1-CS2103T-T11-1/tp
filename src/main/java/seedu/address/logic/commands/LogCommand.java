@@ -24,7 +24,7 @@ import seedu.address.model.person.Person;
  */
 public class LogCommand extends Command {
 
-    public static final String COMMAND_WORD = "log";
+    public static final String COMMAND_WORD = "loglesson";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Logs a lesson for the student identified by the index number used in the displayed"

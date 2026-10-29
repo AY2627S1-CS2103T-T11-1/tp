@@ -130,7 +130,7 @@ public class FindCommandIntegrationTest {
         assertEquals("Lesson records for Alicia Lim (1):\n1. (undated): Calculus",
                 logic.execute("view 1").getFeedbackToUser());
         assertEquals("Logged lesson for Alicia Lim on " + todayText() + ": Statistics",
-                logic.execute("log 1 c/Statistics").getFeedbackToUser());
+                logic.execute("loglesson 1 c/Statistics").getFeedbackToUser());
         assertEquals(1, logic.getFilteredPersonList().size());
         assertEquals("Lesson records for Alicia Lim (2):\n1. " + todayText()
                 + ": Statistics\n2. (undated): Calculus",

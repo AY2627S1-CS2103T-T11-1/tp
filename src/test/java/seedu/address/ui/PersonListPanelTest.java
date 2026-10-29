@@ -131,13 +131,13 @@ public class PersonListPanelTest {
 
                 for (String separator : List.of("\t", "\n", "\r\n", "\u0085", "\u2028", "\u2029")) {
                     int count = model.getFilteredPersonList().get(1).getLessons().size();
-                    String pasted = "log 2 c/Quadratic" + separator + "inequalities";
+                    String pasted = "loglesson 2 c/Quadratic" + separator + "inequalities";
                     ClipboardContent content = new ClipboardContent();
                     content.putString(pasted);
                     assertTrue(clipboard.setContent(content));
                     input.clear();
                     input.paste();
-                    assertEquals("log 2 c/Quadratic inequalities", input.getText());
+                    assertEquals("loglesson 2 c/Quadratic inequalities", input.getText());
                     assertEquals(count, model.getFilteredPersonList().get(1).getLessons().size());
                     input.fireEvent(new ActionEvent());
                     assertEquals("", input.getText());
@@ -146,7 +146,7 @@ public class PersonListPanelTest {
                     assertEquals("Logged lesson for Ben on " + todayText() + ": Quadratic inequalities",
                             result.getText());
                 }
-                assertFeedback(root, "log 1\u00a0c/Algebra",
+                assertFeedback(root, "loglesson 1\u00a0c/Algebra",
                         "Logged lesson for Amy on " + todayText() + ": Algebra", false);
                 try {
                     assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
@@ -213,8 +213,8 @@ public class PersonListPanelTest {
             assertEquals(List.of("find Amy Tan"), executed);
             assertEquals("", input.getText());
 
-            input.replaceText(0, 0, "log 1 c/New\u00a0  text क्\u200dष 👩\u200d🏫\r\nnext");
-            assertEquals("log 1 c/New\u00a0  text क्\u200dष 👩\u200d🏫 next", input.getText());
+            input.replaceText(0, 0, "loglesson 1 c/New\u00a0  text क्\u200dष 👩\u200d🏫\r\nnext");
+            assertEquals("loglesson 1 c/New\u00a0  text क्\u200dष 👩\u200d🏫 next", input.getText());
             input.selectAll();
             input.replaceSelection("\t\r\n");
             assertEquals(" ", input.getText());
@@ -355,9 +355,9 @@ public class PersonListPanelTest {
                 assertEquals("Ben", label(cellAt(list, 0), "name").getText());
                 assertEquals("No lessons yet", label(cellAt(list, 0), "lessonStatus").getText());
 
-                enterClickTestCommand(root, "log 1 c/Vectors date/2/1/2020");
+                enterClickTestCommand(root, "loglesson 1 c/Vectors date/2/1/2020");
                 assertEquals("1 lesson, last 02/01/2020", label(cellAt(list, 0), "lessonStatus").getText());
-                enterClickTestCommand(root, "log 1 c/Algebra date/1/1/2020");
+                enterClickTestCommand(root, "loglesson 1 c/Algebra date/1/1/2020");
                 assertEquals("2 lessons, last 02/01/2020", label(cellAt(list, 0), "lessonStatus").getText());
                 enterClickTestCommand(root, "editlesson 1 1 date/31/12/2019");
                 assertEquals("2 lessons, last 01/01/2020", label(cellAt(list, 0), "lessonStatus").getText());
@@ -613,12 +613,12 @@ public class PersonListPanelTest {
             assertTrue(root.lookup("#noLessonsState").isVisible());
             assertFalse(root.lookup("#lessonOrder").isVisible());
             assertEquals("No lessons logged yet for Alicia Tan.", text(root, "#noLessonsText"));
-            assertEquals("log INDEX c/Topic covered", text(root, "#noLessonsCommand"));
+            assertEquals("loglesson INDEX c/Topic covered", text(root, "#noLessonsCommand"));
 
             panel.show(SHORT_PERSON, 2);
             assertFalse(root.lookup("#flagBanner").isVisible());
             assertFalse(root.lookup("#flagIcon").isVisible());
-            assertEquals("log 2 c/Topic covered", text(root, "#noLessonsCommand"));
+            assertEquals("loglesson 2 c/Topic covered", text(root, "#noLessonsCommand"));
 
             panel.clear();
             assertTrue(panel.getStudent().isEmpty());
@@ -706,7 +706,7 @@ public class PersonListPanelTest {
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
                 assertTrue(root.lookup("#noStudentState").isVisible());
 
-                enterClickTestCommand(root, "log 2 c/Fractions date/1/1/2020");
+                enterClickTestCommand(root, "loglesson 2 c/Fractions date/1/1/2020");
                 assertDetail(root, "Ben", "Lessons (1)");
                 assertEquals(1, list.getSelectionModel().getSelectedIndex());
 
@@ -1227,16 +1227,16 @@ public class PersonListPanelTest {
                 assertEquals(amyHistory, result.getText());
                 clickStudent(root, 1);
                 assertEquals("No lessons logged yet for Ben.", result.getText());
-                enterClickTestCommand(root, "log 2 c/Calculus");
+                enterClickTestCommand(root, "loglesson 2 c/Calculus");
                 assertEquals("Logged lesson for Ben on " + todayText() + ": Calculus", result.getText());
-                input.setText("log 2 c/");
+                input.setText("loglesson 2 c/");
                 clickStudent(root, 1);
                 assertEquals("Lesson records for Ben (1):\n1. " + todayText() + ": Calculus",
                         result.getText());
-                assertEquals("log 2 c/", input.getText());
+                assertEquals("loglesson 2 c/", input.getText());
                 clickStudent(root, 0);
                 assertEquals(amyHistory, result.getText());
-                assertEquals("log 2 c/", input.getText());
+                assertEquals("loglesson 2 c/", input.getText());
                 enterClickTestCommand(root, "view 999");
                 clickStudent(root, 0);
                 assertEquals(amyHistory, result.getText());
@@ -1292,7 +1292,7 @@ public class PersonListPanelTest {
                 clickStudent(root, 0);
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 assertEquals(AMY_FIXTURE_HISTORY, result.getText());
-                assertFeedback(root, "log 1 c/Trigonometry",
+                assertFeedback(root, "loglesson 1 c/Trigonometry",
                         String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable"), true);
                 clickStudent(root, 0);
                 assertEquals(AMY_FIXTURE_HISTORY, result.getText());
@@ -1314,13 +1314,13 @@ public class PersonListPanelTest {
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
                 TextField input = (TextField) root.lookup("#commandTextField");
                 enterClickTestCommand(root, "view 1");
-                input.setText("log 2 c/unfinished");
+                input.setText("loglesson 2 c/unfinished");
 
                 pressKey(list, KeyCode.DOWN);
                 assertEquals(1, list.getSelectionModel().getSelectedIndex());
                 assertDetail(root, "Ben", "Lessons (0)");
                 assertEquals("No lessons logged yet for Ben.", ((TextArea) root.lookup("#resultDisplay")).getText());
-                assertEquals("log 2 c/unfinished", input.getText(), "Keyboard viewing keeps typed text");
+                assertEquals("loglesson 2 c/unfinished", input.getText(), "Keyboard viewing keeps typed text");
 
                 pressKey(list, KeyCode.HOME);
                 assertDetail(root, "Amy", "Lessons (3)");
@@ -1355,8 +1355,8 @@ public class PersonListPanelTest {
                 ListView<?> list = (ListView<?>) root.lookup("#personListView");
                 String saveError = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk unavailable");
                 enterClickTestCommand(root, "view 2");
-                for (String mutation : List.of("log 2 c/Unsaved lesson date/01/01/2020", "edit 2 n/Bernard",
-                        "flag 2 r/Call parent", "delete 2", "log 1 c/Unsaved lesson")) {
+                for (String mutation : List.of("loglesson 2 c/Unsaved lesson date/01/01/2020", "edit 2 n/Bernard",
+                        "flag 2 r/Call parent", "delete 2", "loglesson 1 c/Unsaved lesson")) {
                     assertFeedback(root, mutation, saveError, true);
                     assertEquals(1, list.getSelectionModel().getSelectedIndex(), mutation);
                     assertDetail(root, "Ben", "Lessons (0)");
@@ -1701,16 +1701,16 @@ public class PersonListPanelTest {
                 assertFeedback(root, "view 1", "No lessons logged yet for Amy.", false);
                 String today = todayText();
                 String loggedForAmy = "Logged lesson for Amy on " + today + ": ";
-                assertFeedback(root, "log 1 c/Algebra", loggedForAmy + "Algebra", false);
+                assertFeedback(root, "loglesson 1 c/Algebra", loggedForAmy + "Algebra", false);
                 assertFeedback(root, "view 1", "Lesson records for Amy (1):\n1. " + today + ": Algebra",
                         false);
-                assertFeedback(root, "log 1 c/Geometry", loggedForAmy + "Geometry", false);
-                assertFeedback(root, "log 1 c/Algebra", loggedForAmy + "Algebra", false);
+                assertFeedback(root, "loglesson 1 c/Geometry", loggedForAmy + "Geometry", false);
+                assertFeedback(root, "loglesson 1 c/Algebra", loggedForAmy + "Algebra", false);
                 String amyHistory = "Lesson records for Amy (3):\n1. " + today + ": Algebra\n2. " + today
                         + ": Geometry\n3. " + today + ": Algebra";
                 assertFeedback(root, "view 1", amyHistory, false);
                 assertFeedback(root, "view 2", "No lessons logged yet for Ben.", false);
-                assertFeedback(root, "log 2 c/Calculus", "Logged lesson for Ben on " + today + ": Calculus",
+                assertFeedback(root, "loglesson 2 c/Calculus", "Logged lesson for Ben on " + today + ": Calculus",
                         false);
                 String benHistory = "Lesson records for Ben (1):\n1. " + today + ": Calculus";
                 assertFeedback(root, "view 2", benHistory, false);
@@ -1718,7 +1718,7 @@ public class PersonListPanelTest {
                 assertFeedback(root, "view 3", Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, true);
                 assertFeedback(root, "view abc", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
                         ViewCommand.MESSAGE_USAGE), true);
-                assertFeedback(root, "log 1 c/", Lesson.MESSAGE_CONSTRAINTS, true);
+                assertFeedback(root, "loglesson 1 c/", Lesson.MESSAGE_CONSTRAINTS, true);
                 assertFeedback(root, "view 1", amyHistory, false);
                 submitCommand(root, "delete 1");
                 assertFeedback(root, "view 1", benHistory, false);
@@ -1748,7 +1748,7 @@ public class PersonListPanelTest {
                     assertFeedback(root, "add n/Bea Tan p/81234569 addr/" + blank + " l/Sec 2 sub/E-Math",
                             Address.MESSAGE_CONSTRAINTS, true);
                     assertFeedback(root, "edit 1 addr/" + blank, Address.MESSAGE_CONSTRAINTS, true);
-                    assertFeedback(root, "log 1 c/" + blank, Lesson.MESSAGE_CONSTRAINTS, true);
+                    assertFeedback(root, "loglesson 1 c/" + blank, Lesson.MESSAGE_CONSTRAINTS, true);
                     assertEquals(before, model.getAddressBook().getPersonList());
                 }
                 clickStudent(root, 0);
@@ -1766,9 +1766,9 @@ public class PersonListPanelTest {
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 String boundaryContent = "A".repeat(Lesson.MAX_LENGTH);
-                submitCommand(root, "log 1 c/" + boundaryContent);
+                submitCommand(root, "loglesson 1 c/" + boundaryContent);
                 for (int index = 2; index <= 40; index++) {
-                    submitCommand(root, "log 1 c/Topic " + index);
+                    submitCommand(root, "loglesson 1 c/Topic " + index);
                 }
                 String today = todayText();
                 StringBuilder expected = new StringBuilder("Lesson records for Amy (40):");

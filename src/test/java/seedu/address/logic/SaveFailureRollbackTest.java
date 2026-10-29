@@ -55,7 +55,7 @@ public class SaveFailureRollbackTest {
         List<String> mutations = List.of(
                 "add n/Cara Lee p/81230013 addr/30 Example Street l/Sec 3 sub/E-Math",
                 "edit 1 n/Amy Updated",
-                "log 1 c/Trigonometry",
+                "loglesson 1 c/Trigonometry",
                 "delete 1",
                 "deletelesson 1 1",
                 "editlesson 1 1 c/Revised geometry",
@@ -168,7 +168,7 @@ public class SaveFailureRollbackTest {
                     storage.failNextSave(failure);
 
                     CommandException error = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, ()
-                            -> logic.execute("log 1 c/New lesson"));
+                            -> logic.execute("loglesson 1 c/New lesson"));
                     String reason = failure.getReason();
                     if (reason == null || reason.isBlank()) {
                         reason = "The file or folder could not be written.";
@@ -179,7 +179,7 @@ public class SaveFailureRollbackTest {
                     assertSame(failure, error.getCause());
                     assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
                     assertArrayEquals(original, Files.readAllBytes(file));
-                    logic.execute("log 1 c/New lesson");
+                    logic.execute("loglesson 1 c/New lesson");
                     assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
                 }));
     }
@@ -205,7 +205,7 @@ public class SaveFailureRollbackTest {
                     Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE));
             Assumptions.assumeFalse(Files.isWritable(directory), "This user can bypass directory permissions");
             CommandException error = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, ()
-                    -> logic.execute("log 1 c/New lesson"));
+                    -> logic.execute("loglesson 1 c/New lesson"));
             assertEquals(String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, file), error.getMessage());
             assertFalse(error.getMessage().contains(".tutorlah-"));
             assertEquals(List.of(AMY), model.getFilteredPersonList());
@@ -217,7 +217,7 @@ public class SaveFailureRollbackTest {
         } finally {
             Files.setPosixFilePermissions(directory, previousPermissions);
         }
-        logic.execute("log 1 c/New lesson");
+        logic.execute("loglesson 1 c/New lesson");
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
@@ -240,7 +240,7 @@ public class SaveFailureRollbackTest {
                     : command.equals("flagged") ? List.of(AMY) : List.of(BEN);
             assertEquals(expected, model.getFilteredPersonList());
             assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
-            assertThrows(CommandException.class, () -> logic.execute("log 1 c/New lesson"));
+            assertThrows(CommandException.class, () -> logic.execute("loglesson 1 c/New lesson"));
             assertEquals(expected, model.getFilteredPersonList());
             assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
         }));

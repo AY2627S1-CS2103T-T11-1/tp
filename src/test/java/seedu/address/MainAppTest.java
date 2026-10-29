@@ -319,7 +319,7 @@ public class MainAppTest {
         Logic logic = new LogicManager(model, storage);
         logic.execute("list");
         assertFalse(Files.exists(file));
-        logic.execute("log 1 c/Algebra");
+        logic.execute("loglesson 1 c/Algebra");
         assertEquals(model.getAddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
     }
 
@@ -336,7 +336,7 @@ public class MainAppTest {
         Model model = app.initModelManager(storage, new UserPrefs());
         assertEquals(expected, model.getAddressBook());
         assertTrue(app.getStartupWarning().isEmpty());
-        new LogicManager(model, storage).execute("log 1 c/Geometry");
+        new LogicManager(model, storage).execute("loglesson 1 c/Geometry");
         var lessons = storage.readAddressBook().orElseThrow().getPersonList().getFirst().getLessons();
         assertEquals(2, lessons.size());
         assertTrue(lessons.getFirst().getDate().isEmpty());

@@ -80,7 +80,7 @@ public class FlagPersistenceTest {
     public void restart_editLogAndDeleteLesson_keepFlag() throws Exception {
         logic.execute("flag 1 r/Needs follow-up");
         logic.execute("edit 1 l/Sec 4");
-        logic.execute("log 1 c/Algebra revision");
+        logic.execute("loglesson 1 c/Algebra revision");
         logic.execute("deletelesson 1 1");
 
         Person reloaded = restart().getPersonList().get(0);
