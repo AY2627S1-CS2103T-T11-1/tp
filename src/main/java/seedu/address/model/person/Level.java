@@ -12,11 +12,12 @@ public class Level {
     public static final int MAX_LENGTH = 40;
 
     public static final String MESSAGE_CONSTRAINTS = "Levels should be 1 to " + MAX_LENGTH
-            + " characters long and use only letters, digits and spaces.";
+            + " characters long and use only English letters, digits and spaces.";
 
     /*
      * The first character of the level must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.
+     * \p{Alnum} matches only A-Z, a-z and 0-9, so the message says "English letters".
      */
     public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
 

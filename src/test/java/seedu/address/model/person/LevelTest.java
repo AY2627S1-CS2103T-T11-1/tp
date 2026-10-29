@@ -29,6 +29,7 @@ public class LevelTest {
         assertFalse(Level.isValidLevel("Sec#4")); // contains disallowed characters
         assertFalse(Level.isValidLevel("E-Math")); // hyphen not allowed in levels
         assertFalse(Level.isValidLevel(" Sec 4")); // leading space
+        assertFalse(Level.isValidLevel("中二")); // non-English letters
         assertFalse(Level.isValidLevel("a".repeat(41))); // longer than 40 characters
 
         // valid

@@ -32,6 +32,8 @@ public class SubjectTest {
         assertFalse(Subject.isValidSubject("a".repeat(51))); // longer than 50 characters
         assertFalse(Subject.isValidSubject("Math t/friend")); // unknown prefix text stays invalid
         assertFalse(Subject.isValidSubject("(H2) Math")); // starts with a bracket
+        assertFalse(Subject.isValidSubject("华文")); // non-English letters
+        assertFalse(Subject.isValidSubject("தமிழ்")); // non-English letters with combining marks
 
         // valid
         assertTrue(Subject.isValidSubject("E-Math"));

@@ -228,6 +228,17 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_nonEnglishLevelOrSubject_throwsIllegalValueException() {
+        JsonAdaptedPerson personWithLevel = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
+                "中二", VALID_SUBJECT, VALID_LESSONS);
+        assertThrows(IllegalValueException.class, Level.MESSAGE_CONSTRAINTS, personWithLevel::toModelType);
+
+        JsonAdaptedPerson personWithSubject = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
+                VALID_LEVEL, "华文", VALID_LESSONS);
+        assertThrows(IllegalValueException.class, Subject.MESSAGE_CONSTRAINTS, personWithSubject::toModelType);
+    }
+
+    @Test
     public void toModelType_nullSubject_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_ADDRESS,
