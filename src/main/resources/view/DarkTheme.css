@@ -252,11 +252,6 @@
     -fx-padding: 8 10 8 10;
 }
 
-/* Spaces out multi-line messages, such as usage text and error hints, for easier reading. */
-#resultDisplay .text {
-    -fx-line-spacing: 3px;
-}
-
 /* A failed command turns the feedback red until the next command runs. */
 #resultDisplay.result-error {
     -fx-text-fill: #8E2A20;
