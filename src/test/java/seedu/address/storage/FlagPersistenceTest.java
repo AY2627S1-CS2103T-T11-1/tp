@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,8 +49,7 @@ public class FlagPersistenceTest {
         model = new ModelManager(addressBook, new UserPrefs());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
         storage.saveAddressBook(addressBook);
-        logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+        logic = logicOver(model, storage, testFolder);
     }
 
     @Test

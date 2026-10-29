@@ -3,6 +3,7 @@ package seedu.address.logic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,8 +23,6 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -53,8 +52,7 @@ public class UnicodeBlankInputIntegrationTest {
         dataFile = directory.resolve("students.json");
         storage = new JsonAddressBookStorage(dataFile);
         storage.saveAddressBook(model.getAddressBook());
-        logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(directory.resolve("preferences.json"))));
+        logic = logicOver(model, storage, directory);
         logic.execute("find amy");
     }
 

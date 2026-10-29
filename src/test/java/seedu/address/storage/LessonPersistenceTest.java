@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
+import static seedu.address.testutil.TestStorageUtil.failingSaves;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -68,8 +70,7 @@ public class LessonPersistenceTest {
         model = new ModelManager(addressBook, new UserPrefs());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
         storage.saveAddressBook(addressBook);
-        logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+        logic = logicOver(model, storage, testFolder);
     }
 
     /**
@@ -180,8 +181,7 @@ public class LessonPersistenceTest {
         assertEquals(new PersonBuilder(BEA).withLessons("Calculus").build(), findByName(reloaded, "Bea Tan"));
 
         model = new ModelManager(reloaded, new UserPrefs());
-        logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(dataFile),
-                new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+        logic = logicOver(model, new JsonAddressBookStorage(dataFile), testFolder);
         assertEquals("Lesson records for Alex Lim (2):\n1. (undated): Geometry\n2. (undated): Algebra",
                 logic.execute("view 1").getFeedbackToUser());
         logic.execute("deletelesson 1 2");
@@ -220,14 +220,8 @@ public class LessonPersistenceTest {
             startWith(new PersonBuilder(ALEX).withLessons("Algebra").build());
             logic.execute("list");
             String saved = Files.readString(dataFile);
-            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
-                @Override
-                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                    throw exception;
-                }
-            };
-            LogicManager failingLogic = new LogicManager(model, new StorageManager(failingStorage,
-                    new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+            JsonAddressBookStorage failingStorage = failingSaves(dataFile, exception);
+            LogicManager failingLogic = logicOver(model, failingStorage, testFolder);
             String format = exception instanceof AccessDeniedException
                     ? LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT : LogicManager.FILE_OPS_ERROR_FORMAT;
             Object detail = exception instanceof AccessDeniedException ? dataFile : exception.getMessage();
@@ -302,14 +296,8 @@ public class LessonPersistenceTest {
      * and checks the error message shown to the user.
      */
     private void assertLogSaveFailure(IOException exception, String expectedMessage) {
-        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                throw exception;
-            }
-        };
-        LogicManager failingLogic = new LogicManager(model, new StorageManager(failingStorage,
-                new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+        JsonAddressBookStorage failingStorage = failingSaves(dataFile, exception);
+        LogicManager failingLogic = logicOver(model, failingStorage, testFolder);
 
         assertThrows(CommandException.class, expectedMessage, ()
                 -> failingLogic.execute("loglesson 1 c/Binomial theorem"));

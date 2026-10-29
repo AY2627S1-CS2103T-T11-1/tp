@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.LessonDateUtil.loggedToday;
 import static seedu.address.testutil.LessonDateUtil.todayText;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.Logic;
-import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -24,8 +24,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -56,8 +54,7 @@ public class FindCommandIntegrationTest {
         dataFile = temporaryFolder.resolve("students.json");
         storage = new JsonAddressBookStorage(dataFile);
         storage.saveAddressBook(model.getAddressBook());
-        logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        logic = logicOver(model, storage, temporaryFolder);
     }
 
     @Test

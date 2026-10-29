@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestUtil.BLANK_OR_INVISIBLE_VALUES;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -12,10 +13,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 public class LessonTest {
-    private static final List<String> BLANK_VALUES = List.of("\u2003", "\u3000", "\u00a0", "\u2007", "\u202f",
-            " \t\u2003\u00a0\u3000 ", "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
-            "\u200b\u200c\u200d\u2060\ufeff", " \u2003\u00a0\u200b\u2060 ");
-
     private static final LocalDate OCT_18 = LocalDate.of(2026, 10, 18);
     private static final LocalDate OCT_19 = LocalDate.of(2026, 10, 19);
 
@@ -76,14 +73,14 @@ public class LessonTest {
 
     @Test
     public void isValidContent_whitespaceAndFormatOnly_returnsFalse() {
-        for (String content : BLANK_VALUES) {
+        for (String content : BLANK_OR_INVISIBLE_VALUES) {
             assertFalse(Lesson.isValidContent(content));
         }
     }
 
     @Test
     public void constructor_whitespaceAndFormatOnly_throwsIllegalArgumentException() {
-        for (String content : BLANK_VALUES) {
+        for (String content : BLANK_OR_INVISIBLE_VALUES) {
             assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_CONSTRAINTS, () -> new Lesson(content));
         }
     }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,8 +29,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -58,8 +57,7 @@ public class PhoneWhitespaceIntegrationTest {
         dataFile = directory.resolve("students.json");
         storage = new JsonAddressBookStorage(dataFile);
         storage.saveAddressBook(model.getAddressBook());
-        logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(directory.resolve("preferences.json"))));
+        logic = logicOver(model, storage, directory);
     }
 
     @Test

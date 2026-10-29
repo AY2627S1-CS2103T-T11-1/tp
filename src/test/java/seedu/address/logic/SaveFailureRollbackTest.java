@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -34,8 +35,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Flag;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -68,13 +67,10 @@ public class SaveFailureRollbackTest {
 
     private void assertRollbackAndRetry(String command, boolean isPermissionFailure) throws Exception {
         Path folder = Files.createTempDirectory(temporaryFolder, "mutation-");
-        Model model = new ModelManager();
-        model.addPerson(AMY);
-        model.addPerson(BEN);
+        Model model = modelWithAmyAndBen();
         FailOnceStorage storage = new FailOnceStorage(folder.resolve("students.json"));
         storage.saveAddressBook(model.getAddressBook());
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(folder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, folder);
         logic.execute("find amy");
         AddressBook before = new AddressBook(model.getAddressBook());
         String savedData = Files.readString(storage.getAddressBookFilePath());
@@ -106,12 +102,9 @@ public class SaveFailureRollbackTest {
 
     @Test
     public void execute_failedUnflag_restoresFlaggedFilterForFutureChanges() throws Exception {
-        Model model = new ModelManager();
-        model.addPerson(AMY);
-        model.addPerson(BEN);
+        Model model = modelWithAmyAndBen();
         FailOnceStorage storage = new FailOnceStorage(temporaryFolder.resolve("flagged.json"));
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("flagged");
         storage.failNextSave(new IOException("simulated failure"));
         assertThrows(CommandException.class, () -> logic.execute("unflag 1"));
@@ -126,13 +119,10 @@ public class SaveFailureRollbackTest {
     public void execute_savePathBecomesDirectory_restoresDeletionAfterRealIoFailure() throws Exception {
         Path file = temporaryFolder.resolve("students.json");
         Path preservedFile = temporaryFolder.resolve("students.saved.json");
-        Model model = new ModelManager();
-        model.addPerson(AMY);
-        model.addPerson(BEN);
+        Model model = modelWithAmyAndBen();
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         storage.saveAddressBook(model.getAddressBook());
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("find amy");
         String originalBytes = Files.readString(file);
         Files.move(file, preservedFile);
@@ -163,8 +153,7 @@ public class SaveFailureRollbackTest {
                     FailOnceStorage storage = new FailOnceStorage(file);
                     storage.saveAddressBook(model.getAddressBook());
                     byte[] original = Files.readAllBytes(file);
-                    Logic logic = new LogicManager(model, new StorageManager(storage,
-                            new JsonUserPrefsStorage(file.resolveSibling("preferences.json"))));
+                    Logic logic = logicOver(model, storage, file.getParent());
                     storage.failNextSave(failure);
 
                     CommandException error = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, ()
@@ -190,14 +179,11 @@ public class SaveFailureRollbackTest {
         Assumptions.assumeTrue(Files.getFileStore(directory).supportsFileAttributeView("posix"),
                 "Read-only directory permissions require a POSIX filesystem");
         Path file = directory.resolve("addressbook.json");
-        Model model = new ModelManager();
-        model.addPerson(AMY);
-        model.addPerson(BEN);
+        Model model = modelWithAmyAndBen();
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         storage.saveAddressBook(model.getAddressBook());
         byte[] original = Files.readAllBytes(file);
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("find amy");
         Set<PosixFilePermission> previousPermissions = Files.getPosixFilePermissions(directory);
         try {
@@ -225,13 +211,10 @@ public class SaveFailureRollbackTest {
     public Stream<DynamicTest> execute_filterCommands_skipSavingAndKeepRequestedFilter() {
         return Stream.of("list", "find ben", "flagged").map(command -> DynamicTest.dynamicTest(command, () -> {
             Path folder = Files.createTempDirectory(temporaryFolder, "filter-");
-            Model model = new ModelManager();
-            model.addPerson(AMY);
-            model.addPerson(BEN);
+            Model model = modelWithAmyAndBen();
             FailOnceStorage storage = new FailOnceStorage(folder.resolve("students.json"));
             storage.saveAddressBook(model.getAddressBook());
-            Logic logic = new LogicManager(model, new StorageManager(storage,
-                    new JsonUserPrefsStorage(folder.resolve("preferences.json"))));
+            Logic logic = logicOver(model, storage, folder);
             logic.execute("find ben");
             String savedData = Files.readString(storage.getAddressBookFilePath());
             storage.failNextSave(new IOException("simulated failure"));
@@ -244,6 +227,16 @@ public class SaveFailureRollbackTest {
             assertEquals(expected, model.getFilteredPersonList());
             assertEquals(savedData, Files.readString(storage.getAddressBookFilePath()));
         }));
+    }
+
+    /**
+     * Returns a model containing Amy and Ben, the two students that most of these tests start with.
+     */
+    private static Model modelWithAmyAndBen() {
+        Model model = new ModelManager();
+        model.addPerson(AMY);
+        model.addPerson(BEN);
+        return model;
     }
 
     /** JSON storage whose next save can fail before writing, then resume normal persistence. */
