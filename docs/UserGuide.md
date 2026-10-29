@@ -523,6 +523,8 @@ An abrupt shutdown, such as force-quitting TutorLah before the replacement finis
 
 TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
 
+Keep all students inside one root JSON object. Only whitespace may follow its closing brace; a second object or any other trailing content makes the file invalid and activates the recovery protection described below. Do not concatenate separate data files.
+
 In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. Stored dates must be real dates from `2000-01-01` onwards. Earlier dates, impossible dates and dates in another format make the data file invalid. Existing future dates are kept when loading, so a system-clock correction does not make saved records unreadable; `log` and date changes through `editlesson` still reject future dates.
 
 On loading, names have surrounding whitespace removed and repeated whitespace collapsed to one space, as with `add` and `edit`. If this reveals two students with the same phone and name ignoring case, the file is invalid. TutorLah does not merge their lessons or flags; back up the file and correct the duplicate entries before restarting.
