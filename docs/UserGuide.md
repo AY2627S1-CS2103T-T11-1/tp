@@ -133,7 +133,9 @@ All five fields are required:
 | `l/LEVEL` | 1–40 characters: English letters, digits and spaces. For example, `Sec 3`, `JC1` or `Sec 4 Normal Academic`. Brackets and hyphens are not allowed. |
 | `sub/SUBJECT` | 1–50 characters: English letters, digits, spaces, hyphens, `&`, `(`, `)`, `+` and commas. Start with an English letter or digit. For example, `E-Math` or `E-Math & A-Math`; slashes are not allowed. |
 
-A student with both the same phone and the same name as another student is rejected, ignoring name case and extra spaces. Equal names with different phones are allowed. Only the five listed fields are accepted; unsupported fields such as `t/friend` are not saved as extra details.
+A student with both the same phone and the same name as another student is rejected, ignoring name case and extra spaces. Equal names with different phones are allowed.
+
+Only the five listed markers start fields. Other slash text stays in the preceding value: `n/Amy t/friend` saves the name `Amy t/friend`, while `sub/Math t/friend` makes the subject invalid.
 
 Examples:
 
