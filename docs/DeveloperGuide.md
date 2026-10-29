@@ -302,7 +302,7 @@ On success the command calls `Model#setPerson`, restores the full list as AB3 do
 
 `EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `loglesson`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
 
-`EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does, reusing `DeleteLessonCommand#toStoredLessonIndex`. It then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
+`EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does: both call `LessonCommandUtil#getStoredLessonIndex`, which also rejects a student with no lessons or a number beyond their history. Messages shared by several commands, such as the no-lessons and future-date messages, live in `Messages`. `EditLessonCommand` then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
 
 The command keeps each student's lessons in date order with one of two operations:
 

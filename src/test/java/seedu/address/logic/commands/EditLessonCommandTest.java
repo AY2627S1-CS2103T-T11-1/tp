@@ -168,9 +168,9 @@ public class EditLessonCommandTest {
     @Test
     public void execute_futureDate_failure() {
         assertCommandFailure(new EditLessonCommand(FIRST, FIRST, date(OCT_25), OCT_24_CLOCK), model,
-                LogCommand.MESSAGE_FUTURE_DATE);
+                Messages.MESSAGE_FUTURE_DATE);
         assertCommandFailure(new EditLessonCommand(FIRST, FIRST, contentAndDate("Vectors", OCT_25),
-                OCT_24_CLOCK), model, LogCommand.MESSAGE_FUTURE_DATE);
+                OCT_24_CLOCK), model, Messages.MESSAGE_FUTURE_DATE);
     }
 
     /**

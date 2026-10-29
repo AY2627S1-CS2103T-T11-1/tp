@@ -21,6 +21,12 @@ public class Messages {
             "The student index provided is invalid.";
     public static final String MESSAGE_INVALID_LESSON_DISPLAYED_INDEX =
             "The lesson index provided is invalid.";
+    public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_NO_LESSONS = "No lessons logged yet for %1$s.";
+    /** One lesson in a lesson listing: its {@code view} number, date and content. */
+    public static final String MESSAGE_LESSON_LINE = "%1$d. %2$s: %3$s";
+    public static final String MESSAGE_FUTURE_DATE =
+            "Lesson dates cannot be in the future. Log a lesson on or after the day it is taught.";
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d person(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";

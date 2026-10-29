@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
-import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditLessonCommand;
 import seedu.address.logic.commands.EditLessonCommand.EditLessonDescriptor;
 import seedu.address.model.lesson.Lesson;
@@ -66,8 +65,8 @@ public class EditLessonCommandParserTest {
 
     @Test
     public void parse_noFieldToEdit_failure() {
-        assertParseFailure(parser, "2 1", EditCommand.MESSAGE_NOT_EDITED);
-        assertParseFailure(parser, " 2 \t 1 ", EditCommand.MESSAGE_NOT_EDITED);
+        assertParseFailure(parser, "2 1", Messages.MESSAGE_NOT_EDITED);
+        assertParseFailure(parser, " 2 \t 1 ", Messages.MESSAGE_NOT_EDITED);
     }
 
     /**

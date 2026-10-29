@@ -49,7 +49,6 @@ public class EditCommand extends Command {
             + PREFIX_LEVEL + "Sec 4";
 
     public static final String MESSAGE_EDIT_STUDENT_SUCCESS = "Edited student: %1$s";
-    public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_STUDENT = "This student already exists in the list.";
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);

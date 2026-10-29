@@ -64,7 +64,7 @@ public class FindLessonCommand extends Command {
         List<Lesson> lessons = student.getLessons();
         if (lessons.isEmpty()) {
             return new CommandResult(
-                    String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()), student);
+                    String.format(Messages.MESSAGE_NO_LESSONS, student.getName()), student);
         }
 
         List<String> matches = formatMatchingLines(lessons);
@@ -91,7 +91,7 @@ public class FindLessonCommand extends Command {
         for (int i = lessons.size() - 1; i >= 0; i--) {
             Lesson lesson = lessons.get(i);
             if (predicate.test(lesson)) {
-                matches.add(String.format(ViewCommand.MESSAGE_LESSON_LINE,
+                matches.add(String.format(Messages.MESSAGE_LESSON_LINE,
                         lessons.size() - i, Messages.formatLessonDate(lesson), lesson.content));
             }
         }
