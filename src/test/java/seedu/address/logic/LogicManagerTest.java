@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_FUTURE_DATE;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
-import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddCommandParser;
@@ -175,7 +175,7 @@ public class LogicManagerTest {
         logic.execute("loglesson 1 c/Vectors");
         assertEquals("Logged lesson for " + AMY.getName() + " on " + yesterday + ": Surds",
                 logic.execute("loglesson 1 c/Surds date/" + yesterday).getFeedbackToUser());
-        assertCommandException("loglesson 1 c/Matrices date/" + tomorrow, LogCommand.MESSAGE_FUTURE_DATE);
+        assertCommandException("loglesson 1 c/Matrices date/" + tomorrow, MESSAGE_FUTURE_DATE);
 
         assertEquals("Lesson records for " + AMY.getName() + " (2):\n1. " + todayText() + ": Vectors\n2. "
                 + yesterday + ": Surds", logic.execute("view 1").getFeedbackToUser());

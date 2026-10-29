@@ -161,15 +161,6 @@ public class DeleteLessonCommandTest {
     }
 
     /**
-     * Checks both assertion failures: a converted position below zero or beyond the last lesson.
-     */
-    @Test
-    public void toStoredLessonIndex_invalidPosition_throwsAssertionError() {
-        assertThrows(AssertionError.class, () -> DeleteLessonCommand.toStoredLessonIndex(3, 4));
-        assertThrows(AssertionError.class, () -> DeleteLessonCommand.toStoredLessonIndex(3, 0));
-    }
-
-    /**
      * Compares both target indexes rather than the student alone.
      */
     @Test

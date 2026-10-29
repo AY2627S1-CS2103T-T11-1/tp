@@ -86,7 +86,7 @@ public class EditLessonCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Person student = getDisplayedStudent(model);
-        int storedIndex = getStoredLessonIndex(student);
+        int storedIndex = LessonCommandUtil.getStoredLessonIndex(student, lessonIndex);
         Lesson lessonToEdit = student.getLessons().get(storedIndex);
 
         checkDateNotInFuture();
@@ -121,23 +121,6 @@ public class EditLessonCommand extends Command {
     }
 
     /**
-     * Returns the zero-based position in logging order of the lesson that {@code lessonIndex} shows in
-     * {@code view}.
-     *
-     * @throws CommandException if the student has no lessons or the index is outside their history
-     */
-    private int getStoredLessonIndex(Person student) throws CommandException {
-        List<Lesson> lessons = student.getLessons();
-        if (lessons.isEmpty()) {
-            throw new CommandException(String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()));
-        }
-        if (lessonIndex.getZeroBased() >= lessons.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
-        }
-        return DeleteLessonCommand.toStoredLessonIndex(lessons.size(), lessonIndex.getOneBased());
-    }
-
-    /**
      * Rejects a new date after today, as {@code loglesson} does.
      *
      * @throws CommandException if the new date is in the future
@@ -145,7 +128,7 @@ public class EditLessonCommand extends Command {
     private void checkDateNotInFuture() throws CommandException {
         LocalDate today = LocalDate.now(clock);
         if (editLessonDescriptor.getDate().filter(date -> date.isAfter(today)).isPresent()) {
-            throw new CommandException(LogCommand.MESSAGE_FUTURE_DATE);
+            throw new CommandException(Messages.MESSAGE_FUTURE_DATE);
         }
     }
 

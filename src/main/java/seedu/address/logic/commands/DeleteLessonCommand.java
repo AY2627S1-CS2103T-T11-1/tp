@@ -54,16 +54,8 @@ public class DeleteLessonCommand extends Command {
         }
 
         Person student = students.get(studentIndex.getZeroBased());
-        List<Lesson> lessons = student.getLessons();
-        if (lessons.isEmpty()) {
-            throw new CommandException(String.format(ViewCommand.MESSAGE_NO_LESSONS, student.getName()));
-        }
-        if (lessonIndex.getZeroBased() >= lessons.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
-        }
-
-        int storedIndex = toStoredLessonIndex(lessons.size(), lessonIndex.getOneBased());
-        Lesson deletedLesson = lessons.get(storedIndex);
+        int storedIndex = LessonCommandUtil.getStoredLessonIndex(student, lessonIndex);
+        Lesson deletedLesson = student.getLessons().get(storedIndex);
         Person studentWithoutLesson = student.withLessonRemoved(storedIndex);
         model.setPerson(student, studentWithoutLesson);
         logger.fine("Removed lesson " + lessonIndex.getOneBased()
@@ -72,17 +64,6 @@ public class DeleteLessonCommand extends Command {
         String dateLabel = deletedLesson.getDate().isPresent() ? "(" + lessonDate + ")" : lessonDate;
         return new CommandResult(String.format(MESSAGE_DELETE_LESSON_SUCCESS,
                 lessonIndex.getOneBased(), student.getName(), dateLabel, deletedLesson), studentWithoutLesson);
-    }
-
-    /**
-     * Converts a validated newest-first lesson number to its zero-based position in logging order.
-     * Asserts that the converted position is within the history.
-     */
-    static int toStoredLessonIndex(int lessonCount, int displayedIndex) {
-        int storedIndex = lessonCount - displayedIndex;
-        assert storedIndex >= 0 && storedIndex < lessonCount
-                : "Converted lesson index must identify an existing lesson";
-        return storedIndex;
     }
 
     /**

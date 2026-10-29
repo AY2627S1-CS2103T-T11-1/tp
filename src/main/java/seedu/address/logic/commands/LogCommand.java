@@ -36,8 +36,6 @@ public class LogCommand extends Command {
             + PREFIX_DATE + "21/10/2026";
 
     public static final String MESSAGE_LOG_LESSON_SUCCESS = "Logged lesson for %1$s on %2$s: %3$s";
-    public static final String MESSAGE_FUTURE_DATE =
-            "Lesson dates cannot be in the future. Log a lesson on or after the day it is taught.";
 
     private static final Logger logger = LogsCenter.getLogger(LogCommand.class);
 
@@ -77,7 +75,7 @@ public class LogCommand extends Command {
         LocalDate today = LocalDate.now(clock);
         LocalDate lessonDate = lesson.getDate().orElse(today);
         if (lessonDate.isAfter(today)) {
-            throw new CommandException(MESSAGE_FUTURE_DATE);
+            throw new CommandException(Messages.MESSAGE_FUTURE_DATE);
         }
 
         Lesson datedLesson = lesson.withDate(lessonDate);

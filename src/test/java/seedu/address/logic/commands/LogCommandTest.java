@@ -124,7 +124,7 @@ public class LogCommandTest {
         LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON,
                 LESSON_QUADRATICS.withDate(LocalDate.of(2026, 10, 19)), OCT_18_CLOCK);
 
-        assertCommandFailure(logCommand, model, LogCommand.MESSAGE_FUTURE_DATE);
+        assertCommandFailure(logCommand, model, Messages.MESSAGE_FUTURE_DATE);
     }
 
     @Test

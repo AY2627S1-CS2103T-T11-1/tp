@@ -22,9 +22,7 @@ public class ViewCommand extends Command {
             + ": Views lesson records for the student identified by the displayed student index.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
-    public static final String MESSAGE_NO_LESSONS = "No lessons logged yet for %1$s.";
     public static final String MESSAGE_LESSONS_HEADER = "Lesson records for %1$s (%2$d):";
-    public static final String MESSAGE_LESSON_LINE = "%1$d. %2$s: %3$s";
 
     private final Index targetIndex;
 
@@ -47,14 +45,14 @@ public class ViewCommand extends Command {
         Person student = students.get(targetIndex.getZeroBased());
         List<Lesson> lessons = student.getLessons();
         if (lessons.isEmpty()) {
-            return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()), student);
+            return new CommandResult(String.format(Messages.MESSAGE_NO_LESSONS, student.getName()), student);
         }
 
         StringBuilder result = new StringBuilder(String.format(MESSAGE_LESSONS_HEADER,
                 student.getName(), lessons.size()));
         for (int i = lessons.size() - 1; i >= 0; i--) {
             Lesson lesson = lessons.get(i);
-            result.append("\n").append(String.format(MESSAGE_LESSON_LINE,
+            result.append("\n").append(String.format(Messages.MESSAGE_LESSON_LINE,
                     lessons.size() - i, Messages.formatLessonDate(lesson), lesson.content));
         }
         return new CommandResult(result.toString(), student);
