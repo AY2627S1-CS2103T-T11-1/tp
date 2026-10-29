@@ -34,6 +34,7 @@ public class SubjectTest {
         assertFalse(Subject.isValidSubject("(H2) Math")); // starts with a bracket
         assertFalse(Subject.isValidSubject("华文")); // non-English letters
         assertFalse(Subject.isValidSubject("தமிழ்")); // non-English letters with combining marks
+        assertFalse(Subject.isValidSubject("Math ٤")); // digit outside 0 to 9
 
         // valid
         assertTrue(Subject.isValidSubject("E-Math"));

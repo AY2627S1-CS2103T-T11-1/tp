@@ -13,12 +13,12 @@ public class Subject {
     public static final int MAX_LENGTH = 50;
 
     public static final String MESSAGE_CONSTRAINTS = "Subjects should be 1 to " + MAX_LENGTH
-            + " characters long, start with an English letter or digit, and use only English letters, digits, "
-            + "spaces, hyphens, &, (, ), + and commas.";
+            + " characters long, start with an English letter or a digit 0 to 9, and use only English letters, "
+            + "digits 0 to 9, spaces, hyphens, &, (, ), + and commas.";
 
     /*
      * The first character must be a letter or digit, so " " (a blank string) and "-Math" are rejected.
-     * \p{Alnum} matches only A-Z, a-z and 0-9, so the message says "English letters".
+     * \p{Alnum} matches only A-Z, a-z and 0-9, so the message says "English letters" and "digits 0 to 9".
      * '/' is not allowed, so text such as "t/friend" typed after sub/ is not saved as part of the subject.
      */
     public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} \\-&()+,]*";
