@@ -38,7 +38,7 @@ Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
 <puml src="diagrams/ArchitectureDiagram.puml" width="280" alt="Architecture diagram showing Main, UI, Logic, Model, Storage and Commons, the dependencies between them, the user and the data file" />
 
-The ***Architecture Diagram*** given above explains the high-level design of the App. Each arrow shows a dependency: UI uses Logic and Model, Logic uses Model and Storage, Storage uses Model, and Main sets up all four. No component depends on UI. Every component also uses Commons; those arrows are left out to keep the diagram readable.
+The ***Architecture Diagram*** given above explains the high-level design of the App. Each arrow shows a dependency: UI uses Logic and Model, Logic uses Model and Storage, Storage uses Model, and Main sets up all four. Logic, Model and Storage do not depend on UI. Every component also uses Commons; those arrows are left out to keep the diagram readable.
 
 The following provides a quick overview of the main components and their interactions.
 
@@ -207,12 +207,12 @@ This section describes some noteworthy details on how certain features are imple
 * **Parsing:** `LogCommandParser` tokenizes only `c/` and `date/`. It rejects a missing index or content, a repeated prefix, invalid content and an invalid date. `ParserUtil#parseLessonDate` accepts `D/M/YYYY` or `DD/MM/YYYY` with a four-digit year, and rejects dates that do not exist, such as `31/02/2026`, and dates before `Lesson.EARLIEST_DATE` (01/01/2000). `log` and `editlesson` call it through `parseLessonDateWithNotesHint`, which adds a hint to reword `date/` if it was part of the lesson notes. `findlesson` gives the date error without the hint.
 * **Today's date by default:** `LogCommand` gets today's date from a `Clock`: the system clock in the app, and a fixed clock in tests. A lesson without `date/` is dated today, and a date after today is rejected with `Lesson dates cannot be in the future. ...`. The parser does not check for future dates, so that every check uses the same clock.
 * **Date order:** each student's lessons are stored oldest first. `Person#withLessonAdded` steps back from the newest end past every lesson dated after the new one, and inserts it there. A lesson logged for a date that already has lessons therefore goes after them, and `view`, which lists the stored order in reverse, shows it first among that day's lessons. `deletelesson` and `editlesson` use `view`'s numbering, so no command needs to sort.
-* **Undated records:** lessons saved before v1.4 have no date, and `view` shows them as `(undated)`. `withLessonAdded` never steps past an undated lesson, so a new lesson always goes after it. In a file saved by v1.3, where every older lesson is undated, the undated records therefore stay at the oldest end. `JsonAdaptedLesson` stores a date as `"date" : "YYYY-MM-DD"` and leaves the field out for an undated lesson. When the data file is loaded, `JsonAdaptedPerson` sorts each student's lessons into the same order, as described in the [Storage component](#storage-component).
+* **Undated records:** lessons saved before v1.4 have no date, and `view` shows them as `(undated)`. They are kept at the oldest end, so `view` lists them last. When the data file is loaded, `JsonAdaptedPerson` stably sorts each student's lessons by date, with undated lessons first and lessons on the same date in their saved order, as described in the [Storage component](#storage-component). `withLessonAdded` never steps past an undated lesson, so a new lesson always goes after them. `JsonAdaptedLesson` stores a date as `"date" : "YYYY-MM-DD"` and leaves the field out for an undated lesson.
 
 **Design considerations: when lessons are ordered**
 
 * **Alternative 1 (current choice):** insert each lesson in date order when it is logged.
-  * Pros: the stored order is the order users see, so `view`, `deletelesson` and `editlesson` share one numbering without sorting, and the data file reads chronologically.
+  * Pros: `view`, `deletelesson` and `editlesson` all number lessons by reversing the stored order, so they share one numbering without sorting, and the data file reads chronologically.
   * Cons: every command that adds or redates a lesson must insert it correctly.
 * **Alternative 2:** store lessons in logging order and sort them by date when displaying.
   * Pros: adding a lesson is a plain append.
@@ -1306,7 +1306,7 @@ Use a separate test folder whose `data/addressbook.json` contains `{"persons": [
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
-1. Exit, keep a copy of the data file, and remove the `date` field from the student's oldest lesson, as in a file saved by v1.3. Start the app and view the student.
-   Expected: that lesson shows `(undated)` in place of the date, in its original position, last in the list. Then enter `log INDEX c/Binomial theorem date/DD/MM/YYYY` with the date two days ago, and view the student. Expected: `Binomial theorem` is listed above the undated lesson, which stays last.
+1. Exit, keep a copy of the data file, and remove the `date` field from the student's newest lesson, as in a file saved by v1.3. Start the app and view the student.
+   Expected: that lesson shows `(undated)` in place of the date and is now listed last, because undated lessons are kept at the oldest end. Then enter `log INDEX c/Binomial theorem date/DD/MM/YYYY` with the date two days ago, and view the student. Expected: `Binomial theorem` is listed above the undated lesson, which stays last.
 1. Exit, and change a lesson's date to `18/10/2026` in the data file. Start the app.
    Expected: the data file is treated as invalid and the app starts with no students, as for other invalid fields. Restore your copy afterwards.

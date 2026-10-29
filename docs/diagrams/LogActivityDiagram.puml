@@ -9,15 +9,15 @@ and optional date;
 'Since the beta syntax does not support placing the condition outside the
 'diamond we place it as the true branch instead.
 
-if () then ([format, index, content
-or date is invalid])
+if () then ([input is
+invalid])
     :Show the error;
     stop
 else ([else])
 endif
 
-if () then ([index is beyond
-the displayed list])
+if () then ([index is not
+in the list])
     :Show the invalid
     student index error;
     stop
@@ -30,7 +30,8 @@ else ([else])
     :Use today's date;
 endif
 
-if () then ([date is after today])
+if () then ([date is
+after today])
     :Show the future-date error;
     stop
 else ([else])
