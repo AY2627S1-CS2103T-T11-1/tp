@@ -148,8 +148,8 @@ Before deleting a `.puml` file, search `docs` for its name to make sure no page 
 
 Removing undo/redo (#130) removes all of the DG's object diagrams (`UndoRedoState0` to `5`) and its only activity diagram (`CommitActivityDiagram`). The DG would then have only class and sequence diagrams, while the course asks for several types. Options:
 
-* **An object diagram** of one `Person` and their `Lesson`s, before and after `deletelesson` or a backdated `log`. This shows date-order storage clearly.
-* **An activity diagram** of `log`, from parsing the date through the future-date check to inserting in date order.
+* **An object diagram** of one `Person` and their `Lesson`s, before and after `deletelesson` or a backdated `loglesson`. This shows date-order storage clearly.
+* **An activity diagram** of `loglesson`, from parsing the date through the future-date check to inserting in date order.
 
 ---
 

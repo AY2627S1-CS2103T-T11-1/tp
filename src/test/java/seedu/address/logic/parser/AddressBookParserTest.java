@@ -78,10 +78,12 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_log() throws Exception {
-        LogCommand command = (LogCommand) parser.parseCommand(LogCommand.COMMAND_WORD + " "
-                + INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_CONTENT + "Quadratic inequalities");
-        assertEquals(new LogCommand(INDEX_FIRST_PERSON, new Lesson("Quadratic inequalities")), command);
+    public void parseCommand_logLesson() throws Exception {
+        LogCommand expected = new LogCommand(INDEX_FIRST_PERSON, new Lesson("Quadratic inequalities"));
+        for (String commandWord : List.of("loglesson", "LOGLESSON", "LogLesson")) {
+            assertEquals(expected, parser.parseCommand(commandWord + " " + INDEX_FIRST_PERSON.getOneBased() + " "
+                    + PREFIX_CONTENT + "Quadratic inequalities"));
+        }
     }
 
     @Test
@@ -193,6 +195,9 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_removedCommands_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("clear"));
+        // loglesson replaced log (#227)
+        for (String command : List.of("clear", "log 1 c/Algebra", "LOG 1 c/Algebra", "log")) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(command));
+        }
     }
 }

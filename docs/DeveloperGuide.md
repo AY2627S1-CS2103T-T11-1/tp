@@ -60,7 +60,7 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other when the user successfully logs a lesson for an existing student with the command `log 1 c/Vectors`. `Logic` updates the student in `Model`, then asks `Storage` to save the whole address book to the data file. Error paths, such as an invalid index or a failed save, are omitted.
+The *Sequence Diagram* below shows how the components interact with each other when the user successfully logs a lesson for an existing student with the command `loglesson 1 c/Vectors`. `Logic` updates the student in `Model`, then asks `Storage` to save the whole address book to the data file. Error paths, such as an invalid index or a failed save, are omitted.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" width="666" />
 
@@ -110,7 +110,7 @@ How command execution works:
 1. `LogicManager` calls `Command#execute(Model)`, which reads or updates the model and returns a `CommandResult`.
 1. `LogicManager` compares the complete address book with its snapshot from before execution. If student data changed, it saves through `Storage` before returning the result. Otherwise it returns without saving, so `list`, `view`, `find`, `flagged`, `help` and `exit` work even when saving is unavailable. An edit that leaves the stored values unchanged also skips saving.
 
-`CommandResult` contains feedback and the help/exit flags. Commands that view or change exactly one student (`view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) also supply that `Person` as it is after the command, through `getStudent()`, even when the student has no lessons. Other commands leave it absent (`0..1`). The UI shows that student in the details panel and highlights their card, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync).
+`CommandResult` contains feedback and the help/exit flags. Commands that view or change exactly one student (`view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) also supply that `Person` as it is after the command, through `getStudent()`, even when the student has no lessons. Other commands leave it absent (`0..1`). The UI shows that student in the details panel and highlights their card, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync).
 
 Invalid input raises `ParseException`; execution or save failures raise `CommandException`. Before executing a parsed command, `LogicManager` copies the address book and captures the current filter through `Model#getFilteredPersonListPredicate`. Student, lesson and flag values are immutable, so the copied list preserves the previous values. If saving throws `IOException`, including `AccessDeniedException`, the manager restores changed data through `Model#setAddressBook` and reapplies the captured predicate before reporting the existing save error. Capturing the predicate, rather than only the visible students, preserves its meaning for later updates. The existing observable list remains connected to the UI, and a retry uses the original displayed indexes.
 
@@ -132,7 +132,7 @@ The helper dependencies are shown separately to keep the overview readable. Pale
 
 <a href="diagrams/ParserHelpers.png" no-validation><puml src="diagrams/ParserHelpers.puml" alt="Partial parser helper diagram showing tokenization for logging and shared validation for both lesson parsers" width="500" /></a>
 
-* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date; `log` and `editlesson` use `ParserUtil#parseLessonDateWithNotesHint`, described in [Prefix text inside values](#prefix-text-inside-values).
+* `LogCommandParser` tokenizes `c/` and optional `date/` arguments using `ArgumentTokenizer` and the `Prefix` constants in `CliSyntax`. `ArgumentMultimap` stores the preamble and prefixed values and checks for duplicate prefixes. `ParserUtil` validates the student index, content and date; `loglesson` and `editlesson` use `ParserUtil#parseLessonDateWithNotesHint`, described in [Prefix text inside values](#prefix-text-inside-values).
 * `DeleteLessonCommandParser` splits two positional indexes on whitespace, without using the tokenizer. It shares `ParserUtil`'s index validation, using the appropriate student- or lesson-index error message.
 
 The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
@@ -173,7 +173,7 @@ The `Storage` component,
 
 Before constructing a loaded student, `JsonAdaptedPerson` applies `Name#normalize`, also used by `ParserUtil#parseName`: surrounding Unicode whitespace is removed and internal whitespace is collapsed to one space before validation. `JsonSerializableAddressBook` then checks the normalized name and phone through the existing `isSamePerson` rule. A duplicate makes the complete file invalid; neither student's lessons or flag are silently merged or discarded. The same normalized name with a different phone remains a separate student.
 
-The adapter stably sorts loaded lessons by date, with missing dates before dated records in storage. Equal-date and undated records retain their relative saved order, including repeated occurrences. `view` and the details panel reverse this list as usual; subsequent log, edit and delete operations therefore use the same chronological indexes. Sorting and normalization change only the loaded model, and the file is not rewritten until a successful data-changing command saves it.
+The adapter stably sorts loaded lessons by date, with missing dates before dated records in storage. Equal-date and undated records retain their relative saved order, including repeated occurrences. `view` and the details panel reverse this list as usual; subsequent `loglesson`, `edit` and `delete` operations therefore use the same chronological indexes. Sorting and normalization change only the loaded model, and the file is not rewritten until a successful data-changing command saves it.
 
 `JsonAdaptedLesson` rejects dates before `Lesson.EARLIEST_DATE` with a storage-specific message using `YYYY-MM-DD`. Missing dates remain undated, and impossible dates and invalid date formats still fail loading. Existing future dates are accepted to keep saved records readable after a system-clock correction. The command-side future-date checks remain unchanged; loading does not depend on today's date.
 
@@ -203,11 +203,11 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Logging a lesson
 
-`log INDEX c/CONTENT [date/DATE]` adds one dated lesson record to a student. The activity diagram below shows its steps. A failed save is left out; `LogicManager` then restores the previous data, as described in the [Logic component](#logic-component).
+`loglesson INDEX c/CONTENT [date/DATE]` adds one dated lesson record to a student. The activity diagram below shows its steps. A failed save is left out; `LogicManager` then restores the previous data, as described in the [Logic component](#logic-component).
 
-<puml src="diagrams/LogActivityDiagram.puml" width="300" alt="Activity diagram of log: parsing, checking the index, using the given date or today's date, rejecting a future date, inserting the lesson by date and saving" />
+<puml src="diagrams/LogActivityDiagram.puml" width="300" alt="Activity diagram of loglesson: parsing, checking the index, using the given date or today's date, rejecting a future date, inserting the lesson by date and saving" />
 
-* **Parsing:** `LogCommandParser` tokenizes only `c/` and `date/`. It rejects a missing index or content, a repeated prefix, invalid content and an invalid date. `ParserUtil#parseLessonDate` accepts `D/M/YYYY` or `DD/MM/YYYY` with a four-digit year, and rejects dates that do not exist, such as `31/02/2026`, and dates before `Lesson.EARLIEST_DATE` (01/01/2000). `log` and `editlesson` call it through `parseLessonDateWithNotesHint`, which adds a hint to reword `date/` if it was part of the lesson notes. `findlesson` gives the date error without the hint.
+* **Parsing:** `LogCommandParser` tokenizes only `c/` and `date/`. It rejects a missing index or content, a repeated prefix, invalid content and an invalid date. `ParserUtil#parseLessonDate` accepts `D/M/YYYY` or `DD/MM/YYYY` with a four-digit year, and rejects dates that do not exist, such as `31/02/2026`, and dates before `Lesson.EARLIEST_DATE` (01/01/2000). `loglesson` and `editlesson` call it through `parseLessonDateWithNotesHint`, which adds a hint to reword `date/` if it was part of the lesson notes. `findlesson` gives the date error without the hint.
 * **Today's date by default:** `LogCommand` gets today's date from a `Clock`: the system clock in the app, and a fixed clock in tests. A lesson without `date/` is dated today, and a date after today is rejected with `Lesson dates cannot be in the future. ...`. The parser does not check for future dates, so that every check uses the same clock.
 * **Date order:** each student's lessons are stored oldest first. `Person#withLessonAdded` steps back from the newest end past every lesson dated after the new one, and inserts it there. A lesson logged for a date that already has lessons therefore goes after them, and `view`, which lists the stored order in reverse, shows it first among that day's lessons. `deletelesson` and `editlesson` use `view`'s numbering, so no command needs to sort.
 * **Undated records:** lessons saved before v1.4 have no date, and `view` shows them as `(undated)`. They are kept at the oldest end, so `view` lists them last. When the data file is loaded, `JsonAdaptedPerson` stably sorts each student's lessons by date, with undated lessons first and lessons on the same date in their saved order, as described in the [Storage component](#storage-component). `withLessonAdded` never steps past an undated lesson, so a new lesson always goes after them. `JsonAdaptedLesson` stores a date as `"date" : "YYYY-MM-DD"` and leaves the field out for an undated lesson.
@@ -237,9 +237,9 @@ If parsing or execution fails, `MainWindow` displays the error in the error styl
 
 ### Keeping the details panel in sync
 
-`StudentDetailPanel` must reflect the latest data after any command, but student values are immutable: `log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` each replace the student in the Model with a new `Person`. A panel that kept the old object would show stale data.
+`StudentDetailPanel` must reflect the latest data after any command, but student values are immutable: `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` each replace the student in the Model with a new `Person`. A panel that kept the old object would show stale data.
 
-Every command that views or changes exactly one student therefore returns that student, as it is after the command, through `CommandResult#getStudent`. These are `view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`. After each successful command, `MainWindow#updateSelectedStudent` applies these rules:
+Every command that views or changes exactly one student therefore returns that student, as it is after the command, through `CommandResult#getStudent`. These are `view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`. After each successful command, `MainWindow#updateSelectedStudent` applies these rules:
 
 1. If the result names a student, the panel shows that student. The list highlights the student's current position in `Logic#getFilteredPersonList`, or clears the highlight if a filter now hides them. For example, `unflag 1` in the `flagged` results removes the student from the list but keeps them in the panel.
 1. Otherwise, the panel keeps its current student if the displayed list still contains that same value, and refreshes the highlight because positions may have shifted.
@@ -259,11 +259,11 @@ Failed commands skip these rules, so an error never changes the panel. A failed 
   * Pros: other UI parts could observe it.
   * Cons: adds UI state to the Model and a method that every Model stub in the tests must implement, for no current user benefit.
 
-`PersonListPanelTest` covers the panel's contents and every rule above, including error feedback, filter changes, `edit` resetting the filter, `unflag` in the `flagged` results, deletion, keyboard navigation and failed saves after `log`, `edit`, `flag` and `delete`. The command tests check the student each targeted command returns.
+`PersonListPanelTest` covers the panel's contents and every rule above, including error feedback, filter changes, `edit` resetting the filter, `unflag` in the `flagged` results, deletion, keyboard navigation and failed saves after `loglesson`, `edit`, `flag` and `delete`. The command tests check the student each targeted command returns.
 
 ### Rejecting blank Unicode fields
 
-`Address#isValidAddress` and `Lesson#isValidContent` reject values composed entirely of Unicode whitespace (`\p{IsWhite_Space}`), format characters (`\p{Cf}`), or a mixture of the two. This includes non-breaking spaces, ZERO WIDTH SPACE (U+200B), WORD JOINER (U+2060) and a standalone BOM (U+FEFF). The check does not remove formatting characters inside real text: joiners in written languages and emoji sequences are preserved, along with internal spaces and the existing length and character rules. Both command parsing and the JSON adapters use these model validators, so add, edit, log and data loading share the same non-blank rule and existing field-specific messages.
+`Address#isValidAddress` and `Lesson#isValidContent` reject values composed entirely of Unicode whitespace (`\p{IsWhite_Space}`), format characters (`\p{Cf}`), or a mixture of the two. This includes non-breaking spaces, ZERO WIDTH SPACE (U+200B), WORD JOINER (U+2060) and a standalone BOM (U+FEFF). The check does not remove formatting characters inside real text: joiners in written languages and emoji sequences are preserved, along with internal spaces and the existing length and character rules. Both command parsing and the JSON adapters use these model validators, so `add`, `edit`, `loglesson` and data loading share the same non-blank rule and existing field-specific messages.
 
 ### Deleting an individual lesson record
 
@@ -300,20 +300,20 @@ On success the command calls `Model#setPerson`, restores the full list as AB3 do
 
 ### Editing a lesson record
 
-`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `log`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
+`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `loglesson`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
 
 `EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does, reusing `DeleteLessonCommand#toStoredLessonIndex`. It then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
 
 The command keeps each student's lessons in date order with one of two operations:
 
 * If the date is unchanged, `Person#withLessonReplaced` puts the edited lesson in the same position. Removing and adding it again would move it after the other lessons on its date, which would change its number even though only its content changed. `withLessonReplaced` asserts that the date is unchanged, so it cannot break date order.
-* If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `log` uses for a backdated lesson.
+* If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `loglesson` uses for a backdated lesson.
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
 ### Prefix text inside values
 
-`ArgumentTokenizer` starts a new field at every prefix the command recognises when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `log 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `log 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
+`ArgumentTokenizer` starts a new field at every prefix the command recognises when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `loglesson 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `loglesson 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
 
 We keep this rule for every command rather than special-casing lesson content:
 
@@ -360,7 +360,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 `AddressBookParser` routes `summary` to `SummaryCommandParser`, which accepts whitespace but rejects arguments with the summary-specific usage. `SummaryCommand` creates a `StudentSummary` from `Model#getAddressBook`, rather than the filtered list, and returns a heading and a single summary paragraph in a normal `CommandResult`. `Messages#formatSummaryParagraph` handles empty collections and singular/plural wording for the totals. It never updates the active filter. The immutable snapshot counts each lesson occurrence, including undated legacy records; the total uses a `long` so adding the sizes of many histories cannot overflow an `int`. No summary values are added to JSON. Because the command changes no stored data, `LogicManager` returns its result without attempting to save, including during recovery.
 
-`Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the level and subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `log`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
+`Person#getLessonCount` counts that student's records. `Person#getLatestLessonDate` selects the greatest present date, ignoring undated records and avoiding an assumption about list order. `Messages#formatLessonStatus` supplies empty, singular, plural and undated wording. `PersonCard` places this status below the level and subject using the existing wrapping label style. Each immutable student replacement already triggers the list cell to rebuild its card, so `loglesson`, `editlesson` and `deletelesson` need no additional UI callbacks or cached counters. Flag display is independent of the lesson-status row.
 
 `StudentSummaryTest`, `PersonTest`, `MessagesTest`, the summary command/parser tests and `PersonListPanelTest` cover zero/one/many totals, filtered views, legacy dates, persistence, unavailable saving, dynamic card updates and layout alongside flags. The class diagrams show representative classes and omit this derived snapshot and the summary command/parser.
 
@@ -372,7 +372,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 `FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
-`view`, `log`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; read-only searches do not rewrite the student data file.
+`view`, `loglesson`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; read-only searches do not rewrite the student data file.
 
 ### Flagging students for follow-up
 
@@ -988,7 +988,7 @@ Use a separate test folder with an empty student file and fictional data only.
 ### Searching lesson histories
 
 Before launching, prepare an isolated test folder with `data/addressbook.json`
-containing `{"persons": []}`. Add Amy Tan and Ben Lim, then log `Algebra` for Amy
+containing `{"persons": []}`. Add Amy Tan and Ben Lim, then use `loglesson` to record `Algebra` for Amy
 on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` on
 05/01/2020. Amy is student 1 and Ben is student 2.
 
@@ -1052,7 +1052,7 @@ Use another isolated test folder. Before launching, create `data/addressbook.jso
 ```text
 add n/Amy Tan p/81230021 addr/21 Example Street l/Sec 3 sub/E-Math
 add n/Ben Lim p/81230022 addr/22 Example Street l/JC1 sub/H2 Math
-log 1 c/Algebra date/20/10/2026
+loglesson 1 c/Algebra date/20/10/2026
 flag 1 r/Weak in algebra
 ```
 
@@ -1092,8 +1092,8 @@ Use another isolated test folder. Before launching, create `data/addressbook.jso
 ```text
 add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
 add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
-log 1 c/Algebra
-log 2 c/Calculus
+loglesson 1 c/Algebra
+loglesson 2 c/Calculus
 ```
 
 1. Try `delete 0`, `delete 01` and `delete 3`. Expected: `The student index provided is invalid.`, with both students and their lesson records unchanged.
@@ -1138,11 +1138,11 @@ Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim 
 1. Remove the empty directory and move `data/addressbook.saved.json` back to `data/addressbook.json`. Enter `list`. Expected: both students remain; the failed deletion was not saved by this later command.
 1. Enter `find amy`, then `delete 1`. Expected: Amy is deleted exactly once. `list` shows Ben, and a restart retains him.
 
-`SaveFailureRollbackTest` also covers IO and permission failures for add, edit, log, delete, deletelesson, editlesson, flag and unflag, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
+`SaveFailureRollbackTest` also covers IO and permission failures for `add`, `edit`, `loglesson`, `delete`, `deletelesson`, `editlesson`, `flag` and `unflag`, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
 
 Permission failures use `Storage#getAddressBookFilePath` in the existing permission message. Other `FileSystemException` failures use `Could not save data to file PATH due to the following error: REASON`, taking only `getReason()` rather than the exception's temporary-file paths. A missing or blank reason becomes `The file or folder could not be written.`. Other IO errors keep their existing messages, including the saving-disabled recovery explanation. The original exception remains the command error's cause, and rollback is unchanged.
 
-On a POSIX filesystem, make the disposable `data/` directory read-only while TutorLah is open and enter `log 1 c/Permission test`. Expected: the error names `addressbook.json` and contains no `.tutorlah-` filename; the student, selected index and saved bytes are unchanged, with no temporary files left behind. Restore directory permissions before retrying or removing the test folder. `SaveFailureRollbackTest` covers this real permission failure where supported, plus deterministic full-disk, unsupported-atomic-move and missing-reason failures on every platform, preserving the original exception and verifying successful retries.
+On a POSIX filesystem, make the disposable `data/` directory read-only while TutorLah is open and enter `loglesson 1 c/Permission test`. Expected: the error names `addressbook.json` and contains no `.tutorlah-` filename; the student, selected index and saved bytes are unchanged, with no temporary files left behind. Restore directory permissions before retrying or removing the test folder. `SaveFailureRollbackTest` covers this real permission failure where supported, plus deterministic full-disk, unsupported-atomic-move and missing-reason failures on every platform, preserving the original exception and verifying successful retries.
 
 #### Missing or corrupted files
 
@@ -1163,12 +1163,12 @@ Use a separate test folder and fictional data only. Keep a valid copy of the stu
 Use disposable copies of `data/addressbook.json` while TutorLah is closed.
 
 1. Give one fictional student stored lessons dated `2026-10-20` and `2026-10-10`, in that order, plus undated records and repeated same-day records. Restart and enter `view 1`. Expected: dated lessons appear newest first, followed by undated lessons; no occurrences disappear. Within a date, the last saved occurrence appears first. Read-only commands leave the file unchanged.
-1. Enter `log 1 c/Mid date/15/10/2026`, then `view 1`. Expected: Mid appears between the dated records. Edit and delete using these displayed lesson numbers, restart and verify the same remaining records and flags.
+1. Enter `loglesson 1 c/Mid date/15/10/2026`, then `view 1`. Expected: Mid appears between the dated records. Edit and delete using these displayed lesson numbers, restart and verify the same remaining records and flags.
 1. Give two students the same phone and names `Amy Tan` and ` Amy  Tan `. Restart. Expected: an empty protected session with the duplicate-person reason, and the original bytes preserved. Different phone numbers allow both students to load with normalized names.
 1. Change a saved date to `1999-12-31`. Expected: protected recovery with a reason mentioning `2000-01-01` and `YYYY-MM-DD`. Restore it as `2000-01-01`: it loads normally. Undated legacy lessons and existing future dates also load; commands still reject newly entered future lesson dates.
 1. For a fresh destination, create `data/` and copy a valid `addressbook.json` from another disposable working folder, with TutorLah closed in both. Start from the destination folder and verify its students, lessons and flags using `list` and `view`.
 
-`StudentDataLoadingTest` covers sanitized startup reasons for truncated JSON, trailing commas, a UTF-8 BOM and invalid structures; unknown locations and read errors; preservation of validation messages; normalized duplicates, different-phone identities, stable ordering followed by log/edit/delete/search, exact byte preservation, blocked saves and repair/restart. Adapter tests cover the minimum date, future stored dates, undated records, normalization before length validation and stable same-day occurrences.
+`StudentDataLoadingTest` covers sanitized startup reasons for truncated JSON, trailing commas, a UTF-8 BOM and invalid structures; unknown locations and read errors; preservation of validation messages; normalized duplicates, different-phone identities, stable ordering followed by `loglesson`, `edit`, `delete` and search, exact byte preservation, blocked saves and repair/restart. Adapter tests cover the minimum date, future stored dates, undated records, normalization before length validation and stable same-day occurrences.
 
 ### Deleting lesson records
 
@@ -1177,10 +1177,10 @@ Use a separate test directory with `data/addressbook.json` containing `{"persons
 ```text
 add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
 add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
-log 1 c/Algebra date/18/10/2026
-log 1 c/Geometry date/19/10/2026
-log 1 c/Algebra date/20/10/2026
-log 2 c/Calculus date/20/10/2026
+loglesson 1 c/Algebra date/18/10/2026
+loglesson 1 c/Geometry date/19/10/2026
+loglesson 1 c/Algebra date/20/10/2026
+loglesson 2 c/Calculus date/20/10/2026
 ```
 
 1. Enter `view 1`.<br>
@@ -1216,9 +1216,9 @@ These steps need today's date to be 23/10/2026 or later. Use a separate test dir
 
 ```text
 add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
-log 1 c/Algebra date/19/10/2026
-log 1 c/Vectors date/21/10/2026
-log 1 c/Trigonometry date/23/10/2026
+loglesson 1 c/Algebra date/19/10/2026
+loglesson 1 c/Vectors date/21/10/2026
+loglesson 1 c/Trigonometry date/23/10/2026
 ```
 
 1. Enter `view 1`.<br>
@@ -1269,9 +1269,9 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 ```
 
 1. Enter `view 1`. Expected: `No lessons logged yet for Amy Tan.` and Amy's card highlighted, even though her history is empty.
-1. Enter `log 1 c/Algebra`, `log 1 c/Geometry`, then `log 1 c/Algebra`. Enter `view 1`. Expected: `Lesson records for Amy Tan (3):`, followed by Algebra, Geometry and Algebra, each with today's date. Both Algebra occurrences remain.
+1. Enter `loglesson 1 c/Algebra`, `loglesson 1 c/Geometry`, then `loglesson 1 c/Algebra`. Enter `view 1`. Expected: `Lesson records for Amy Tan (3):`, followed by Algebra, Geometry and Algebra, each with today's date. Both Algebra occurrences remain.
 1. Enter `view 2`, then `view 1`. Expected: Ben's empty-history message and highlight first, then Amy's three records and highlight. Press Ben's card once, then Amy's once. Each first press updates both the feedback and highlight to the chosen student.
-1. Enter `log 2 c/Calculus`. Type `log 2 c/unfinished` without pressing Enter, then press Ben's card twice. Expected: each press shows Ben's single Calculus record and keeps `log 2 c/unfinished` in the command box. Enter `view 2` instead: the same history appears and the successfully submitted command clears.
+1. Enter `loglesson 2 c/Calculus`. Type `loglesson 2 c/unfinished` without pressing Enter, then press Ben's card twice. Expected: each press shows Ben's single Calculus record and keeps `loglesson 2 c/unfinished` in the command box. Enter `view 2` instead: the same history appears and the successfully submitted command clears.
 1. Enter `view 999`, then `view abc`. Expected: the student-index error, then usage feedback, with the failed command retained and styled as an error. The previous selection is not changed by either failed typed view. Enter `view 1`: Amy's unchanged history returns and the successful command clears.
 1. Enter `find ben`, then `view 1` and press Ben's card. Expected: both show Ben's Calculus record while only Ben is displayed. Enter `list`, then `delete 1` to remove Amy. Ben becomes student 1; `view 1` and a single press on his card still show only his Calculus record. `view 2` reports an invalid student index.
 1. Prepare a separate fictional student with 40 lesson records, including a 300-character record. View the student and scroll to the bottom. Expected: the header shows count 40, the records are newest first, the long content wraps, and row 40 is reachable. Press the same card again, then view another student: both updates reset the result area to its beginning without losing records.
@@ -1291,8 +1291,8 @@ Use a separate test folder and fictional students only.
 
    Expected: after the first `add`, the hint changes to `Click a student, or type view INDEX, to see their details and lessons here.` with `view 1`. No student opens in the panel.
 1. Exit and relaunch TutorLah. Expected: Amy and Ben are listed as students 1 and 2, no card is highlighted, and the panel shows `No student selected.` with `view 1`.
-1. Enter `view 2`. Expected: the panel shows Ben's initials, name, level and subject chips, phone and address, `Lessons (0)` and the hint `log 2 c/Topic covered`. Ben's card is highlighted.
-1. Enter `log 1 c/Algebra date/1/10/2026`, then `log 1 c/Vectors date/8/10/2026`. Expected: the panel switches to Amy after the first command and lists `1. 08/10/2026 Vectors` and `2. 01/10/2026 Algebra` after the second, without another `view`.
+1. Enter `view 2`. Expected: the panel shows Ben's initials, name, level and subject chips, phone and address, `Lessons (0)` and the hint `loglesson 2 c/Topic covered`. Ben's card is highlighted.
+1. Enter `loglesson 1 c/Algebra date/1/10/2026`, then `loglesson 1 c/Vectors date/8/10/2026`. Expected: the panel switches to Amy after the first command and lists `1. 08/10/2026 Vectors` and `2. 01/10/2026 Algebra` after the second, without another `view`.
 1. Enter `editlesson 1 2 date/9/10/2026`, then `deletelesson 1 1`. Expected: Algebra first moves to lesson 1, and after the deletion only Vectors remains as lesson 1.
 1. Enter `flag 2 r/Call parent`. Expected: the panel switches to Ben, with a red flag beside his name and the banner `Call parent`. His card shows a red flag icon.
 1. Enter `flagged`, then `unflag 1`. Expected: the displayed list becomes empty, but the panel still shows Ben, now without the flag or banner.
@@ -1310,12 +1310,12 @@ Use a separate test folder and fictional students only.
 
 Use a separate test folder whose `data/addressbook.json` contains `{"persons": []}`, and add one fictional student with `add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math`. `INDEX` below is 1.
 
-1. Log `Vectors` for the student, then `log INDEX c/Surds date/DD/MM/YYYY` and `log INDEX c/Matrices date/DD/MM/YYYY`, both with yesterday's date, and view the student.
+1. Enter `loglesson INDEX c/Vectors`, then `loglesson INDEX c/Surds date/DD/MM/YYYY` and `loglesson INDEX c/Matrices date/DD/MM/YYYY`, both with yesterday's date, and view the student.
    Expected: `Vectors` is listed first with today's date, then `Matrices` and `Surds` with yesterday's date. `Matrices` comes before `Surds` because it was logged later on the same date. Enter `deletelesson INDEX 3`: `Surds` is deleted.
 1. Try `date/` with tomorrow's date, `31/02/2026`, `2026-10-20`, `1/1/-2026`, `31/12/1999` and an empty value.
    Expected: tomorrow gives `Lesson dates cannot be in the future. ...`, and the others give `Lesson dates should be real dates from 01/01/2000 onwards, ...` followed by `If "date/" was part of your lesson notes, please reword it, for example "date and time".` No lesson is added.
-1. Enter `log INDEX c/Worksheet collected c/o Mum` and `log INDEX c/Revised date/time conversions`.
-   Expected: the first gives the repeated `c/` error with the hint to reword prefix text, and the second gives the date error with the `date/` hint. No lesson is added. Then enter `log INDEX c/Worksheet collected care of Mum`: the lesson is logged as typed.
+1. Enter `loglesson INDEX c/Worksheet collected c/o Mum` and `loglesson INDEX c/Revised date/time conversions`.
+   Expected: the first gives the repeated `c/` error with the hint to reword prefix text, and the second gives the date error with the `date/` hint. No lesson is added. Then enter `loglesson INDEX c/Worksheet collected care of Mum`: the lesson is logged as typed.
 1. Enter `findlesson INDEX from/31/02/2026`.
    Expected: only the lesson-date message, without the `date/` notes hint.
 

@@ -101,22 +101,22 @@ public class LogicManagerTest {
     @Test
     public void execute_prefixTextInLessonNotes_rejectedWithoutChangingData() throws Exception {
         logic.execute("add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math");
-        logic.execute("log 1 c/Algebra date/21/10/2026");
+        logic.execute("loglesson 1 c/Algebra date/21/10/2026");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         byte[] savedBefore = Files.readAllBytes(dataFile);
         AddressBook dataBefore = new AddressBook(model.getAddressBook());
 
         String duplicateContent = Messages.getErrorMessageForDuplicatePrefixes(PREFIX_CONTENT);
         String dateWithHint = Lesson.MESSAGE_DATE_CONSTRAINTS + "\n" + Messages.MESSAGE_LESSON_DATE_TEXT_HINT;
-        assertParseException("log 1 c/Worksheet collected c/o Mum", duplicateContent);
-        assertParseException("log 1 c/Revised date/time conversions", dateWithHint);
+        assertParseException("loglesson 1 c/Worksheet collected c/o Mum", duplicateContent);
+        assertParseException("loglesson 1 c/Revised date/time conversions", dateWithHint);
         assertParseException("editlesson 1 1 c/Notes collected c/o tutor", duplicateContent);
         assertParseException("editlesson 1 1 c/Revised date/time conversions", dateWithHint);
         assertEquals(dataBefore, model.getAddressBook());
         assertArrayEquals(savedBefore, Files.readAllBytes(dataFile));
 
         // the reworded notes are logged and saved
-        logic.execute("log 1 c/Worksheet collected care of Mum");
+        logic.execute("loglesson 1 c/Worksheet collected care of Mum");
         assertTrue(model.getFilteredPersonList().getFirst().getLessons().stream()
                 .anyMatch(lesson -> lesson.content.equals("Worksheet collected care of Mum")));
         assertEquals(model.getAddressBook(), new JsonAddressBookStorage(dataFile).readAddressBook().orElseThrow());
@@ -125,7 +125,7 @@ public class LogicManagerTest {
     @Test
     public void execute_nbspFieldBoundaries_savesSeparateFieldsAndPreservesHistory() throws Exception {
         logic.execute("add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math");
-        logic.execute("log 1\u00a0c/Quadratic\u00a0  inequalities date/21/10/2026");
+        logic.execute("loglesson 1\u00a0c/Quadratic\u00a0  inequalities date/21/10/2026");
         logic.execute("edit 1 addr/New Rd\u00a0l/Sec 4");
 
         Person student = model.getFilteredPersonList().getFirst();
@@ -145,16 +145,16 @@ public class LogicManagerTest {
                 logic.execute("view 1").getFeedbackToUser());
 
         String today = todayText();
-        logic.execute("log 1 c/Algebra");
+        logic.execute("loglesson 1 c/Algebra");
         assertEquals("Lesson records for " + AMY.getName() + " (1):\n1. " + today + ": Algebra",
                 logic.execute("view 1").getFeedbackToUser());
-        logic.execute("log 1 c/Geometry");
-        logic.execute("log 1 c/Algebra");
+        logic.execute("loglesson 1 c/Geometry");
+        logic.execute("loglesson 1 c/Algebra");
         String amyHistory = "Lesson records for " + AMY.getName() + " (3):\n1. " + today + ": Algebra\n2. "
                 + today + ": Geometry\n3. " + today + ": Algebra";
         assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
         assertEquals("No lessons logged yet for Ben Tan.", logic.execute("view 2").getFeedbackToUser());
-        logic.execute("log 2 c/Calculus");
+        logic.execute("loglesson 2 c/Calculus");
         String benHistory = "Lesson records for Ben Tan (1):\n1. " + today + ": Calculus";
         assertEquals(benHistory, logic.execute("view 2").getFeedbackToUser());
         assertEquals(amyHistory, logic.execute("view 1").getFeedbackToUser());
@@ -172,10 +172,10 @@ public class LogicManagerTest {
         String yesterday = LocalDate.now().minusDays(1).format(Messages.LESSON_DATE_FORMATTER);
         String tomorrow = LocalDate.now().plusDays(1).format(Messages.LESSON_DATE_FORMATTER);
 
-        logic.execute("log 1 c/Vectors");
+        logic.execute("loglesson 1 c/Vectors");
         assertEquals("Logged lesson for " + AMY.getName() + " on " + yesterday + ": Surds",
-                logic.execute("log 1 c/Surds date/" + yesterday).getFeedbackToUser());
-        assertCommandException("log 1 c/Matrices date/" + tomorrow, LogCommand.MESSAGE_FUTURE_DATE);
+                logic.execute("loglesson 1 c/Surds date/" + yesterday).getFeedbackToUser());
+        assertCommandException("loglesson 1 c/Matrices date/" + tomorrow, LogCommand.MESSAGE_FUTURE_DATE);
 
         assertEquals("Lesson records for " + AMY.getName() + " (2):\n1. " + todayText() + ": Vectors\n2. "
                 + yesterday + ": Surds", logic.execute("view 1").getFeedbackToUser());
@@ -185,8 +185,8 @@ public class LogicManagerTest {
     public void execute_deleteThenView_usesUpdatedStudentIndexes() throws Exception {
         model.addPerson(AMY);
         model.addPerson(new PersonBuilder().withName("Ben Tan").withPhone("81234567").build());
-        logic.execute("log 1 c/Algebra");
-        logic.execute("log 2 c/Calculus");
+        logic.execute("loglesson 1 c/Algebra");
+        logic.execute("loglesson 2 c/Calculus");
         logic.execute("view 1");
         logic.execute("delete 1");
         assertEquals("Lesson records for Ben Tan (1):\n1. " + todayText() + ": Calculus",
@@ -197,8 +197,8 @@ public class LogicManagerTest {
     @Test
     public void execute_logReloadThenView_returnsPersistedHistoryWithoutChangingFile() throws Exception {
         model.addPerson(AMY);
-        logic.execute("log 1 c/Algebra");
-        logic.execute("log 1 c/Geometry");
+        logic.execute("loglesson 1 c/Algebra");
+        logic.execute("loglesson 1 c/Geometry");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(dataFile);
         JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(dataFile);

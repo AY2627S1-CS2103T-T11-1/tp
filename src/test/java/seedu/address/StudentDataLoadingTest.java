@@ -149,7 +149,7 @@ public class StudentDataLoadingTest {
         assertEquals("Lesson records for Amy Tan (1):\n1. (undated): Algebra",
                 logic.execute("view 1").getFeedbackToUser());
         assertArrayEquals(original, Files.readAllBytes(file));
-        logic.execute("log 1 c/Geometry date/20/10/2026");
+        logic.execute("loglesson 1 c/Geometry date/20/10/2026");
         assertEquals(List.of(new Lesson("Algebra"), new Lesson("Geometry", LocalDate.of(2026, 10, 20))),
                 model.getAddressBook().getPersonList().getFirst().getLessons());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
@@ -175,7 +175,7 @@ public class StudentDataLoadingTest {
                 "add n/AMY  TAN p/81230001 addr/2 Example Street l/Sec 3 sub/Math"));
         assertArrayEquals(original, Files.readAllBytes(file));
 
-        logic.execute("log 1 c/Algebra date/20/10/2026");
+        logic.execute("loglesson 1 c/Algebra date/20/10/2026");
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
@@ -204,7 +204,7 @@ public class StudentDataLoadingTest {
                 logic.execute("view 1").getFeedbackToUser());
         assertArrayEquals(original, Files.readAllBytes(file));
 
-        logic.execute("log 1 c/Mid date/15/10/2026");
+        logic.execute("loglesson 1 c/Mid date/15/10/2026");
         assertTrue(logic.execute("view 1").getFeedbackToUser().contains("4. 15/10/2026: Mid\n5. 10/10/2026: Older"));
         logic.execute("editlesson 1 5 c/Older corrected date/21/10/2026");
         assertTrue(logic.execute("view 1").getFeedbackToUser().contains("1. 21/10/2026: Older corrected"));
@@ -279,7 +279,7 @@ public class StudentDataLoadingTest {
         MainApp oldApp = new MainApp(temporaryFolder.resolve("old/preferences.json"), source);
         oldApp.init();
         oldApp.logic.execute("add n/Amy Tan p/81230001 addr/1 Example Street l/Sec 3 sub/Math");
-        oldApp.logic.execute("log 1 c/Algebra date/20/10/2026");
+        oldApp.logic.execute("loglesson 1 c/Algebra date/20/10/2026");
         oldApp.logic.execute("flag 1 r/Call parent");
         oldApp.stop();
         byte[] original = Files.readAllBytes(source);

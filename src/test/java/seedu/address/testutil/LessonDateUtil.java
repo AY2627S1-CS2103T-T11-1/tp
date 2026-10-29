@@ -11,7 +11,7 @@ import seedu.address.model.lesson.Lesson;
 public class LessonDateUtil {
 
     /**
-     * Returns today's date as shown in {@code log} and {@code view} messages.
+     * Returns today's date as shown in {@code loglesson} and {@code view} messages.
      */
     public static String todayText() {
         return LocalDate.now().format(Messages.LESSON_DATE_FORMATTER);

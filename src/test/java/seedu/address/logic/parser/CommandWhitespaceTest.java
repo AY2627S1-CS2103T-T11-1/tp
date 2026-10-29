@@ -30,7 +30,7 @@ public class CommandWhitespaceTest {
                 "add|n/Amy Tan|p/81230001|addr/1 Example Street|l/Sec 3|sub/Math",
                 "edit|1|addr/New Rd|l/Sec 4",
                 "delete|1", "view|1", "unflag|1",
-                "log|1|c/Quadratic inequalities|date/21/10/2026",
+                "loglesson|1|c/Quadratic inequalities|date/21/10/2026",
                 "editlesson|1|2|c/Quadratic inequalities|date/21/10/2026",
                 "deletelesson|1|2",
                 "flag|1|r/Review homework",
@@ -60,9 +60,9 @@ public class CommandWhitespaceTest {
     public void parseCommand_unicodeSeparators_preservesValidationErrors() {
         List<String> commands = List.of("view|0", "view|-1", "view|01", "view|2147483648", "view|+1",
                 "view|1|extra", "deletelesson|1|0", "deletelesson|01|1", "deletelesson|1|1|extra",
-                "editlesson|1|01|c/Algebra", "edit|1|l/", "log|1|c/",
-                "edit|1|l/Sec3|l/Sec4", "log|1|c/Algebra|c/Geometry",
-                "log|1|c/Algebra|date/31/02/2026", "list|extra", "flagged|extra", "summary|extra",
+                "editlesson|1|01|c/Algebra", "edit|1|l/", "loglesson|1|c/",
+                "edit|1|l/Sec3|l/Sec4", "loglesson|1|c/Algebra|c/Geometry",
+                "loglesson|1|c/Algebra|date/31/02/2026", "list|extra", "flagged|extra", "summary|extra",
                 "add|n/Amy|p/81230001|a/Road|l/Sec3|sub/Math");
         for (String command : commands) {
             ParseException expected = assertThrows(ParseException.class, () ->
@@ -81,7 +81,7 @@ public class CommandWhitespaceTest {
     @Test
     public void parseCommand_fieldValues_preservesInternalSpacingAndFormatting() throws Exception {
         String value = "New\u00a0  Road क्\u200dष 👩\u200d🏫";
-        for (String command : List.of("edit|1|addr/" + value, "log|1|c/" + value, "flag|1|r/" + value)) {
+        for (String command : List.of("edit|1|addr/" + value, "loglesson|1|c/" + value, "flag|1|r/" + value)) {
             assertEquals(parser.parseCommand(command.replace('|', ' ')),
                     parser.parseCommand(command.replace("|", "\u00a0")));
         }

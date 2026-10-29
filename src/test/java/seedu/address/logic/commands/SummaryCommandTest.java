@@ -88,7 +88,7 @@ public class SummaryCommandTest {
         assertEquals("Summary:\n"
                 + "You have 1 student and 0 lesson records in total.",
                 logic.execute("summary").getFeedbackToUser());
-        logic.execute("log 1 c/Algebra date/2/1/2020");
+        logic.execute("loglesson 1 c/Algebra date/2/1/2020");
         logic.execute("editlesson 1 1 c/Vectors date/1/1/2020");
         assertEquals("Summary:\n"
                 + "You have 1 student and 1 lesson record in total.",

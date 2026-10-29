@@ -107,7 +107,7 @@ ask the team. Do not guess.
 | Find lesson | `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]` | Header `Matching lesson records for {NAME} ({COUNT}):` then matching `view` lines, or `No matching lesson records found for {NAME}.` |
 | Flag | `flag INDEX [r/REASON]` | `Flagged student: {NAME}.`, `Flagged student: {NAME}. Reason: {REASON}`, or `Updated flag for {NAME}. Reason: {REASON}` |
 | Flagged | `flagged` | `Listed {COUNT} flagged students.` (`Listed 1 flagged student.` for one) or `No flagged students found. Use list to show all students.` |
-| Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
+| Log lesson | `loglesson INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
 | Summary | `summary` | `Summary:` then a single summary paragraph on the next line |
 | Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
@@ -120,7 +120,7 @@ starts a new field wherever it follows whitespace, in every command; values
 cannot contain it after a space. We do not special-case `c/o` or `date/time`
 or guess intent. Instead, `Messages#getErrorMessageForDuplicatePrefixes` adds
 `A recognised prefix after a space starts another field. If it was part of your text, please reword it.`
-on a new line to every duplicate-field error, and `log` and `editlesson` parse
+on a new line to every duplicate-field error, and `loglesson` and `editlesson` parse
 `date/` with `ParserUtil#parseLessonDateWithNotesHint`, which adds
 `If "date/" was part of your lesson notes, please reword it, for example "date and time".`
 on a new line and keeps the original exception as the cause. `findlesson` dates
@@ -137,7 +137,7 @@ and index or content errors get no date hint. The UG suggests `care of` and
 **Help:** show the TutorLah User Guide URL and a Copy URL button, without
 individual command hints.
 
-**Lesson dates (#98, #120):** `log` dates each lesson with `date/DATE` if
+**Lesson dates (#98, #120):** `loglesson` dates each lesson with `date/DATE` if
 given, otherwise today's date from the system clock. `{DATE}` is
 `DD/MM/YYYY`, for example `18/10/2026`, and typed dates use the same format
 (`1/2/2026` is also accepted). A future date gives `Lesson dates cannot be
@@ -156,6 +156,11 @@ stored order reversed, and `deletelesson` uses the same numbers.
 Any older document that says `lessons INDEX`, `LessonsCommand` or
 `lessons-command` means `view`.
 
+**`loglesson` replaces `log`.** The team renamed the command on Oct 29 (#227),
+to match `deletelesson`, `editlesson` and `findlesson`. `log` is now an
+unknown command, and the classes keep their names (`LogCommand`,
+`LogCommandParser`). Older decision records that say `log` mean `loglesson`.
+
 **GUI shortcut:** left-clicking a populated student card runs `view INDEX` for
 its current displayed index. Clicking it again views the student again. Existing
 history messages and newest-first ordering apply, and typed command text is kept.
@@ -165,7 +170,7 @@ List updates and programmatic selection changes do not execute this shortcut.
 
 **Details panel (#155):** the right-hand `StudentDetailPanel` shows one student
 or `No student selected.` Commands that view or change exactly one student
-(`view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag`,
+(`view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag`,
 `unflag`) return that student, as it is after the command, in
 `CommandResult(String, Person)`. Any new command of that kind must do the same.
 After other successful commands, `MainWindow` keeps the panel's student only
@@ -206,7 +211,7 @@ filter. Deleting the last lesson leaves an empty history. The confirmation
 includes the lesson date as `(DD/MM/YYYY)`, or `(undated)` for a legacy record.
 The details panel shows the remaining records.
 
-**Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `log` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
+**Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `loglesson` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
 
 **Find policy (#101, extended in #143):** bare keywords before any prefix and
 the `n/` value search names, `sub/` searches subjects and `l/` searches levels.
@@ -218,8 +223,8 @@ wildcards or spelling corrections; other prefixes such as `p/` stay part of
 the name keywords.
 Each find searches the full address book and keeps the original list order.
 Displayed indexes restart at 1 and are used by commands and card clicks.
-`list` restores all students; add and edit also restore the full list. View,
-log, delete and deletelesson retain the filter. Find changes no stored
+`list` restores all students; add and edit also restore the full list. `view`,
+`loglesson`, `delete` and `deletelesson` retain the filter. Find changes no stored
 student or lesson data, and filters are not persisted. The empty-list panel says
 `No students to display.` and `Type list to show all students, or add one:`,
 followed by the add-command format and example. This offers useful guidance
@@ -256,7 +261,7 @@ Flagged cards show a red flag icon. The details panel shows the reason in a red
 banner, or `Flagged (no reason given)` for a reasonless flag. JSON omits the
 `flag` property for an unflagged student, stores `"flag": {}` without a reason,
 and stores `"flag": {"reason": "..."}` with one. Data without `flag` loads as
-unflagged. Edit, log and deletelesson preserve the flag when rebuilding a
+unflagged. `edit`, `loglesson` and `deletelesson` preserve the flag when rebuilding a
 student.
 
 ---
@@ -290,7 +295,7 @@ spaces before the command box removes them; pasting never executes a command.
   Real text keeps internal spaces and formatting, including joiners used by
   written languages and emoji sequences.
 - `/` is allowed in names so that `s/o` and `d/o` work. No prefix starts
-  with `s/`, `o/` or `d/`. `date/` is used only by `log`, so lesson content
+  with `s/`, `o/` or `d/`. `date/` is used only by `loglesson`, so lesson content
   such as `d/dx` and names such as `d/o` are unaffected.
 - **Address prefix `addr/` (#109):** the address prefix is `addr/`, not `a/`, so names containing `a/l` or `a/p` (e.g. `Muthu a/l Raju`) are kept in full by `add` and `edit`, and `edit` never changes the address through a name. Old `a/` input is not reinterpreted: it joins the previous field, whose validation rejects it, or stays in the name. When `addr/` is missing and ` a/` appears, `add` appends `The address prefix is addr/, for example addr/1 Example Street.` to its usage message.
 - **Duplicate student:** same phone, and names equal when case is ignored
@@ -376,7 +381,7 @@ accepted by the parser. Commands apply these errors consistently:
 - `JsonAdaptedLesson` stores the date as `"date" : "YYYY-MM-DD"` and leaves
   the field out for undated lessons. A missing date loads as undated, and an
   invalid date makes the data file invalid.
-- **Testing with dates:** `log` run through `Logic` uses today's date, so
+- **Testing with dates:** `loglesson` run through `Logic` uses today's date, so
   build expected text with `LessonDateUtil.todayText()` and expected lessons
   with `LessonDateUtil.loggedToday(...)` (in `testutil`). Unit tests of
   `LogCommand` pass a fixed `Clock` instead. `PersonBuilder#withLessons`
@@ -393,7 +398,7 @@ accepted by the parser. Commands apply these errors consistently:
 - `PersonListPanel(ObservableList<Person>, Consumer<Index>)` invokes the callback
   for primary-button clicks on populated cards. `MainWindow` routes that index
   through `Logic.execute("view " + index.getOneBased())` and displays its result.
-- `view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and
+- `view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and
   `unflag` return `CommandResult(feedback, Person)` with the student as it is
   after the command. The optional `getStudent()` is empty for other commands.
   `MainWindow` shows that student in `StudentDetailPanel#show(Person, int)` and
@@ -534,7 +539,7 @@ From [Appendix E][appendix-e] and the [SE-EDU review guide][reviewing].
   (`build/libs/TutorLah.jar`), and notes listing what changed since the
   previous release, with screenshots committed under `docs/images/`.
 - Before publishing, copy the JAR to an empty folder and run it with
-  `java -jar TutorLah.jar` under Java 25. Add, log, view and exit, then
+  `java -jar TutorLah.jar` under Java 25. Run `add`, `loglesson`, `view` and `exit`, then
   start it again and check that the data was kept.
 - For the feature freeze and final submission, read the live
   [Week 12 page][w12]. Do not rely on remembered limits.

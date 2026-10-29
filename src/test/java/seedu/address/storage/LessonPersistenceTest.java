@@ -100,9 +100,9 @@ public class LessonPersistenceTest {
     @Test
     public void restart_multipleStudentsWithDistinctHistories_eachHistoryKept() throws Exception {
         startWith(ALEX, BEA, CHEN);
-        logic.execute("log 1 c/Quadratic inequalities");
-        logic.execute("log 2 c/Binomial theorem");
-        logic.execute("log 1 c/Surds and indices");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
+        logic.execute("loglesson 2 c/Binomial theorem");
+        logic.execute("loglesson 1 c/Surds and indices");
         // student 3 has no lessons
 
         ReadOnlyAddressBook reloaded = restart();
@@ -117,10 +117,10 @@ public class LessonPersistenceTest {
     @Test
     public void restart_duplicateLessonsAndOrder_kept() throws Exception {
         startWith(ALEX);
-        logic.execute("log 1 c/Quadratic inequalities");
-        logic.execute("log 1 c/Binomial theorem");
-        logic.execute("log 1 c/Quadratic inequalities");
-        logic.execute("log 1 c/Surds   and   indices");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
+        logic.execute("loglesson 1 c/Binomial theorem");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
+        logic.execute("loglesson 1 c/Surds   and   indices");
 
         List<Lesson> expected = lessonsLoggedToday("Quadratic inequalities", "Binomial theorem",
                 "Quadratic inequalities", "Surds   and   indices");
@@ -130,8 +130,8 @@ public class LessonPersistenceTest {
     @Test
     public void restart_reloadAndSaveAgain_lessonsUnchanged() throws Exception {
         startWith(ALEX, BEA);
-        logic.execute("log 1 c/Quadratic inequalities");
-        logic.execute("log 2 c/Binomial theorem");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
+        logic.execute("loglesson 2 c/Binomial theorem");
         ReadOnlyAddressBook firstLoad = restart();
 
         // second session: start from the reloaded data and save it again unchanged
@@ -143,8 +143,8 @@ public class LessonPersistenceTest {
     @Test
     public void restart_afterDeletingStudent_theirLessonsGoneOthersKept() throws Exception {
         startWith(ALEX, BEA);
-        logic.execute("log 1 c/Quadratic inequalities");
-        logic.execute("log 2 c/Binomial theorem");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
+        logic.execute("loglesson 2 c/Binomial theorem");
 
         logic.execute("delete 1");
         ReadOnlyAddressBook reloaded = restart();
@@ -157,7 +157,7 @@ public class LessonPersistenceTest {
     @Test
     public void restart_afterEditingStudent_lessonsKept() throws Exception {
         startWith(ALEX);
-        logic.execute("log 1 c/Quadratic inequalities");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
 
         logic.execute("edit 1 n/Alex Tan l/Sec 4");
 
@@ -250,7 +250,7 @@ public class LessonPersistenceTest {
     @Test
     public void restart_loggedLesson_savesDateInIsoFormat() throws Exception {
         startWith(ALEX);
-        logic.execute("log 1 c/Quadratic inequalities");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
 
         assertTrue(Files.readString(dataFile).contains("\"date\" : \"" + LocalDate.now() + "\""));
     }
@@ -283,7 +283,7 @@ public class LessonPersistenceTest {
     @Test
     public void log_saveFails_reportsErrorAndKeepsLastSavedFile() throws Exception {
         startWith(ALEX);
-        logic.execute("log 1 c/Quadratic inequalities");
+        logic.execute("loglesson 1 c/Quadratic inequalities");
         String lastSaved = Files.readString(dataFile);
 
         assertLogSaveFailure(new IOException("disk full"),
@@ -298,7 +298,7 @@ public class LessonPersistenceTest {
     }
 
     /**
-     * Runs a {@code log} command against storage that fails to save with {@code exception},
+     * Runs a {@code loglesson} command against storage that fails to save with {@code exception},
      * and checks the error message shown to the user.
      */
     private void assertLogSaveFailure(IOException exception, String expectedMessage) {
@@ -311,7 +311,8 @@ public class LessonPersistenceTest {
         LogicManager failingLogic = new LogicManager(model, new StorageManager(failingStorage,
                 new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
 
-        assertThrows(CommandException.class, expectedMessage, () -> failingLogic.execute("log 1 c/Binomial theorem"));
+        assertThrows(CommandException.class, expectedMessage, ()
+                -> failingLogic.execute("loglesson 1 c/Binomial theorem"));
         assertTrue(Files.exists(dataFile));
     }
 }

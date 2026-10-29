@@ -49,7 +49,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 
    * `add n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22, #05-13 l/JC1 sub/H2 Math` : Adds a JC1 student named `Tan Wei Ming` who is taking H2 Math.
 
-   * `log 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
+   * `loglesson 1 c/Quadratic inequalities` : Records a lesson on quadratic inequalities for the 1st student in the list.
 
    * `view 1` : Shows the lesson records of the 1st student in the list, most recent first.
 
@@ -93,7 +93,7 @@ TutorLah is a **desktop application for freelance tutors in Singapore to keep tr
 * A prefix used by the command you are typing starts a new field wherever it follows whitespace
   (an ordinary space, a non-breaking space or a tab). Other slashes are ordinary text, so `a/l` in a
   name or `d/dx` in lesson notes is kept. If your text contains one of that command's prefixes after a
-  space, such as `c/o` in `log` notes, reword it, for example `care of`. When this causes an error,
+  space, such as `c/o` in `loglesson` notes, reword it, for example `care of`. When this causes an error,
   such as `Multiple values specified for the following single-valued field(s): c/`, the message adds
   `A recognised prefix after a space starts another field. If it was part of your text, please reword it.`
   A command that is still valid is not detected: `edit 1 addr/Unit l/2` changes the address to `Unit`
@@ -188,7 +188,7 @@ Each student card also shows a lesson-status line below the subject:
 | Multiple dated lessons | `5 lessons, last 21/10/2026` |
 | Only undated lessons | `5 lessons (undated)` |
 
-`last` means the most recent **recorded lesson date**, rather than when a command was typed. When dated and undated lessons coexist, all records count and the most recent dated lesson supplies the date. The line refreshes after `log`, `editlesson` and `deletelesson`, and a flagged student's flag icon remains visible.
+`last` means the most recent **recorded lesson date**, rather than when a command was typed. When dated and undated lessons coexist, all records count and the most recent dated lesson supplies the date. The line refreshes after `loglesson`, `editlesson` and `deletelesson`, and a flagged student's flag icon remains visible.
 
 ### Finding students: `find`
 
@@ -208,7 +208,7 @@ Format: `find [KEYWORD]... [n/NAME] [sub/SUBJECT] [l/LEVEL]`
 * Only lowercase `n/`, `sub/` and `l/` are fields. Other text that looks like a prefix, such as `a/l`, is searched as part of the name.
 * Each search checks all saved students, replacing the previous `find` or `flagged` filter. The matches keep their original list order.
 * With one match: `Found 1 student.` With multiple matches: `Found {COUNT} students.` With no matches: `No matching students found. Use list to show all students.` If the search used names only, such as `find physics`, the message adds `To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`, because keywords without a prefix search names, not subjects or levels. If moving the last words after `sub/` or `l/` to the names would find someone, the message adds `Words after sub/ or l/ search only that field. Did you mean: find ng sub/Physics?` with the suggested search.
-* Matches are numbered from 1. Use these displayed numbers for `view`, `log`, `edit` and `delete`, or click a matching card to view its history.
+* Matches are numbered from 1. Use these displayed numbers for `view`, `loglesson`, `edit` and `delete`, or click a matching card to view its history.
 * `find` does not change or delete student details or lesson records. Type `list` to restore all students. Search filters are not saved across restarts.
 * Adding or editing a student also restores the full list. Viewing, logging and deleting use the current filter.
 
@@ -319,7 +319,7 @@ directly from the command box. Any text you are typing in the command box is pre
 * The header is `Lesson records for NAME (COUNT):`, followed by one line per record in the form `NUMBER. DATE: CONTENT`.
 * Missing indexes, non-integers, and extra arguments produce an invalid-command-format message with usage. Zero, negative integers, leading-zero integers, integers too large to parse, and indexes outside the displayed list produce `The student index provided is invalid.`
 
-Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays Geometry before Algebra, each with today's date.
+Example: `loglesson 1 c/Algebra` followed by `loglesson 1 c/Geometry` and `view 1` displays Geometry before Algebra, each with today's date.
 
 **Screenshot example:** `view 1` opens Alex Tan in the details panel with his three dated lessons, newest date first, and highlights his student card:
 
@@ -329,9 +329,9 @@ Example: `log 1 c/Algebra` followed by `log 1 c/Geometry` and `view 1` displays 
 
 The details panel always shows one student, or a hint when no student is selected.
 
-* **Opening a student:** `view`, clicking a card, moving through the list with the arrow keys, `findlesson`, and any command that changes one student (`log`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) open that student in the panel. Changes appear immediately, so you do not need to run `view` again.
+* **Opening a student:** `view`, clicking a card, moving through the list with the arrow keys, `findlesson`, and any command that changes one student (`loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) open that student in the panel. Changes appear immediately, so you do not need to run `view` again.
 * **Lesson numbers** in the panel are the same numbers that `view`, `editlesson` and `deletelesson` use. Lesson 1 is the most recent.
-* **No lessons yet:** the panel shows an example `log` command for that student.
+* **No lessons yet:** the panel shows an example `loglesson` command for that student.
 * **Other commands** such as `list`, `find`, `flagged`, `summary` and `add` keep the same student in the panel while they are still in the displayed list. If `find` or `flagged` hides them, or `delete` removes them, the panel returns to the hint.
 * **Failed commands** never change the panel or the highlighted card, including when TutorLah cannot save your data.
 * After `unflag` in the `flagged` results, the student leaves the list but stays in the panel, so you can see what changed.
@@ -353,7 +353,7 @@ Format: `findlesson INDEX [KEYWORDS] [from/DATE] [to/DATE]`
 * Every keyword must occur somewhere in the lesson content, ignoring case and
   keyword order. Partial words match; punctuation is literal, not a wildcard or
   regular expression.
-* Dates use the same `DD/MM/YYYY` rules as `log`, including single-digit days/months
+* Dates use the same `DD/MM/YYYY` rules as `loglesson`, including single-digit days/months
   and the earliest date 01/01/2000. Unlike logging, future search boundaries are allowed.
 * Both boundaries are inclusive. One boundary leaves the other end open. Equal
   boundaries search one day; a `from/` date after `to/` gives
@@ -401,17 +401,17 @@ Drag the vertical divider between the student list and the details panel to resi
 them, and scroll inside the details panel to read a long lesson history.
 The window can be made as small as 700 x 420 pixels, so it fits small or highly scaled screens. TutorLah also opens no larger than your primary screen, even if it was last closed on a larger one. A saved position on a connected screen is restored; if that position no longer fits on any connected screen, TutorLah opens in the centre of the primary screen instead.
 
-### Logging a lesson: `log`
+### Logging a lesson: `loglesson`
 
 Records what you covered in a lesson for the specified student.
 
-Format: `log INDEX c/CONTENT [date/DATE]`
+Format: `loglesson INDEX c/CONTENT [date/DATE]`
 
 * Logs a lesson for the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * `CONTENT` can be any text from 1 to 300 characters, e.g. the topics covered or homework set. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces. Internal spaces and formatting characters used in real text are kept.
-* `c/` and `date/` after a space always start a field, even inside your notes. Write `care of` instead of `c/o` and `date and time` instead of `date/time`. For example, `log 1 c/Worksheet collected care of Mum` works, while `log 1 c/Worksheet collected c/o Mum` is rejected as a repeated `c/`. An invalid date in `log` or `editlesson` also says `If "date/" was part of your lesson notes, please reword it, for example "date and time".`
+* `c/` and `date/` after a space always start a field, even inside your notes. Write `care of` instead of `c/o` and `date and time` instead of `date/time`. For example, `loglesson 1 c/Worksheet collected care of Mum` works, while `loglesson 1 c/Worksheet collected c/o Mum` is rejected as a repeated `c/`. An invalid date in `loglesson` or `editlesson` also says `If "date/" was part of your lesson notes, please reword it, for example "date and time".`
 * `DATE` is the day the lesson was taught, as `DD/MM/YYYY`, for example `21/10/2026`. Single-digit days and months such as `1/2/2026` are also accepted. Without `date/`, the lesson is dated with today's date on your computer.
 * `DATE` must be a real date from 01/01/2000 up to today: future dates and dates such as `31/02/2026` are rejected. The day and month have one or two digits, and the year has exactly four.
 * Confirmation: `Logged lesson for NAME on DD/MM/YYYY: CONTENT`, for example `Logged lesson for Tan Wei Ming on 18/10/2026: Quadratic inequalities`.
@@ -419,11 +419,11 @@ Format: `log INDEX c/CONTENT [date/DATE]`
 * To correct a logged lesson's content or date, use `editlesson`. To remove an incorrect record, use `deletelesson`. Both are described below.
 
 Examples:
-* `list` followed by `log 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
-* `log 1 c/Electric circuits: series and parallel, Q1-5 for homework` logs a lesson for the 1st student in the list.
-* `log 2 c/Surds and indices date/20/10/2026` logs a lesson taught on 20 October 2026 for the 2nd student, placed among their records by that date.
+* `list` followed by `loglesson 3 c/Quadratic inequalities` logs a lesson on quadratic inequalities for the 3rd student in the list.
+* `loglesson 1 c/Electric circuits: series and parallel, Q1-5 for homework` logs a lesson for the 1st student in the list.
+* `loglesson 2 c/Surds and indices date/20/10/2026` logs a lesson taught on 20 October 2026 for the 2nd student, placed among their records by that date.
 
-**Screenshot example:** after `list`, the command `log 1 c/Trigonometry: solved right-angled triangle problems. date/18/10/2026` records an earlier lesson for Alex Tan. The confirmation includes the lesson date and content:
+**Screenshot example:** after `list`, the command `loglesson 1 c/Trigonometry: solved right-angled triangle problems. date/18/10/2026` records an earlier lesson for Alex Tan. The confirmation includes the lesson date and content:
 
 <a href="images/log-lesson-past-date.png"><img src="images/log-lesson-past-date.png" alt="Confirmation of a Trigonometry lesson logged for Alex Tan on 18/10/2026" width="726"></a>
 
@@ -473,13 +473,13 @@ Format: `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`
 
 * `STUDENT_INDEX` and `LESSON_INDEX` work as in `deletelesson`: the student's number in the displayed student list, and the lesson's current number shown by `view STUDENT_INDEX`, where lesson 1 is the most recent.
 * Give at least one of `c/` and `date/`. Without either, the command reports `At least one field to edit must be provided.`
-* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `log`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today. As in `log`, reword `c/` or `date/` inside the content, for example `care of` and `date and time`.
+* `c/CONTENT` replaces the lesson's content and `date/DATE` replaces its date. A field you leave out keeps its current value. Both follow the same rules as in `loglesson`: content of 1 to 300 characters, and a real date from 01/01/2000 up to today. As in `loglesson`, reword `c/` or `date/` inside the content, for example `care of` and `date and time`.
 * Changing only the content keeps the lesson's number.
 * Changing the date moves the lesson to its place in date order, so its number can change. On a date that already has lessons, the edited lesson goes after them, so `view` shows it first among that date's lessons. The confirmation gives the new number to use in later `editlesson` and `deletelesson` commands.
 * Lessons saved before v1.4 have no date and show `(undated)`. Editing only their content keeps them undated, and giving `date/` dates them. A date cannot be removed from a dated lesson.
 * If the new content and date are the same as the lesson's current ones, the command reports `The lesson already has those details.` and nothing changes.
 * Confirmation: `Edited lesson LESSON_INDEX for NAME (now lesson NEW_INDEX). DATE: CONTENT`.
-* Student details, other lessons, other students and the current student filter are unchanged. Index errors and an empty history give the same messages as `deletelesson`, and a future date gives the same message as `log`.
+* Student details, other lessons, other students and the current student filter are unchanged. Index errors and an empty history give the same messages as `deletelesson`, and a future date gives the same message as `loglesson`.
 
 Examples:
 * `editlesson 2 1 c/Quadratic inequalities and homework review` corrects the content of student 2's most recent lesson. It stays lesson 1.
@@ -510,7 +510,7 @@ Keep all students inside one root JSON object. Only whitespace may follow its cl
 Phone values in the data file must already contain exactly eight digits from `0` to `9`,
 without spaces. Whitespace is removed only from phone values entered through commands.
 
-In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. Stored dates must be real dates from `2000-01-01` onwards. Earlier dates, impossible dates and dates in another format make the data file invalid. Existing future dates are kept when loading, so a system-clock correction does not make saved records unreadable; `log` and date changes through `editlesson` still reject future dates.
+In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. Stored dates must be real dates from `2000-01-01` onwards. Earlier dates, impossible dates and dates in another format make the data file invalid. Existing future dates are kept when loading, so a system-clock correction does not make saved records unreadable; `loglesson` and date changes through `editlesson` still reject future dates.
 
 On loading, names have surrounding whitespace removed and repeated whitespace collapsed to one space, as with `add` and `edit`. If this reveals two students with the same phone and name ignoring case, the file is invalid. TutorLah does not merge their lessons or flags; back up the file and correct the duplicate entries before restarting.
 
@@ -568,7 +568,7 @@ Action     | Format, Examples
 **List**   | `list`
 **Summary** | `summary` (totals cover all students and keep the current filter)
 **View**   | `view INDEX`<br> e.g., `view 1`
-**Log**    | `log INDEX c/CONTENT [date/DATE]`<br> e.g., `log 3 c/Quadratic inequalities date/21/10/2026`
+**Log lesson** | `loglesson INDEX c/CONTENT [date/DATE]`<br> e.g., `loglesson 3 c/Quadratic inequalities date/21/10/2026`
 **Unflag** | `unflag INDEX`<br> e.g., `unflag 2`
 **Help**   | `help`
 **Exit**   | `exit`

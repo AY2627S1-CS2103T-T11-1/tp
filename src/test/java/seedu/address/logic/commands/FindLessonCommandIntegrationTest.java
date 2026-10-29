@@ -148,7 +148,7 @@ public class FindLessonCommandIntegrationTest {
 
     @Test
     public void execute_identicalRecords_deletesOnlySelectedOccurrence() throws Exception {
-        logic.execute("log 2 c/Algebra date/2/1/2020");
+        logic.execute("loglesson 2 c/Algebra date/2/1/2020");
         assertEquals("Matching lesson records for Amy Tan (2):"
                 + "\n4. 02/01/2020: Algebra\n5. 02/01/2020: Algebra",
                 feedback("findlesson 2 algebra from/2/1/2020 to/2/1/2020"));
@@ -168,7 +168,7 @@ public class FindLessonCommandIntegrationTest {
         assertEquals("Matching lesson records for Amy Tan (3):"
                 + "\n1. 06/01/2020: Algebra\n3. 04/01/2020: Algebra\n5. (undated): Algebra legacy",
                 feedback("findlesson 1 algebra"));
-        logic.execute("log 1 c/Algebra extension date/7/1/2020");
+        logic.execute("loglesson 1 c/Algebra extension date/7/1/2020");
         assertEquals("Matching lesson records for Amy Tan (1):\n1. 07/01/2020: Algebra extension",
                 feedback("findlesson 1 extension"));
         assertEquals(6, storage.readAddressBook().orElseThrow().getPersonList().get(1).getLessonCount());

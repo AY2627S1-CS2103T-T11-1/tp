@@ -52,10 +52,10 @@ Start with an empty student list and add
 1. Enter `edit 1 addr/New Rd[NBSP]l/Sec 4`, replacing `[NBSP]` with a
    non-breaking space (Option+Space on macOS). Check that the address is
    `New Rd` and the level is `Sec 4`, including after restarting.
-2. Enter `log 1[NBSP]c/Algebra` using the same separator. It should log
-   `Algebra`, just like `log 1 c/Algebra` with an ordinary space.
-3. Copy `log 1 c/Quadratic` and `inequalities` as two lines, then paste into
-   the command box. Check that it reads `log 1 c/Quadratic inequalities` and
+2. Enter `loglesson 1[NBSP]c/Algebra` using the same separator. It should log
+   `Algebra`, just like `loglesson 1 c/Algebra` with an ordinary space.
+3. Copy `loglesson 1 c/Quadratic` and `inequalities` as two lines, then paste into
+   the command box. Check that it reads `loglesson 1 c/Quadratic inequalities` and
    nothing is logged until Enter is pressed. Repeat with a tab between the words.
 4. Paste `Amy` and `Tan` separated by a tab over the name in `find old name`.
    Check the result is `find Amy Tan`; undo and redo should restore each version.

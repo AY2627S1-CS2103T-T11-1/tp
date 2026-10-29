@@ -198,7 +198,7 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a lesson date given in {@code log} or {@code editlesson} as {@link #parseLessonDate} does. An error
+     * Parses a lesson date given in {@code loglesson} or {@code editlesson} as {@link #parseLessonDate} does. An error
      * keeps the original message and cause, and adds a hint in case {@code date/} was meant as lesson notes.
      *
      * @throws ParseException if the given {@code date} is not a real date in that format.

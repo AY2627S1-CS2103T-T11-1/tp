@@ -85,7 +85,7 @@ Saved JSON files contain exactly one root value followed only by whitespace. Ext
   first, with the same numbers as `view`. Tutors can type `view INDEX` or
   left-click a student card to open that student, while command text is preserved.
   The click callback uses the current displayed index and the existing command path.
-  `view`, `findlesson`, `log`, `edit`, `editlesson`, `deletelesson`, `flag` and
+  `view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and
   `unflag` open their student in the panel through `CommandResult#getStudent`.
   Other commands keep the panel's student while it is still displayed, and clear
   the panel otherwise. Failed commands turn the result box red and never change
@@ -119,7 +119,7 @@ to run it; meaningful spacing inside addresses and lesson content is kept.
 
 A prefix the command uses always starts a new field after whitespace, so text
 such as `c/o` or `date/time` cannot appear after whitespace inside lesson notes. Tutors reword
-it (`care of`, `date and time`); the duplicate-field and `log`/`editlesson`
+it (`care of`, `date and time`); the duplicate-field and `loglesson`/`editlesson`
 date errors say so. This is a deliberate, documented limitation.
 
 `add` and `edit` remove Unicode whitespace, including non-breaking spaces,
@@ -138,7 +138,7 @@ Names and addresses keep their normal errors. No extra fields are parsed.
 | Add a student | `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT` | `add n/Tan Wei Ming p/87654321 addr/Blk 8 Bishan St 22 #05-13 l/JC1 sub/H2 Math` |
 | Delete a student | `delete INDEX` | `delete 3` |
 | List students | `list` | `list` |
-| Log a lesson | `log INDEX c/CONTENT [date/DATE]` | `log 3 c/Quadratic inequalities date/21/10/2026` |
+| Log a lesson | `loglesson INDEX c/CONTENT [date/DATE]` | `loglesson 3 c/Quadratic inequalities date/21/10/2026` |
 | View lessons | `view INDEX` | `view 3` |
 
 Added after the MVP (v1.4):
@@ -212,7 +212,7 @@ names and keywords separately, so Greek sigma variants also match. An empty
 student panel offers both `list` and the add-command format and example,
 covering searches with no matches as well as a genuinely empty address book.
 
-`log` dates each lesson with today's date (v1.4, issue #98), or with
+`loglesson` dates each lesson with today's date (v1.4, issue #98), or with
 `date/DD/MM/YYYY` for a lesson taught earlier (issue #120). Future dates are
 rejected. `view` shows each record as `NUMBER. DD/MM/YYYY: CONTENT`, most
 recent date first. Lessons saved before v1.4 have no date and show
@@ -236,7 +236,8 @@ recent date first. Lessons saved before v1.4 have no date and show
 ## Decisions (Oct 8, 2026)
 
 - **No lesson date** in the MVP. `log` takes content only. Replaced in v1.4
-  by issue #98: `log` dates each lesson with today's date.
+  by issue #98: `log` dates each lesson with today's date. `log` was renamed
+  `loglesson` on Oct 29 (#227), to match the other lesson commands.
 - **View order:** most recently logged first (reverse logging order), as
   agreed by the team on Oct 8. Implemented in PR #63. This replaces the
   earlier order-logged proposal. Since issue #120, lessons are kept in date
@@ -255,7 +256,7 @@ recent date first. Lessons saved before v1.4 have no date and show
 
 ## Shared index policy
 
-- **Invalid index messages:** `delete`, `log`, and `view` accept positive
+- **Invalid index messages:** `delete`, `loglesson`, and `view` accept positive
   integers without leading zeros. There is no arbitrary 1000 cap. Zero,
   negative integers, leading-zero integers, values too large to parse, and
   indexes outside the displayed list give "The student index provided is
