@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "logging-a-lesson": "Logging a lesson",
         "viewing-lesson-history": "Viewing lesson history",
         "keeping-the-details-panel-in-sync": "Keeping the details panel in sync",
         "rejecting-blank-unicode-fields": "Rejecting blank Unicode fields",

@@ -1,0 +1,45 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+start
+:Parse the index, content
+and optional date;
+
+'Since the beta syntax does not support placing the condition outside the
+'diamond we place it as the true branch instead.
+
+if () then ([input is
+invalid])
+    :Show the error;
+    stop
+else ([else])
+endif
+
+if () then ([index is not
+in the list])
+    :Show the invalid
+    student index error;
+    stop
+else ([else])
+endif
+
+if () then ([date/ given])
+    :Use the given date;
+else ([else])
+    :Use today's date;
+endif
+
+if () then ([date is
+after today])
+    :Show the future-date error;
+    stop
+else ([else])
+endif
+
+:Insert the lesson before
+any lessons dated after it;
+:Save the student data;
+:Show the logged lesson;
+stop
+@enduml
