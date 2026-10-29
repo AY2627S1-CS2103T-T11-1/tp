@@ -421,7 +421,7 @@ records. Each command displays its feedback from the beginning. The command box
 remains above the result box, and the student list and details panel remain below it.
 Drag the vertical divider between the student list and the details panel to resize
 them, and scroll inside the details panel to read a long lesson history.
-The window can be made as small as 700 x 420 pixels, so it fits small or highly scaled screens. TutorLah also opens no larger than your screen, even if it was last closed on a larger one.
+The window can be made as small as 700 x 420 pixels, so it fits small or highly scaled screens. TutorLah also opens no larger than your primary screen, even if it was last closed on a larger one. A saved position on a connected screen is restored; if that position no longer fits on any connected screen, TutorLah opens in the centre of the primary screen instead.
 
 ### Logging a lesson: `log`
 
@@ -570,8 +570,7 @@ _Details coming soon ..._
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 

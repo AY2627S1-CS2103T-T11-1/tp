@@ -183,7 +183,10 @@ Stacked level and subject chips return side by side only with 20 pixels to
 spare, more than the scroll bar, so the layout cannot flicker (#202).
 `MainWindow` has a minimum size of 700 x 420 pixels and opens no larger than
 the primary screen's usable area. By calculation this fits 1280x720 at 150%
-scale; a real display at that scale is still to be checked (#167).
+scale (#167). A saved position is restored only when the complete window fits
+within a connected screen's usable bounds; otherwise, the window is centred on
+the primary screen. Valid secondary-screen positions include negative
+coordinates (#216).
 
 Other messages:
 

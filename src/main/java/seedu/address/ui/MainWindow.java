@@ -1,10 +1,13 @@
 package seedu.address.ui;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
@@ -192,17 +195,43 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sets the default size based on {@code guiSettings}, shrunk to fit the primary screen's usable area,
-     * so that the window opens fully on small or highly scaled screens.
+     * Sets the default size based on {@code guiSettings}, shrunk to fit the primary screen's usable area.
+     * A saved position is kept only when the complete window fits within a connected screen's usable area;
+     * otherwise, the window is centred on the primary screen.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        Rectangle2D screen = Screen.getPrimary().getVisualBounds();
-        primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), screen.getHeight()));
-        primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), screen.getWidth()));
-        if (guiSettings.getWindowCoordinates() != null) {
-            primaryStage.setX(guiSettings.getWindowCoordinates().getX());
-            primaryStage.setY(guiSettings.getWindowCoordinates().getY());
+        Rectangle2D primaryScreen = Screen.getPrimary().getVisualBounds();
+        primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), primaryScreen.getHeight()));
+        primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), primaryScreen.getWidth()));
+        List<Rectangle2D> screens = Screen.getScreens().stream().map(Screen::getVisualBounds).toList();
+        getRestoredWindowPosition(guiSettings, primaryStage.getWidth(), primaryStage.getHeight(), screens,
+                primaryScreen).ifPresent(position -> {
+                    primaryStage.setX(position.getX());
+                    primaryStage.setY(position.getY());
+                });
+    }
+
+    /**
+     * Returns the saved position if the complete window fits on a connected screen, or a position centred within
+     * the primary screen otherwise. An empty result leaves first-launch positioning to the window system.
+     */
+    static Optional<Point2D> getRestoredWindowPosition(GuiSettings guiSettings, double windowWidth,
+            double windowHeight, List<Rectangle2D> screens, Rectangle2D primaryScreen) {
+        if (guiSettings.getWindowCoordinates() == null) {
+            return Optional.empty();
         }
+        double savedX = guiSettings.getWindowCoordinates().getX();
+        double savedY = guiSettings.getWindowCoordinates().getY();
+        boolean fitsConnectedScreen = screens.stream().anyMatch(screen -> savedX >= screen.getMinX()
+                && savedY >= screen.getMinY()
+                && savedX + windowWidth <= screen.getMaxX()
+                && savedY + windowHeight <= screen.getMaxY());
+        if (fitsConnectedScreen) {
+            return Optional.of(new Point2D(savedX, savedY));
+        }
+        double centredX = primaryScreen.getMinX() + (primaryScreen.getWidth() - windowWidth) / 2;
+        double centredY = primaryScreen.getMinY() + (primaryScreen.getHeight() - windowHeight) / 2;
+        return Optional.of(new Point2D(centredX, centredY));
     }
 
     /**
