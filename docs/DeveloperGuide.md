@@ -14,6 +14,7 @@
 ## **Acknowledgements**
 
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
+* Libraries used: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for reading and writing JSON data files, and [JUnit 5](https://github.com/junit-team/junit5) for automated tests.
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
 * OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries and per-student lesson counts.
@@ -126,7 +127,7 @@ The following diagram focuses on parser selection and command creation:
 
 <a href="diagrams/ParserClasses.png" no-validation><puml src="diagrams/ParserClasses.puml" alt="Partial parser class diagram showing selection of lesson parsers and creation of their commands" width="520" /></a>
 
-[`AddressBookParser`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/parser/AddressBookParser.java) separates the command word from its arguments and creates the matching parser. It lowercases only the command word with `Locale.ROOT`, so command selection ignores case without depending on the system locale. Arguments are unchanged, so prefixes remain case-sensitive and must use their documented lowercase forms. Command-specific parsers implement the generic `Parser` interface: for example, `LogCommandParser` implements `Parser<LogCommand>` and returns a `LogCommand`. The type parameter and common `Command` superclass are omitted from this diagram. Dashed arrows labelled `<<create>>` show object creation, not held references. Other command parsers are omitted; `help` and `exit` are created directly without separate parsers.
+[`AddressBookParser`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/logic/parser/AddressBookParser.java) separates the command word from its arguments and creates the matching parser. It lowercases only the command word with `Locale.ROOT`, so command selection ignores case without depending on the system locale. Arguments are unchanged, so prefixes remain case-sensitive and must use their documented lowercase forms. Command-specific parsers implement the generic `Parser` interface: for example, `LogCommandParser` implements `Parser<LogCommand>` and returns a `LogCommand`. The type parameter and common `Command` superclass are omitted from this diagram. Dashed arrows labeled `<<create>>` show object creation, not held references. Other command parsers are omitted; `help` and `exit` are created directly without separate parsers.
 
 The helper dependencies are shown separately to keep the overview readable. Pale grey-blue boxes identify helpers within the same parser package.
 
@@ -137,7 +138,7 @@ The helper dependencies are shown separately to keep the overview readable. Pale
 
 The helper diagram omits prefix classes, model values and exceptions to focus on tokenization, use of the returned multimap and shared validation.
 
-Command words, positional indexes and prefix boundaries recognise Unicode
+Command words, positional indexes and prefix boundaries recognize Unicode
 whitespace, including non-breaking spaces. `ArgumentTokenizer` trims field
 boundaries without replacing internal spacing. In the UI, `CommandBox` uses a
 `TextFormatter` to replace inserted tabs and line breaks with spaces before
@@ -227,9 +228,9 @@ Both `view INDEX` and a primary press on a student card reach `MainWindow#execut
 
 <puml src="diagrams/ViewHistorySequenceDiagram.puml" alt="Successful view sequence showing typed input and a student-card press joining the same UI execution path" width="950" />
 
-The sequence shows a successful view of displayed student 1. The `User` actor represents the person entering a command or pressing a student card. Both entry paths share the same execution flow in `MainWindow`. The diagram expands only the UI component; `Logic` is shown through its interface. Parsing, model access, saving, JavaFX internals and error paths are omitted. Activation bars and the private self-call from `handlePersonClick` to `executeCommand` are omitted. Solid arrows show input events or calls; dashed arrows show returns. A return labelled `return` carries no value. The final alternatives complete the same entry path chosen at the top.
+The sequence shows a successful view of displayed student 1. The `User` actor represents the person entering a command or pressing a student card. Both entry paths share the same execution flow in `MainWindow`. The diagram expands only the UI component; `Logic` is shown through its interface. Parsing, model access, saving, JavaFX internals and error paths are omitted. Activation bars and the private self-call from `handlePersonClick` to `executeCommand` are omitted. Solid arrows show input events or calls; dashed arrows show returns. A return labeled `return` carries no value. The final alternatives complete the same entry path chosen at the top.
 
-`MainWindow` passes the command to `Logic#execute`. A successful `ViewCommand` returns a `CommandResult` containing the feedback and the viewed `Person`. `MainWindow` displays the feedback, then finds the student's position in the displayed list, shows the student in `StudentDetailPanel` and passes the position to `PersonListPanel#selectPerson` to synchronise the highlight and scroll position. The student is present even when their history is empty. This selection does not invoke the click callback, so it cannot execute the command again.
+`MainWindow` passes the command to `Logic#execute`. A successful `ViewCommand` returns a `CommandResult` containing the feedback and the viewed `Person`. `MainWindow` displays the feedback, then finds the student's position in the displayed list, shows the student in `StudentDetailPanel` and passes the position to `PersonListPanel#selectPerson` to synchronize the highlight and scroll position. The student is present even when their history is empty. This selection does not invoke the click callback, so it cannot execute the command again.
 
 `ViewCommand` reads the student from `Model#getFilteredPersonList`, leaving the current filter and student data unchanged. It traverses the stored lessons backwards: the most recent lesson date appears first, with the most recently logged record first among equal dates. Existing undated records appear at the oldest end when lessons have been added in date order. Each row shows its displayed lesson number, formatted date and content; undated records use `(undated)`. An empty history returns `No lessons logged yet for NAME.`.
 
@@ -313,7 +314,7 @@ The command keeps each student's lessons in date order with one of two operation
 
 ### Prefix text inside values
 
-`ArgumentTokenizer` starts a new field at every prefix the command recognises when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `loglesson 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `loglesson 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
+`ArgumentTokenizer` starts a new field at every prefix the command recognizes when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `loglesson 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `loglesson 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
 
 We keep this rule for every command rather than special-casing lesson content:
 
@@ -366,7 +367,7 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 ### Finding students by name, subject and level
 
-`AddressBookParser` routes `find` input to `FindCommandParser`, which first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space so that search keywords use a consistent separator. It then passes the normalized text to `ArgumentTokenizer` for the `n/`, `sub/` and `l/` prefixes. The shared tokenizer itself recognises a configured prefix after Unicode whitespace, as described in [Prefix text inside values](#prefix-text-inside-values); the normalization is specific to how `find` prepares its keywords, not a requirement for prefix recognition. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognised, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
+`AddressBookParser` routes `find` input to `FindCommandParser`, which first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space so that search keywords use a consistent separator. It then passes the normalized text to `ArgumentTokenizer` for the `n/`, `sub/` and `l/` prefixes. The shared tokenizer itself recognizes a configured prefix after Unicode whitespace, as described in [Prefix text inside values](#prefix-text-inside-values); the normalization is specific to how `find` prepares its keywords, not a requirement for prefix recognition. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognized, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
 
 `StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched, and `isNameSearchOnly()` reports when only name keywords were given, so that `FindCommand` can add a hint about `sub/` and `l/` when such a search finds no one. Because every word after `sub/` or `l/` belongs to that field, a name typed afterwards, as in `find sub/Physics ng`, makes the search find no one. `withTrailingFieldWordsAsNames()` therefore returns the searches that move the last one or more words of a multi-word subject or level search to the names, fewest words first (subject before level for the same number of words) and keeping at least one word in each field. When a search that used `sub/` or `l/` finds no one, `FindCommand` tests these alternatives against `Model#getAddressBook`, without changing the displayed list, and suggests the first one that matches, written with name keywords first. Moving words is only a suggestion, never applied automatically, because multi-word values such as `Sec 3` and `H2 Math` are valid. All three fields share `StringUtil#containsIgnoreCase`, which compares each candidate substring with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
 
@@ -417,7 +418,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 The stories marked `Yes` in the **MVP** column form the historical MVP scope. The separate **Status/version** column states what TutorLah actually implements; `Proposed` stories are not available in the current product.
 
-| Priority | MVP | Status/version | As a … | I want to … | So that I can… |
+| Priority | MVP | Status/version | As a ... | I want to ... | So that I can ... |
 |----------|-----|----------------|--------|-------------|----------------|
 | `* * *` | Yes | Implemented (v1.2) | tutor | add a student's details | keep their information in one place |
 | `* * *` | Yes | Implemented (v1.2) | tutor | see a list of my students | identify the student whose information or lesson records I need |
@@ -555,8 +556,8 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 **MSS**
 
 1.  Tutor <u>lists students (UC02)</u>.
-2.  Tutor requests to view the lesson records of a specific student in the list, either by command or by clicking the student.
-3.  TutorLah shows the student's details and lesson records, most recent first, and highlights the student in the list.
+2.  Tutor requests to view the lesson records of a specific student in the list.
+3.  TutorLah shows the student's details and lesson records, most recent first.
 
     Use case ends.
 
@@ -564,7 +565,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 * 2a. The given student index is invalid.
 
-    * 2a1. TutorLah shows an error message, and the student shown before stays shown.
+    * 2a1. TutorLah shows an error message.
 
       Use case resumes at step 2.
 
@@ -626,9 +627,21 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 **Extensions**
 
-* 2a. The given lesson record does not exist.
+* 2a. The given student index is invalid.
 
     * 2a1. TutorLah shows an error message.
+
+      Use case resumes at step 2.
+
+* 2b. The student has no lesson records.
+
+    * 2b1. TutorLah informs Tutor that no lessons have been logged for the student.
+
+      Use case ends.
+
+* 2c. The given lesson record does not exist.
+
+    * 2c1. TutorLah shows an error message.
 
       Use case resumes at step 2.
 
@@ -767,7 +780,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 1.  Tutor <u>lists students (UC02)</u> or <u>finds students (UC10)</u>.
 2.  Tutor requests to search a specific displayed student's lesson records, providing content keywords, an inclusive date range or both.
-3.  TutorLah shows the matching lesson records newest first with their complete-history lesson numbers, and opens the student's complete history in the details panel.
+3.  TutorLah shows the matching lesson records newest first, with their lesson numbers from the student's complete history.
 
     Use case ends.
 
@@ -830,7 +843,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 1.  Tutor <u>lists students (UC02)</u> or <u>finds students (UC10)</u>.
 2.  Tutor requests to remove the follow-up flag from a specific displayed student.
-3.  TutorLah removes the flag and reason, opens the student in the details panel and shows a confirmation.
+3.  TutorLah removes the flag and reason and shows a confirmation.
 
     Use case ends.
 
@@ -850,7 +863,7 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 * 3a. Tutor is viewing only flagged students.
 
-    * 3a1. The unflagged student leaves the displayed list but remains open in the details panel.
+    * 3a1. TutorLah removes the student from the displayed list of flagged students.
 
       Use case ends.
 
@@ -887,18 +900,14 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 ### Non-Functional Requirements
 
-These are product requirements, not a claim that every target has been verified.
-
 1.  **Platform support:** TutorLah should work on Windows, Linux and macOS.
 2.  **Java version:** TutorLah should work with Java `25`.
 3.  **Portable distribution:** TutorLah should be usable without an installer.
 4.  **Single-file distribution:** TutorLah should be packaged in one JAR file that does not exceed `100 MB`.
-5.  **Typing-first interaction:** Student and lesson management should be possible using typed commands. Adding a student and logging a lesson should each take one command.
-6.  **Error feedback:** Rejected input should receive field- or command-specific feedback. Missing or malformed command parts should also show usage.
-7.  **Data persistence:** After a successful data-changing command, TutorLah should save the complete student and lesson data locally before returning success feedback.
-8.  **Data integrity:** A failed command should not add, delete or modify student or lesson records.
-
-    If saving fails, `LogicManager` restores the preceding student data and active filter before reporting the error.
+5.  **Typing-first interaction:** A user with above-average typing speed for regular English text should be able to accomplish most tasks faster using commands than using the mouse.
+6.  **Performance:** With up to 1,000 students and 10,000 lesson records, each command should show its result within 2 seconds on a typical laptop.
+7.  **Durability:** A change that TutorLah reports as successful should already be saved, so closing the app straight afterwards loses no data.
+8.  **Data integrity:** A failed command, including one whose changes cannot be saved, should leave the stored student and lesson records unchanged.
 
 9.  **Human-editable storage:** Data should be stored locally in human-editable JSON, without a database management system.
 10. **Offline operation:** Student and lesson management should work offline. Accessing the online User Guide requires an internet connection.
