@@ -37,7 +37,7 @@ final class LessonCommandUtil {
     }
 
     /**
-     * Converts a validated newest-first lesson number to its zero-based position in logging order.
+     * Converts a validated newest-first lesson number to its zero-based position in stored order.
      * Asserts that the converted position is within the history.
      */
     static int toStoredLessonIndex(int lessonCount, int displayedIndex) {
