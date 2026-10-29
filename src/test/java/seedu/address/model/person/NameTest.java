@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -17,6 +18,16 @@ public class NameTest {
     public void constructor_invalidName_throwsIllegalArgumentException() {
         String invalidName = "";
         assertThrows(IllegalArgumentException.class, () -> new Name(invalidName));
+    }
+
+    @Test
+    public void normalize_whitespaceAndRealNameText_preservesIdentity() {
+        assertThrows(NullPointerException.class, () -> Name.normalize(null));
+        assertEquals("", Name.normalize(" \t\u00a0\u2003"));
+        assertEquals("Amy Tan", Name.normalize("\u00a0 Amy\t \u2003Tan \n"));
+        assertEquals("Mary-Anne O'Brien", Name.normalize(" Mary-Anne  O'Brien "));
+        assertEquals("Ramesh s/o Kumar", Name.normalize("Ramesh s/o Kumar"));
+        assertEquals("Zoe\u0308 Ng", Name.normalize("Zoe\u0308  Ng"));
     }
 
     @Test

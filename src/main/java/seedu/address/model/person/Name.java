@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.commons.util.StringUtil;
+
 /**
  * Represents a Person's name in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
@@ -34,6 +36,15 @@ public class Name {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
         fullName = name;
+    }
+
+    /**
+     * Trims surrounding Unicode whitespace and collapses internal whitespace to one space.
+     * Commands and stored data normalize names before validating them and checking student identity.
+     */
+    public static String normalize(String name) {
+        requireNonNull(name);
+        return StringUtil.stripUnicodeWhitespace(name).replaceAll("(?U)\\s+", " ");
     }
 
     /**

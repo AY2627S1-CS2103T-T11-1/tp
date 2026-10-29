@@ -99,7 +99,7 @@ ask the team. Do not guess.
 |---|---|---|
 | Add | `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT` | `New student added: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
 | Delete | `delete INDEX` | `Deleted student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
-| Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME}: {CONTENT}` |
+| Delete lesson | `deletelesson STUDENT_INDEX LESSON_INDEX` | `Deleted lesson {LESSON_INDEX} for {NAME} ({DATE}): {CONTENT}` |
 | Edit lesson | `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]` | `Edited lesson {LESSON_INDEX} for {NAME} (now lesson {NEW_INDEX}). {DATE}: {CONTENT}` |
 | List | `list` | `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
 | Edit | `edit INDEX [n/NAME] [p/PHONE] [addr/ADDRESS] [l/LEVEL] [sub/SUBJECT]` | `Edited student: {NAME}; Phone: {PHONE}; Address: {ADDRESS}; Level: {LEVEL}; Subject: {SUBJECT}` |
@@ -148,6 +148,8 @@ in the future. Log a lesson on or after the day it is taught.` Lessons
 saved before v1.4 have no date, and `view` shows `(undated)` in place of
 `{DATE}`.
 
+**Imported student data (#176, #177, #178):** `Name#normalize` is shared by command parsing and JSON loading: trim surrounding Unicode whitespace and collapse internal whitespace before name validation and duplicate detection. Normalized duplicates invalidate the complete file without merging or dropping either student's lessons or flag; equal names with different phones are allowed. `JsonAdaptedPerson` stably sorts loaded lessons oldest first, with undated lessons first in storage and saved order retained for ties. Read-only loading does not rewrite the file. Stored dates before `Lesson.EARLIEST_DATE` are invalid; the storage message uses `YYYY-MM-DD` and the shared minimum. Undated legacy records and existing future dates still load. Future dates remain rejected by lesson-writing commands; accepting recorded dates after clock correction does not change those checks.
+
 **Lesson order (#120):** each student's lessons are stored in date order.
 A lesson logged for an earlier date is inserted by date, after lessons on
 the same date. Undated lessons stay at the oldest end. `view` shows the
@@ -173,6 +175,15 @@ After other successful commands, `MainWindow` keeps the panel's student only
 while the displayed list still contains it. Failed commands use the red
 result-box style and leave the panel unchanged. Lesson rows use `view`'s
 numbering, newest first.
+With no student selected, the panel's hint suits the current list (#168):
+`view 1` while students are displayed, `list` when a filter hides every saved
+student, and the `add` format when there are none. It follows changes to
+`Logic#getFilteredPersonList` and `Logic#getAddressBook`'s student list.
+Stacked level and subject chips return side by side only with 20 pixels to
+spare, more than the scroll bar, so the layout cannot flicker (#202).
+`MainWindow` has a minimum size of 700 x 420 pixels and opens no larger than
+the primary screen's usable area. By calculation this fits 1280x720 at 150%
+scale; a real display at that scale is still to be checked (#167).
 
 Other messages:
 
@@ -191,8 +202,9 @@ Other messages:
 **Lesson deletion:** `deletelesson` uses the displayed student index and
 the lesson number from `view` (newest first). Remove only that occurrence,
 even if contents repeat. Keep the student, remaining lessons and current
-filter. Deleting the last lesson leaves an empty history. Show confirmation;
-the details panel shows the remaining records.
+filter. Deleting the last lesson leaves an empty history. The confirmation
+includes the lesson date as `(DD/MM/YYYY)`, or `(undated)` for a legacy record.
+The details panel shows the remaining records.
 
 **Lesson editing (#145):** `editlesson` uses the same two indexes and index errors as `deletelesson`, and needs at least one of `c/` and `date/` (otherwise `At least one field to edit must be provided.`). Content and dates follow the `log` rules, including the future-date message. A content-only edit, or one that gives the current date, keeps the lesson's position and number. A new date removes the lesson and adds it again in date order, after the lessons already on that date, so its number can change; the confirmation reports the old and new numbers. An undated lesson stays undated unless `date/` is given, and a date cannot be removed. An edit that changes nothing gives `The lesson already has those details.`. The student, other lessons and the current filter are kept.
 
@@ -314,9 +326,11 @@ accepted by the parser. Commands apply these errors consistently:
 
 - `LogicManager` saves student data only when it differs from the snapshot taken before command execution. Read-only commands and edits that leave stored values unchanged skip saving, so help, exit and filters still work during recovery or write failures. First-run sample data is saved by the first data-changing command.
 
+- Save permission errors name `Storage#getAddressBookFilePath`, never the temporary path from the exception. Other filesystem errors use `Could not save data to file {PATH} due to the following error: {REASON}`, using only `FileSystemException#getReason`; null or blank reasons use `The file or folder could not be written.`. Other IO errors retain their existing messages, including the saving-disabled explanation. The original exception remains the cause, and rollback and temporary-file cleanup are unchanged.
+
 - `Model#getFilteredPersonListPredicate()` captures the active student filter as a non-null predicate. `LogicManager` snapshots the address book and filter before command execution. If saving fails, it restores changed student data and the captured filter before throwing the existing save-error `CommandException`. Lesson records and flags are preserved, and later commands cannot silently save the failed mutation.
 
-- If reading a student data file fails (including a null JSON root or null student entry), that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location. The original student file is preserved. Read-only commands still work; changed student data is rejected by the guard and rolled back. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples. `MainApp` and `UiManager` store the warning as a nullable string; `MainApp#getStartupWarning()` returns an `Optional<String>`.
+- If reading a student data file fails (including a null JSON root or null student entry), that `JsonAddressBookStorage` instance refuses every later save with `MESSAGE_SAVE_BLOCKED`: `Saving is disabled because the student data file could not be loaded. Close TutorLah, repair or restore the file, then restart.` `MainApp` starts with an empty model and `UiManager` shows a recovery warning including the file location and a sanitized `Reason:`. A non-blank `IllegalValueException` message is retained. A JSON syntax error, including one wrapped by Jackson mapping, gives `Reason: The file is not valid JSON (line N, column M).` when both coordinates are positive, or `Reason: The file is not valid JSON.` otherwise. Invalid structures and other errors give `Reason: Check that the file is readable and contains valid student data.` Raw parser messages, JSON excerpts and internal class names are not displayed. The original student file is preserved. Read-only commands still work; changed student data is rejected by the guard and rolled back. A new storage instance after repair/restart restores normal saving; genuinely missing files still use samples. `MainApp` and `UiManager` store the warning as a nullable string; `MainApp#getStartupWarning()` returns an `Optional<String>`.
 
 - At startup, `ApplicationLock` takes an operating-system lock on `data/.tutorlah.lock` before preferences or student data are loaded. `MainApp` retains it until `stop`. A second copy using the same data folder stops initialization before storage, model, logic or the main window is created; a failure-only `UiManager` explains the conflict. Failure to create or lock the lock file is also fatal. The lock file may remain after exit; only the operating-system lock indicates a running instance.
 

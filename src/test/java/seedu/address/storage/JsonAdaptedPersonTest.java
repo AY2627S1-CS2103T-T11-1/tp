@@ -5,6 +5,7 @@ import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORM
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,41 @@ public class JsonAdaptedPersonTest {
         assertEquals(personWithLessons, loaded);
         assertEquals(List.of(new Lesson("Quadratic inequalities"), new Lesson("Binomial theorem")),
                 loaded.getLessons());
+    }
+
+    @Test
+    public void toModelType_unsortedLessons_preservesOccurrencesAndStableDateOrder() throws Exception {
+        Lesson older = new Lesson("Older", LocalDate.of(2026, 10, 10));
+        Lesson newer = new Lesson("Newer", LocalDate.of(2026, 10, 20));
+        Lesson sameDay = new Lesson("Same day", LocalDate.of(2026, 10, 20));
+        Lesson firstUndated = new Lesson("First undated");
+        Lesson secondUndated = new Lesson("Second undated");
+        Person original = new Person(BENSON.getName(), BENSON.getPhone(), BENSON.getAddress(), BENSON.getLevel(),
+                BENSON.getSubject(), List.of(newer, firstUndated, older, sameDay, secondUndated, sameDay),
+                java.util.Optional.of(new Flag("Call parent")));
+
+        Person loaded = new JsonAdaptedPerson(original).toModelType();
+
+        assertEquals(List.of(firstUndated, secondUndated, older, newer, sameDay, sameDay), loaded.getLessons());
+        assertEquals(original.getFlag(), loaded.getFlag());
+        assertEquals(original.getName(), loaded.getName());
+        assertEquals(original.getPhone(), loaded.getPhone());
+        assertEquals(original.getAddress(), loaded.getAddress());
+        assertEquals(original.getLevel(), loaded.getLevel());
+        assertEquals(original.getSubject(), loaded.getSubject());
+        assertEquals(List.of(newer, firstUndated, older, sameDay, secondUndated, sameDay), original.getLessons());
+    }
+
+    @Test
+    public void toModelType_nameWhitespace_normalizesBeforeValidation() throws Exception {
+        for (String name : List.of("  Amy   Tan  ", "\tAmy \tTan\n", "\u00a0Amy\u2003Tan\u00a0")) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(name, VALID_PHONE, VALID_ADDRESS,
+                    VALID_LEVEL, VALID_SUBJECT, VALID_LESSONS);
+            assertEquals(new Name("Amy Tan"), person.toModelType().getName());
+        }
+        JsonAdaptedPerson padded = new JsonAdaptedPerson(" ".repeat(Name.MAX_LENGTH) + "Amy Tan",
+                VALID_PHONE, VALID_ADDRESS, VALID_LEVEL, VALID_SUBJECT, VALID_LESSONS);
+        assertEquals(new Name("Amy Tan"), padded.toModelType().getName());
     }
 
     @Test

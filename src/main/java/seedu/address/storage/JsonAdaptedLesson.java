@@ -20,7 +20,8 @@ class JsonAdaptedLesson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Lesson's %s field is missing!";
     public static final String MESSAGE_INVALID_DATE =
-            "Lesson dates should be valid dates in the format YYYY-MM-DD.";
+            "Lesson dates should be real dates from " + Lesson.EARLIEST_DATE
+                    + " onwards, in the format YYYY-MM-DD.";
 
     private static final Logger logger = LogsCenter.getLogger(JsonAdaptedLesson.class);
 
@@ -47,7 +48,8 @@ class JsonAdaptedLesson {
 
     /**
      * Converts this Jackson-friendly adapted lesson object into the model's {@code Lesson} object.
-     * A missing date gives an undated lesson.
+     * A missing date gives an undated lesson. Dates before the minimum are invalid.
+     * Future recorded dates are kept, allowing data to load after a system-clock correction.
      *
      * @throws IllegalValueException if there were any data constraints violated in the adapted lesson.
      */
@@ -62,12 +64,18 @@ class JsonAdaptedLesson {
         if (date == null) {
             return new Lesson(content);
         }
+        LocalDate parsedDate;
         try {
-            return new Lesson(content, LocalDate.parse(date));
+            parsedDate = LocalDate.parse(date);
         } catch (DateTimeParseException e) {
             logger.warning("Rejected a stored lesson with invalid date: " + date);
             throw new IllegalValueException(MESSAGE_INVALID_DATE);
         }
+        if (parsedDate.isBefore(Lesson.EARLIEST_DATE)) {
+            logger.warning("Rejected a stored lesson dated before " + Lesson.EARLIEST_DATE + ": " + date);
+            throw new IllegalValueException(MESSAGE_INVALID_DATE);
+        }
+        return new Lesson(content, parsedDate);
     }
 
 }

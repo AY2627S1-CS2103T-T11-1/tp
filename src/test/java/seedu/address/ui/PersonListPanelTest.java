@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,6 +33,7 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
@@ -53,8 +55,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
@@ -84,6 +88,12 @@ public class PersonListPanelTest {
     // Allow for first-window initialization and scheduling delays on CI runners.
     private static final long FX_THREAD_TIMEOUT_SECONDS = 15;
     private static final double LAYOUT_TOLERANCE = 1;
+    /** Usable logical size of a 1280x720 screen at 150% scale, below which the GUI need not fit (DG NFR 11). */
+    private static final double SMALLEST_SCREEN_WIDTH = 853;
+    /** 720 / 1.5 = 480 logical pixels, less a 48-pixel taskbar. */
+    private static final double SMALLEST_SCREEN_HEIGHT = 432;
+    /** More than the height of a window title bar on Windows, macOS and common Linux desktops. */
+    private static final double TITLE_BAR_ALLOWANCE = 40;
     /** Amy's history in {@link #clickTestModel()}, whose lessons have no dates. */
     private static final String AMY_FIXTURE_HISTORY = "Lesson records for Amy (3):\n1. (undated): Algebra"
             + "\n2. (undated): Geometry\n3. (undated): Algebra";
@@ -200,7 +210,7 @@ public class PersonListPanelTest {
                 assertEquals(0, list.getSelectionModel().getSelectedIndex());
                 assertFeedback(root, "editlesson 1 3 c/Algebra revised",
                         "Edited lesson 3 for Amy (now lesson 3). (undated): Algebra revised", false);
-                assertFeedback(root, "deletelesson 1 1", "Deleted lesson 1 for Amy: Algebra", false);
+                assertFeedback(root, "deletelesson 1 1", "Deleted lesson 1 for Amy (undated): Algebra", false);
                 assertFeedback(root, "findlesson 1 alg",
                         "Matching lesson records for Amy (1):\n2. (undated): Algebra revised", false);
                 assertFeedback(root, "view 1",
@@ -551,7 +561,7 @@ public class PersonListPanelTest {
     @Test
     public void detailPanel_showAndClear_displaysStudentFlagAndNumberedLessons() throws Exception {
         runOnJavaFxThread(() -> {
-            StudentDetailPanel panel = new StudentDetailPanel();
+            StudentDetailPanel panel = createDetailPanel();
             Region root = panel.getRoot();
             new Scene(new StackPane(root), 500, 500);
             // the scroll pane only exposes its content to lookups once its skin exists
@@ -602,7 +612,7 @@ public class PersonListPanelTest {
     @Test
     public void detailPanel_longLevelAndSubject_stackAndWrapWithoutClipping() throws Exception {
         runOnJavaFxThread(() -> {
-            StudentDetailPanel panel = new StudentDetailPanel();
+            StudentDetailPanel panel = createDetailPanel();
             Region root = panel.getRoot();
             StackPane container = new StackPane(root);
             Scene scene = new Scene(container, 320, 500);
@@ -629,6 +639,40 @@ public class PersonListPanelTest {
             settle(container, 900);
             assertEquals(sceneY(level), sceneY(subject), LAYOUT_TOLERANCE);
             assertFullyRendered(subject, "Higher Order Thinking in Additional Mathematics");
+        });
+    }
+
+    @Test
+    public void detailPanel_chipsNearScrollBarThreshold_settleInOneLayout() throws Exception {
+        runOnJavaFxThread(() -> {
+            StudentDetailPanel panel = createDetailPanel();
+            Region root = panel.getRoot();
+            StackPane container = new StackPane(root);
+            Scene scene = new Scene(container, 320, 300);
+            scene.getStylesheets().add(PersonListPanel.class.getResource("/view/DarkTheme.css").toExternalForm());
+            panel.show(new PersonBuilder(SHORT_PERSON).withLevel("Secondary Four Normal Technical Stream 1")
+                    .withSubject("Math").build(), 7);
+            settle(container, 320);
+            Label level = (Label) root.lookup("#level");
+            Label subject = (Label) root.lookup("#subject");
+
+            // the scroll bar's width is the margin that used to flip the layout every pulse (#202)
+            for (double height = 200; height <= 420; height += 4) {
+                for (double width = 300; width <= 520; width += 2) {
+                    container.resize(width, height);
+                    for (int pass = 0; pass < 4; pass++) {
+                        container.applyCss();
+                        container.layout();
+                    }
+                    boolean isStacked = sceneY(subject) > sceneY(level) + LAYOUT_TOLERANCE;
+                    for (int pass = 0; pass < 4; pass++) {
+                        container.applyCss();
+                        container.layout();
+                        assertEquals(isStacked, sceneY(subject) > sceneY(level) + LAYOUT_TOLERANCE,
+                                "Chips changed layout without a resize at " + width + "x" + height);
+                    }
+                }
+            }
         });
     }
 
@@ -830,6 +874,115 @@ public class PersonListPanelTest {
         });
     }
 
+    @Test
+    public void detailPanel_noStudentSelected_suggestsCommandThatWorksForDisplayedList(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                assertNoStudentGuidance(root, StudentDetailPanel.SELECT_GUIDANCE, "view 1");
+
+                enterClickTestCommand(root, "view 2");
+                assertFalse(root.lookup("#noStudentState").isVisible());
+                // filtering out the shown student returns the panel to guidance that works for an empty list
+                enterClickTestCommand(root, "find unknown");
+                assertNoStudentGuidance(root, StudentDetailPanel.FILTERED_GUIDANCE, "list");
+                enterClickTestCommand(root, "flagged");
+                assertNoStudentGuidance(root, StudentDetailPanel.FILTERED_GUIDANCE, "list");
+                enterClickTestCommand(root, "list");
+                assertNoStudentGuidance(root, StudentDetailPanel.SELECT_GUIDANCE, "view 1");
+
+                enterClickTestCommand(root, "delete 2");
+                enterClickTestCommand(root, "delete 1");
+                assertNoStudentGuidance(root, StudentDetailPanel.NO_STUDENTS_GUIDANCE,
+                        "add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT");
+                enterClickTestCommand(root, "add n/Alice Tan p/81234567 addr/10 Short Street l/Sec 2 sub/E-Math");
+                assertNoStudentGuidance(root, StudentDetailPanel.SELECT_GUIDANCE, "view 1");
+                enterClickTestCommand(root, "view 1");
+                assertFalse(root.lookup("#noStudentState").isVisible());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
+     * Creates a details panel whose displayed and saved student lists each hold one student.
+     */
+    private static StudentDetailPanel createDetailPanel() {
+        return new StudentDetailPanel(FXCollections.observableArrayList(SHORT_PERSON),
+                FXCollections.observableArrayList(SHORT_PERSON));
+    }
+
+    @Test
+    public void mainWindow_minimumSize_fitsSmallestSupportedScreen(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(),
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory), directory);
+            try {
+                Stage stage = window.getPrimaryStage();
+                Region root = (Region) stage.getScene().getRoot();
+                root.applyCss();
+                assertTrue(stage.getMinWidth() <= SMALLEST_SCREEN_WIDTH, "Minimum width " + stage.getMinWidth());
+                assertTrue(stage.getMinHeight() <= SMALLEST_SCREEN_HEIGHT,
+                        "Minimum height " + stage.getMinHeight());
+                // the window's own minimum must leave room for its contents below the title bar
+                assertTrue(root.minWidth(-1) <= stage.getMinWidth(), "Contents need width " + root.minWidth(-1));
+                assertTrue(root.minHeight(-1) + TITLE_BAR_ALLOWANCE <= stage.getMinHeight(),
+                        "Contents need height " + root.minHeight(-1));
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void resultDisplay_multiLineMessage_hasLineSpacing(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(),
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory), directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                enterClickTestCommand(root, "find");
+                assertEquals(3, ((Text) root.lookup("#resultDisplay .text")).getLineSpacing());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
+    public void mainWindow_savedSize_shrinksToFitScreenOnly(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            Rectangle2D screen = Screen.getPrimary().getVisualBounds();
+            ModelManager model = clickTestModel();
+            Logic logic = clickTestLogic(model,
+                    new JsonAddressBookStorage(directory.resolve("students.json")), directory);
+
+            model.setGuiSettings(new GuiSettings(screen.getWidth() + 500, screen.getHeight() + 500, 0, 0));
+            Stage tooLarge = new MainWindow(new Stage(), logic, directory.resolve("students.json")).getPrimaryStage();
+            assertEquals(screen.getWidth(), tooLarge.getWidth());
+            assertEquals(screen.getHeight(), tooLarge.getHeight());
+
+            // CI's virtual screen may be as small as 640x480
+            model.setGuiSettings(new GuiSettings(screen.getWidth() - 50, screen.getHeight() - 50, 0, 0));
+            Stage fits = new MainWindow(new Stage(), logic, directory.resolve("students.json")).getPrimaryStage();
+            assertEquals(screen.getWidth() - 50, fits.getWidth());
+            assertEquals(screen.getHeight() - 50, fits.getHeight());
+        });
+    }
+
+    private static void assertNoStudentGuidance(Region root, String guidance, String command) {
+        assertTrue(root.lookup("#noStudentState").isVisible());
+        assertEquals("No student selected.", text(root, "#noStudentTitle"));
+        assertEquals(guidance, text(root, "#noStudentText"));
+        assertEquals(command, text(root, "#noStudentCommand"));
+    }
+
     private static void assertEmptyStateGuidance(VBox emptyState) {
         List<String> instructions = emptyState.getChildren().stream()
                 .map(node -> ((Label) node).getText()).toList();
@@ -919,6 +1072,44 @@ public class PersonListPanelTest {
     }
 
     /**
+     * Shows the selected duplicate's date in the real command box and saves the remaining history.
+     */
+    @Test
+    public void commandBox_deleteLesson_reportsDatedAndUndatedRecords(@TempDir Path directory) throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            Person amy = model.getFilteredPersonList().getFirst();
+            Person ben = model.getFilteredPersonList().get(1);
+            Lesson newer = new Lesson("Fractions", LocalDate.of(2026, 10, 21));
+            Person datedAmy = new PersonBuilder(amy).withLessons("Legacy").withFlag("Bring worksheet").build()
+                    .withLessonAdded(new Lesson("Fractions", LocalDate.of(2026, 10, 20)))
+                    .withLessonAdded(newer);
+            model.setPerson(amy, datedAmy);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
+            Logic logic = clickTestLogic(model, storage, directory);
+            MainWindow window = createClickableWindow(logic, directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                enterClickTestCommand(root, "find amy");
+                assertFeedback(root, "deletelesson 1 2",
+                        "Deleted lesson 2 for Amy (20/10/2026): Fractions", false);
+                assertDetail(root, "Amy", "Lessons (2)");
+                assertEquals(List.of("1. 21/10/2026 Fractions", "2. (undated) Legacy"), lessonRows(root));
+                assertFeedback(root, "deletelesson 1 2", "Deleted lesson 2 for Amy (undated): Legacy", false);
+                Person expected = new PersonBuilder(datedAmy).withLessons().build().withLessonAdded(newer);
+                assertDetail(root, "Amy", "Lessons (1)");
+                assertEquals(List.of("1. 21/10/2026 Fractions"), lessonRows(root));
+                assertEquals(List.of(expected), model.getFilteredPersonList());
+                assertEquals(List.of(expected, ben), model.getAddressBook().getPersonList());
+                assertEquals(List.of(expected, ben),
+                        assertDoesNotThrow(() -> storage.readAddressBook().orElseThrow()).getPersonList());
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    /**
      * Deletes through the command box and verifies that typed views and card clicks show the updated history.
      */
     @Test
@@ -933,7 +1124,7 @@ public class PersonListPanelTest {
                 TextArea result = (TextArea) root.lookup("#resultDisplay");
                 enterClickTestCommand(root, "view 1");
                 enterClickTestCommand(root, "deletelesson 1 1");
-                assertEquals("Deleted lesson 1 for Amy: Algebra", result.getText());
+                assertEquals("Deleted lesson 1 for Amy (undated): Algebra", result.getText());
                 String historyAfterDelete = "Lesson records for Amy (2):\n1. (undated): Geometry"
                         + "\n2. (undated): Algebra";
                 enterClickTestCommand(root, "view 1");

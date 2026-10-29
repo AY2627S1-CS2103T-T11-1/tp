@@ -98,7 +98,7 @@ public class ParserUtil {
      */
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
-        String normalisedName = name.trim().replaceAll("\\s+", " ");
+        String normalisedName = Name.normalize(name);
         if (!Name.isValidName(normalisedName)) {
             throw new ParseException(Name.MESSAGE_CONSTRAINTS);
         }

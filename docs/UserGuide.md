@@ -354,6 +354,7 @@ The details panel always shows one student, or a hint when no student is selecte
 * **Failed commands** never change the panel or the highlighted card, including when TutorLah cannot save your data.
 * After `unflag` in the `flagged` results, the student leaves the list but stays in the panel, so you can see what changed.
 * When TutorLah starts, no student is selected.
+* **With no student selected,** the hint suggests a command that works for the current list: `view 1` when students are displayed, `list` when `find`, `flagged` or `unlogged` shows no students, or the `add` format when you have no students yet.
 
 ### Searching a student's lessons: `findlesson`
 
@@ -416,6 +417,7 @@ records. Each command displays its feedback from the beginning. The command box
 remains above the result box, and the student list and details panel remain below it.
 Drag the vertical divider between the student list and the details panel to resize
 them, and scroll inside the details panel to read a long lesson history.
+The window can be made as small as 700 x 420 pixels, so it fits small or highly scaled screens. TutorLah also opens no larger than your screen, even if it was last closed on a larger one.
 
 ### Logging a lesson: `log`
 
@@ -454,7 +456,9 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 * Both indexes must be positive whole numbers without leading zeros. Exactly two arguments are required, in the order shown.
 * Use `view STUDENT_INDEX` before deleting to check the lesson number. Numbers are positions, not permanent IDs: logging or deleting a lesson, or changing a lesson's date with `editlesson`, can change them. Running `view` first is recommended, not required.
 * Only the selected occurrence is deleted, even if several lessons have identical content. Remaining lessons keep their order and are renumbered from 1 on the next view.
-* Confirmation: `Deleted lesson LESSON_INDEX for NAME: CONTENT`. The details panel shows the remaining records, renumbered from 1.
+* Confirmation: `Deleted lesson LESSON_INDEX for NAME (DD/MM/YYYY): CONTENT`.
+  Older records without a date show `(undated)` instead. The details panel shows
+  the remaining records, renumbered from 1.
 * Student details, other students' records and the current student filter are unchanged. Deleting the final lesson keeps the student with an empty history.
 * Missing arguments, non-integers such as `abc`, `+1` or `1.5`, and extra
   arguments produce an invalid-command-format message with usage. Zero,
@@ -465,7 +469,11 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
   `No lessons logged yet for NAME.`. Nothing is deleted.
 * Deletion is saved automatically and cannot be undone in the app. `delete INDEX` still deletes the entire student and all their lessons; it is a different command.
 
-Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026, `view 2` shows `1. 18/10/2026: Geometry` and `2. 18/10/2026: Algebra`. `deletelesson 2 1` deletes Geometry and confirms `Deleted lesson 1 for NAME: Geometry`. A subsequent `view 2` shows only `1. 18/10/2026: Algebra`.
+Example: after logging `Algebra`, then `Geometry` for student 2 on 18/10/2026,
+`view 2` shows `1. 18/10/2026: Geometry` and `2. 18/10/2026: Algebra`.
+`deletelesson 2 1` deletes Geometry and confirms
+`Deleted lesson 1 for NAME (18/10/2026): Geometry`. A subsequent `view 2` shows
+only `1. 18/10/2026: Algebra`.
 
 **Screenshot example:** after the past-date logging example above, `view 1` shows Alex Tan's four lessons in date order. The Trigonometry lesson dated 18/10/2026 is lesson 2:
 
@@ -507,7 +515,7 @@ TutorLah automatically saves after a successful command changes student or lesso
 
 Only one copy of TutorLah can use a data folder at a time. If another copy is already open from the same folder, the second copy explains the conflict and exits without loading or changing student data. Close the first copy before reopening TutorLah. The hidden `data/.tutorlah.lock` file may remain after TutorLah closes; it is harmless and does not mean the app is still running.
 
-If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Fix the reported file or permission problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry. Student data and preferences are written to a temporary file before replacing the previous file. If the write or replacement fails, the previous saved file is kept; a failed first save leaves no empty data file. Saving requires a folder that supports atomic replacement of an existing file; otherwise, saving reports an error.
+If saving fails, TutorLah reports the problem and restores the student data and list filter from before that command. Permission and filesystem errors identify the student data file, such as `data/addressbook.json`, rather than an internal temporary file. Filesystem errors also include the reported reason, such as insufficient disk space. Fix the reported file, folder, permission or disk-space problem before retrying. A failed deletion does not remove a student from memory or shift the indexes used by a retry. Student data and preferences are written to a temporary file before replacing the previous file. If the write or replacement fails, the previous saved file is kept; a failed first save leaves no empty data file. Saving requires a folder that supports atomic replacement of an existing file; otherwise, saving reports an error.
 
 An abrupt shutdown, such as force-quitting TutorLah before the replacement finishes, may leave a hidden `.tutorlah-*.tmp` file beside the data or preferences file. These temporary files are not loaded as student data and are not automatically removed on restart. After closing all copies of TutorLah, you may delete these temporary files; keep `addressbook.json` and `preferences.json`.
 
@@ -515,7 +523,11 @@ An abrupt shutdown, such as force-quitting TutorLah before the replacement finis
 
 TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
 
-In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. A date in any other format makes the data file invalid.
+In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. Stored dates must be real dates from `2000-01-01` onwards. Earlier dates, impossible dates and dates in another format make the data file invalid. Existing future dates are kept when loading, so a system-clock correction does not make saved records unreadable; `log` and date changes through `editlesson` still reject future dates.
+
+On loading, names have surrounding whitespace removed and repeated whitespace collapsed to one space, as with `add` and `edit`. If this reveals two students with the same phone and name ignoring case, the file is invalid. TutorLah does not merge their lessons or flags; back up the file and correct the duplicate entries before restarting.
+
+Lessons are loaded in date order and displayed newest first, with undated lessons last. Records on the same date, and undated records, retain their saved order internally; the display reverses that order, as it does for normally logged lessons. No records are removed, even when content and dates repeat. Loading and read-only commands do not rewrite the original file; the normalized data is saved after the next successful data-changing command.
 
 A flagged student with a reason stores `"flag" : { "reason" : "REASON" }`; a flag without a reason stores `"flag" : { }`. An unflagged student has no `flag` property. Data files created before flags were introduced therefore continue to load every student as unflagged.
 
@@ -524,7 +536,7 @@ Addresses and lesson content containing only whitespace or invisible formatting 
 <box type="warning" seamless>
 
 **Caution:**
-If the data file cannot be loaded, TutorLah shows a startup warning with its location and starts with an empty student list. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `unlogged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
+If the data file cannot be loaded, TutorLah shows a startup warning with its location and a short reason, such as `Phone numbers should be exactly 8 digits.`, and starts with an empty student list. For malformed JSON, the reason says `The file is not valid JSON` and includes the line and column when available. It does not quote student data or internal error details. For an invalid file structure or other read problem, the warning asks you to check that the file is readable and contains valid student data. Saving is disabled for that session, so commands cannot overwrite the original file. Read-only commands such as `list`, `find`, `flagged`, `unlogged`, `help` and `exit` still work normally. A command that changes student or lesson data reports the saving-disabled error and restores the preceding data and filter. Close TutorLah using `exit` or the window's close button, make a backup of the file, then repair it or restore a valid copy at the same location. Restart TutorLah to load the recovered students and enable saving again. Repairing the file while the app remains open does not enable saving; a restart is required. Back up the file before editing it.<br>
 Furthermore, certain edits can cause TutorLah to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
@@ -537,7 +549,13 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorLah home folder.
+**A**: Install TutorLah on the other computer, then:
+
+1. Close TutorLah on both computers.
+1. Find `data/addressbook.json` in the working folder from which you launched the old copy.
+1. In the working folder from which you will launch the new copy, create a `data/` directory if it does not exist. With the Quick start instructions, this is the folder containing the JAR. A fresh launch that only displays sample students does not create `addressbook.json`.
+1. Copy the old `addressbook.json` into that `data/` directory, keeping the filename. If a destination file already exists, back it up before replacing it. Copy the file while TutorLah is closed so that a running session cannot overwrite the transferred data.
+1. Start TutorLah from that same working folder. Use `list` and `view INDEX` to check that your students, lesson records and flags have loaded.
 
 --------------------------------------------------------------------------------------------------------------------
 

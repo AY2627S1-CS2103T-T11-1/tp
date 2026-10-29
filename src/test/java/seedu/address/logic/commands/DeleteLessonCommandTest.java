@@ -8,6 +8,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 
@@ -18,6 +19,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
@@ -65,6 +67,29 @@ public class DeleteLessonCommandTest {
     @Test
     public void execute_oldestLesson_removesOldestOccurrence() throws Exception {
         assertDeletion(3, List.of("Geometry", "Algebra"), "Algebra");
+    }
+
+    /**
+     * Reports the selected duplicate's date while preserving the filter, flag and other records.
+     */
+    @Test
+    public void execute_sameContentOnDifferentDates_reportsSelectedDate() throws Exception {
+        Lesson older = new Lesson("Fractions", LocalDate.of(2026, 10, 20));
+        Lesson newer = new Lesson("Fractions", LocalDate.of(2026, 10, 21));
+        Person datedStudent = new PersonBuilder(STUDENT).withLessons().withFlag("Bring worksheet").build()
+                .withLessonAdded(older).withLessonAdded(newer);
+        model.setPerson(STUDENT, datedStudent);
+        model.updateFilteredPersonList(person -> person.getName().equals(datedStudent.getName()));
+
+        CommandResult result = new DeleteLessonCommand(FIRST, SECOND).execute(model);
+
+        assertEquals("Deleted lesson 2 for " + STUDENT.getName() + " (20/10/2026): Fractions",
+                result.getFeedbackToUser());
+        Person expected = new PersonBuilder(datedStudent).withLessons().build().withLessonAdded(newer);
+        assertEquals(expected, result.getStudent().orElseThrow());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertEquals(List.of(expected, OTHER_STUDENT), model.getAddressBook().getPersonList());
+        assertEquals(List.of(older, newer), datedStudent.getLessons());
     }
 
     /**
@@ -176,7 +201,8 @@ public class DeleteLessonCommandTest {
      */
     private void assertDeletion(int displayedLesson, List<String> remaining, String deletedContent) throws Exception {
         CommandResult result = new DeleteLessonCommand(FIRST, Index.fromOneBased(displayedLesson)).execute(model);
-        assertEquals("Deleted lesson " + displayedLesson + " for " + STUDENT.getName() + ": " + deletedContent,
+        assertEquals("Deleted lesson " + displayedLesson + " for " + STUDENT.getName()
+                + " (undated): " + deletedContent,
                 result.getFeedbackToUser());
         Person expected = new PersonBuilder(STUDENT).withLessons(remaining.toArray(String[]::new)).build();
         assertEquals(expected, result.getStudent().orElseThrow());

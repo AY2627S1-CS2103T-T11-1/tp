@@ -88,9 +88,10 @@ The UI responsibilities are:
 
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
 * `PersonListPanel` observes the filtered student list supplied by `Logic`. Compact cards show each student's displayed index, initials, name, level and subject, and lesson status. A flagged card also shows a red flag icon. The indexes follow the displayed list, including after filtering or deletion.
-* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance instead. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state. The level and subject chips sit side by side when both fit; otherwise the panel stacks them so that a long chip wraps its text within the panel width instead of being cut off.
+* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance that works for the current list: `view 1` while students are displayed, `list` when a filter hides every saved student, or the `add` format when there are no students. It listens to `Logic#getFilteredPersonList` and the address book's student list, so the guidance follows `find`, `list`, `add` and `delete` without a restart. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state. The level and subject chips sit side by side when both fit; otherwise the panel stacks them so that a long chip wraps its text within the panel width instead of being cut off. Stacked chips return side by side only when they fit with 20 pixels to spare, more than the vertical scroll bar's width. Stacking can add the scroll bar and narrow the panel, so without this margin the two layouts would keep replacing each other (#202).
 * A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses view the student again; empty cells and other mouse buttons do not execute the shortcut. Releasing a navigation key (arrows, Page Up/Down, Home, End) in the focused list sends the newly selected index through the same callback, so keyboard selection cannot leave the list and details panel showing different students. Programmatic selection and list changes fire no key events, so they never execute a command.
 * `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Error feedback uses a red style until the next command. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider. The student list and details panel share the area below, separated by a vertical divider.
+* `MainWindow` has a minimum size of 700 x 420 pixels. Its contents need about 350 pixels of height, leaving room for the title bar, so by calculation the window fits a `1280x720` screen at 150% scaling (about 853 x 480 logical pixels) with a taskbar. This has not yet been checked on a real display at that scale. At startup, the saved or default window size is reduced to fit the primary screen's usable area, so the window never opens taller or wider than the screen.
 * After a successful command, `MainWindow` updates the details panel and the list highlight, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync). Programmatic selection and list changes do not execute a view command.
 
 ### Logic component
@@ -169,11 +170,17 @@ The `Storage` component,
 
 `JsonSerializableAddressBook` holds a `persons` list of `JsonAdaptedPerson`, which stores each student's `name`, `phone`, `address`, `level` and `subject` as strings, a `lessons` list and, for a flagged student, a `flag`. Each `JsonAdaptedLesson` stores `content` and a `date` in `YYYY-MM-DD` form (`LocalDate#toString`), although users type and see `DD/MM/YYYY`. `JsonAdaptedFlag` stores an optional `reason`. Absent values are left out of the file rather than written as `null`: an undated lesson has no `date`, an unflagged student has no `flag`, and a flag without a reason has no `reason`. Saving writes lessons in the student's stored order.
 
-Loading reverses this conversion. Each `toModelType` method checks that required fields are present and passes every value through the model's validators, such as `Name#isValidName` and `Lesson#isValidContent`, so a value that breaks any of them makes the whole file fail to load. Rules that are applied only when parsing commands are not checked on loading: lesson dates are not checked against 01/01/2000 or today's date, and names are not trimmed or their repeated spaces collapsed. So a file can contain values that no command could create, such as a lesson dated 2030 or a second `Amy  Tan` (with two spaces) alongside `Amy Tan`. `JsonSerializableAddressBook` also rejects duplicate students. Older files stay readable: a student without `lessons` loads with no lessons, a lesson without `date` loads as an undated `Lesson` (records saved by v1.3), and a student without `flag` loads unflagged. Lessons are rebuilt in file order and are not re-sorted on loading.
+Before constructing a loaded student, `JsonAdaptedPerson` applies `Name#normalize`, also used by `ParserUtil#parseName`: surrounding Unicode whitespace is removed and internal whitespace is collapsed to one space before validation. `JsonSerializableAddressBook` then checks the normalized name and phone through the existing `isSamePerson` rule. A duplicate makes the complete file invalid; neither student's lessons or flag are silently merged or discarded. The same normalized name with a different phone remains a separate student.
+
+The adapter stably sorts loaded lessons by date, with missing dates before dated records in storage. Equal-date and undated records retain their relative saved order, including repeated occurrences. `view` and the details panel reverse this list as usual; subsequent log, edit and delete operations therefore use the same chronological indexes. Sorting and normalization change only the loaded model, and the file is not rewritten until a successful data-changing command saves it.
+
+`JsonAdaptedLesson` rejects dates before `Lesson.EARLIEST_DATE` with a storage-specific message using `YYYY-MM-DD`. Missing dates remain undated, and impossible dates and invalid date formats still fail loading. Existing future dates are accepted to keep saved records readable after a system-clock correction. The command-side future-date checks remain unchanged; loading does not depend on today's date.
+
+Loading reverses this conversion. Each `toModelType` method checks that required fields are present and validates normalized values, so an invalid student or lesson makes the whole file fail to load. Older files stay readable: a student without `lessons` loads with no lessons, a lesson without `date` loads as an undated `Lesson` (records saved by v1.3), and a student without `flag` loads unflagged.
 
 `JsonUtil` serializes the complete object before calling `FileUtil#writeToFile`. `AtomicFileWriter` creates a unique temporary file in the destination directory, writes UTF-8 content and uses `Files.move` with `ATOMIC_MOVE` and `REPLACE_EXISTING`. Both student data and preferences use this path, including first saves with missing parent directories. The destination is never pre-created or truncated. If writing or replacement fails, the original file is retained and the temporary file is removed where possible; cleanup errors are suppressed on the original save exception. With `ATOMIC_MOVE`, the other options are ignored and replacement of an existing target is filesystem-provider-specific. We rely on a provider that supports atomic replacement; a provider that cannot do so reports a save failure, with no non-atomic fallback. An abrupt process termination between staging and replacement can bypass cleanup and leave a `.tutorlah-*.tmp` file in the same directory. Startup does not load or remove these files; users may remove them after closing all TutorLah instances. This protects against incomplete writes, but does not provide a second-instance lock or a guarantee against power loss. `AtomicFileWriterTest` injects partial-write, replacement and cleanup failures, while the storage round-trip tests cover both JSON callers.
 
-If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions; `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
+If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions, including a safe explanation after `Reason:`. `MainApp#getDataLoadingReason` keeps non-blank `IllegalValueException` messages from our field validators. For syntax errors it follows Jackson wrappers to a `JsonParseException` and reports `The file is not valid JSON (line N, column M).` when both coordinates are known, or `The file is not valid JSON.` otherwise. Invalid structures, such as a null `persons` list, and other read errors use the general readability/data-format guidance. Raw Jackson messages, source excerpts and internal class names are never included in the dialog. `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
 
 Before loading preferences or student data, `MainApp` asks `ApplicationLock` to obtain an operating-system lock on `data/.tutorlah.lock`. The channel and lock remain open for the application's lifetime and are released in `MainApp#stop`; the lock file itself may remain. If another process or application object already holds the lock, initialization stops before creating `Storage`, `Model`, `Logic` or the main window, and a failure-only `UiManager` shows an error. A failure to create or lock the file is also fatal rather than allowing an instance to save without exclusive access. This prevents two copies from loading the same snapshot and silently overwriting each other's later changes.
 
@@ -261,7 +268,14 @@ Failed commands skip these rules, so an error never changes the panel. A failed 
 
 `view` numbers lessons newest first, whereas `Person#getLessons` stores them oldest first. `Person#withLessonAdded` inserts each lesson in date order, keeping same-date records in logging order. The command therefore converts a one-based displayed lesson number to a zero-based stored position using `lessons.size() - lessonIndex.getOneBased()`. An assertion protects this internal conversion after the user-supplied index has been validated. Removing by position deletes only the selected occurrence even when two lessons have identical content and dates.
 
-`Person#withLessonRemoved` returns a new student with the selected record omitted and every student field and remaining lesson preserved. `Model#setPerson` replaces the old value in the backing `UniquePersonList`; the active filtered view continues to show the same matching students. The command then returns a confirmation containing the displayed lesson number, student name and deleted content. `LogicManager` persists the updated address book through the normal save path shown in the architecture sequence diagram.
+`Person#withLessonRemoved` returns a new student with the selected record omitted
+and every student field and remaining lesson preserved. `Model#setPerson` replaces
+the old value in the backing `UniquePersonList`; the active filtered view continues
+to show the same matching students.
+The confirmation includes the displayed lesson number, student name, lesson date
+and deleted content. `Messages#formatLessonDate` supplies the date, shown in parentheses,
+or `(undated)` for a legacy record. `LogicManager` persists the updated address book
+through the normal save path shown in the architecture sequence diagram.
 
 Deleting the final lesson therefore leaves the student present with an empty history. A later deletion attempt stops before mutation and reports `No lessons logged yet for NAME.`.
 
@@ -1111,19 +1125,35 @@ Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim 
 
 `SaveFailureRollbackTest` also covers IO and permission failures for add, edit, log, delete, deletelesson, editlesson, flag and unflag, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
 
+Permission failures use `Storage#getAddressBookFilePath` in the existing permission message. Other `FileSystemException` failures use `Could not save data to file PATH due to the following error: REASON`, taking only `getReason()` rather than the exception's temporary-file paths. A missing or blank reason becomes `The file or folder could not be written.`. Other IO errors keep their existing messages, including the saving-disabled recovery explanation. The original exception remains the command error's cause, and rollback is unchanged.
+
+On a POSIX filesystem, make the disposable `data/` directory read-only while TutorLah is open and enter `log 1 c/Permission test`. Expected: the error names `addressbook.json` and contains no `.tutorlah-` filename; the student, selected index and saved bytes are unchanged, with no temporary files left behind. Restore directory permissions before retrying or removing the test folder. `SaveFailureRollbackTest` covers this real permission failure where supported, plus deterministic full-disk, unsupported-atomic-move and missing-reason failures on every platform, preserving the original exception and verifying successful retries.
+
 #### Missing or corrupted files
 
 Use a separate test folder and fictional data only. Keep a valid copy of the student file before changing it.
 
 1. Launch with no `data/addressbook.json`. Expected: sample students and no recovery warning. `list` works without creating the student file; logging a lesson creates it and saves the complete collection.
-1. Save a fictional Amy Tan with an Algebra record, exit, and keep an exact copy of the JSON file. Remove a closing brace from the working copy and restart. Expected: a warning with the file location and repair/restart instructions, an empty list and saving disabled.
+1. Save a fictional Amy Tan with an Algebra record, exit, and keep an exact copy of the JSON file. Remove a closing brace from the working copy and restart. Expected: a warning with the file location, a short JSON syntax reason with its line and column, and repair/restart instructions; an empty list and saving disabled. The warning must not quote the JSON contents, `[Source: ...]` or internal class names.
 1. Dismiss the warning and try `list`, `find amy`, `flagged` and `help`. Expected: normal feedback for the empty collection, with the help window opening normally and the original file remaining byte-for-byte unchanged.
 1. Try adding a fictional student. Expected: the saving-disabled error, with the model still empty and the original file unchanged. Enter `exit`. Expected: the app closes normally without overwriting that file.
 1. Restore the valid file and restart. Expected: Amy and Algebra return, no recovery warning appears, and new changes save normally.
-1. Repeat with valid JSON containing Amy's phone as `12`. Expected: the same protection and warning, because stored field validation also failed.
+1. Repeat with valid JSON containing Amy's phone as `12`. Expected: the same protection and warning, now including `Reason: Phone numbers should be exactly 8 digits.`, because stored field validation also failed.
 1. Prepare a valid `{"persons": []}` file and restart. Expected: an empty list with no warning and normal saving. Valid legacy lesson records without a date still load as undated.
 
 `MainAppTest` and `JsonAddressBookStorageTest` exercise startup and subsequent commands with malformed JSON, a null root, null student entries and invalid values, exact byte preservation, missing/legacy data, repair and restart. `PersonListPanelTest` checks that the recovery warning is requested after the window is shown and is absent during a normal start.
+
+### Importing and repairing student data
+
+Use disposable copies of `data/addressbook.json` while TutorLah is closed.
+
+1. Give one fictional student stored lessons dated `2026-10-20` and `2026-10-10`, in that order, plus undated records and repeated same-day records. Restart and enter `view 1`. Expected: dated lessons appear newest first, followed by undated lessons; no occurrences disappear. Within a date, the last saved occurrence appears first. Read-only commands leave the file unchanged.
+1. Enter `log 1 c/Mid date/15/10/2026`, then `view 1`. Expected: Mid appears between the dated records. Edit and delete using these displayed lesson numbers, restart and verify the same remaining records and flags.
+1. Give two students the same phone and names `Amy Tan` and ` Amy  Tan `. Restart. Expected: an empty protected session with the duplicate-person reason, and the original bytes preserved. Different phone numbers allow both students to load with normalized names.
+1. Change a saved date to `1999-12-31`. Expected: protected recovery with a reason mentioning `2000-01-01` and `YYYY-MM-DD`. Restore it as `2000-01-01`: it loads normally. Undated legacy lessons and existing future dates also load; commands still reject newly entered future lesson dates.
+1. For a fresh destination, create `data/` and copy a valid `addressbook.json` from another disposable working folder, with TutorLah closed in both. Start from the destination folder and verify its students, lessons and flags using `list` and `view`.
+
+`StudentDataLoadingTest` covers sanitized startup reasons for truncated JSON, trailing commas, a UTF-8 BOM and invalid structures; unknown locations and read errors; preservation of validation messages; normalized duplicates, different-phone identities, stable ordering followed by log/edit/delete/search, exact byte preservation, blocked saves and repair/restart. Adapter tests cover the minimum date, future stored dates, undated records, normalization before length validation and stable same-day occurrences.
 
 ### Deleting lesson records
 
@@ -1132,18 +1162,22 @@ Use a separate test directory with `data/addressbook.json` containing `{"persons
 ```text
 add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
 add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
-log 1 c/Algebra
-log 1 c/Geometry
-log 1 c/Algebra
-log 2 c/Calculus
+log 1 c/Algebra date/18/10/2026
+log 1 c/Geometry date/19/10/2026
+log 1 c/Algebra date/20/10/2026
+log 2 c/Calculus date/20/10/2026
 ```
 
 1. Enter `view 1`.<br>
-   Expected: Amy's three records appear as `1. DD/MM/YYYY: Algebra`, `2. DD/MM/YYYY: Geometry`, `3. DD/MM/YYYY: Algebra`, each with today's date.
+   Expected: Amy's records appear as `1. 20/10/2026: Algebra`,
+   `2. 19/10/2026: Geometry`, `3. 18/10/2026: Algebra`.
 1. Enter `deletelesson 1 1`, then `view 1`.<br>
-   Expected: `Deleted lesson 1 for Amy Tan: Algebra`, followed by Geometry as lesson 1 and the older Algebra as lesson 2. This proves that only the newest duplicate was removed.
+   Expected: `Deleted lesson 1 for Amy Tan (20/10/2026): Algebra`, followed by
+   Geometry as lesson 1 and the older Algebra as lesson 2. Only the newest duplicate
+   was removed, and the confirmation identifies its date.
 1. Enter `deletelesson 1 2`, then `view 1`.<br>
-   Expected: `Deleted lesson 2 for Amy Tan: Algebra`, then only Geometry remains. Amy's details and Ben's Calculus record are unchanged.
+   Expected: `Deleted lesson 2 for Amy Tan (18/10/2026): Algebra`, then only Geometry
+   remains. Amy's details and Ben's Calculus record are unchanged.
 1. Try `deletelesson 1 0`, `deletelesson 1 01`, `deletelesson 1 2`, `deletelesson 0 1`, `deletelesson`, `deletelesson 1` and `deletelesson 1 1 extra`.<br>
    Expected: the relevant lesson-index, student-index or usage error appears. Amy's remaining Geometry record is unchanged after every rejected command.
 1. Exit and restart, enter `view 1`, then `deletelesson 1 1` and `view 1`.<br>
@@ -1151,7 +1185,13 @@ log 2 c/Calculus
 1. Enter `deletelesson 1 1` while Amy's history is empty.<br>
    Expected: `No lessons logged yet for Amy Tan.`, with both students and saved data unchanged.
 1. Enter `find ben`, then `deletelesson 1 1` and `view 1`.<br>
-   Expected: `Deleted lesson 1 for Ben Lim: Calculus`, while only Ben's card remains displayed. The view reports `No lessons logged yet for Ben Lim.`. Enter `list` to confirm both students remain; the search filter was retained during deletion and no unrelated student changed.
+   Expected: `Deleted lesson 1 for Ben Lim (20/10/2026): Calculus`, while only Ben's
+   card remains displayed. The view reports `No lessons logged yet for Ben Lim.`.
+   Enter `list` to confirm both students remain; deletion retained the filter and
+   no unrelated student changed.
+
+For a legacy record without a date, the confirmation uses `(undated)` once, for
+example `Deleted lesson 1 for Amy Tan (undated): Algebra`.
 
 Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
 
@@ -1224,24 +1264,32 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 
 ### Student details panel
 
-Start with an empty data folder and add two fictional students:
+Use a separate test folder and fictional students only.
 
-```text
-add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
-add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
-```
+1. Before launching, create `data/addressbook.json` containing `{"persons": []}`, so that TutorLah starts with no students instead of the sample data. Launch TutorLah. Expected: no card is highlighted, and the details panel shows `No student selected.`, the hint `Add a student first. Their details and lessons will show here.` and `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`.
+1. Add two students in this order, so that Amy is student 1 and Ben is student 2:
 
-1. Launch TutorLah. Expected: the details panel shows `No student selected.` and no card is highlighted.
+   ```text
+   add n/Amy Tan p/81230011 addr/11 Example Street l/Sec 3 sub/E-Math
+   add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
+   ```
+
+   Expected: after the first `add`, the hint changes to `Click a student, or type view INDEX, to see their details and lessons here.` with `view 1`. No student opens in the panel.
+1. Exit and relaunch TutorLah. Expected: Amy and Ben are listed as students 1 and 2, no card is highlighted, and the panel shows `No student selected.` with `view 1`.
 1. Enter `view 2`. Expected: the panel shows Ben's initials, name, level and subject chips, phone and address, `Lessons (0)` and the hint `log 2 c/Topic covered`. Ben's card is highlighted.
 1. Enter `log 1 c/Algebra date/1/10/2026`, then `log 1 c/Vectors date/8/10/2026`. Expected: the panel switches to Amy after the first command and lists `1. 08/10/2026 Vectors` and `2. 01/10/2026 Algebra` after the second, without another `view`.
 1. Enter `editlesson 1 2 date/9/10/2026`, then `deletelesson 1 1`. Expected: Algebra first moves to lesson 1, and after the deletion only Vectors remains as lesson 1.
 1. Enter `flag 2 r/Call parent`. Expected: the panel switches to Ben, with a red flag beside his name and the banner `Call parent`. His card shows a red flag icon.
 1. Enter `flagged`, then `unflag 1`. Expected: the displayed list becomes empty, but the panel still shows Ben, now without the flag or banner.
 1. Enter `list`, then `view 1`, then `find ben`. Expected: Amy is hidden by the search, so the panel returns to `No student selected.`.
+1. Enter `find nobody`. Expected: the list is empty, and the panel's hint is `No students are displayed. Type list to show all students.` with `list`, not `view 1`. Enter `flagged` while no student is flagged: the same hint appears.
 1. Enter `list`, `view 1`, then `edit 1 n/Amelia Tan`. Expected: the panel shows `Amelia Tan` and keeps her lesson. Enter `view 9`: the result box turns red with the student-index error, and the panel still shows Amelia.
 1. Click Amelia's card, then press the Down arrow. Expected: Ben's card is highlighted and the panel shows Ben. Press Up: both return to Amelia.
-1. Enter `delete 1`. Expected: the panel returns to `No student selected.`.
 1. Resize the window to its minimum width and drag the vertical divider both ways. Expected: long names and lesson content wrap, and nothing overlaps or is cut off.
+1. Enter `edit 2 l/Secondary Four Normal Technical Stream 1 sub/Math`. Slowly shrink the window to its minimum width, pausing at several widths. Expected: at each width, the level and subject chips settle side by side or stacked, and stay in that layout while the window is still. The panel's scroll bar does not flash on and off.
+1. Shrink the window to its minimum height of 420 pixels. Expected: the command box, result box, student list, details panel and status bar all remain visible, and the result box, list and panel scroll instead of cutting off text.
+1. Enter `view 1`, then `delete 1`. Expected: the panel returns to `No student selected.` with `view 1`, because Ben is now student 1.
+1. Enter `delete 1` again. Expected: the list is empty, and the panel's hint asks you to add a student first, with the `add` format.
 
 ### Lesson dates and data saved by v1.3
 

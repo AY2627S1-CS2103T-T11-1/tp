@@ -172,7 +172,7 @@ public class LessonPersistenceTest {
     public void restart_afterDeletingLesson_selectedOccurrenceRemovedOthersKept() throws Exception {
         startWith(new PersonBuilder(ALEX).withLessons("Algebra", "Geometry", "Algebra").build(),
                 new PersonBuilder(BEA).withLessons("Calculus").build());
-        assertEquals("Deleted lesson 1 for Alex Lim: Algebra",
+        assertEquals("Deleted lesson 1 for Alex Lim (undated): Algebra",
                 logic.execute("deletelesson 1 1").getFeedbackToUser());
         ReadOnlyAddressBook reloaded = restart();
         assertEquals(new PersonBuilder(ALEX).withLessons("Algebra", "Geometry").build(),
@@ -230,7 +230,8 @@ public class LessonPersistenceTest {
                     new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
             String format = exception instanceof AccessDeniedException
                     ? LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT : LogicManager.FILE_OPS_ERROR_FORMAT;
-            assertThrows(CommandException.class, String.format(format, exception.getMessage()), () ->
+            Object detail = exception instanceof AccessDeniedException ? dataFile : exception.getMessage();
+            assertThrows(CommandException.class, String.format(format, detail), () ->
                     failingLogic.execute("deletelesson 1 1"));
             assertEquals(saved, Files.readString(dataFile));
             assertEquals(lessons("Algebra"), findByName(restart(), "Alex Lim").getLessons());
@@ -288,7 +289,7 @@ public class LessonPersistenceTest {
         assertLogSaveFailure(new IOException("disk full"),
                 String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "disk full"));
         assertLogSaveFailure(new AccessDeniedException("read-only"),
-                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "read-only"));
+                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, dataFile));
 
         // the file on disk is untouched by the failed saves
         assertEquals(lastSaved, Files.readString(dataFile));

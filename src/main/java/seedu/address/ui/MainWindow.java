@@ -5,11 +5,13 @@ import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -124,7 +126,8 @@ public class MainWindow extends UiPart<Stage> {
         personListPanel = new PersonListPanel(logic.getFilteredPersonList(), this::handlePersonClick);
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 
-        studentDetailPanel = new StudentDetailPanel();
+        studentDetailPanel = new StudentDetailPanel(logic.getFilteredPersonList(),
+                logic.getAddressBook().getPersonList());
         studentDetailPanelPlaceholder.getChildren().add(studentDetailPanel.getRoot());
 
         resultDisplay = new ResultDisplay();
@@ -189,11 +192,13 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sets the default size based on {@code guiSettings}.
+     * Sets the default size based on {@code guiSettings}, shrunk to fit the primary screen's usable area,
+     * so that the window opens fully on small or highly scaled screens.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
+        Rectangle2D screen = Screen.getPrimary().getVisualBounds();
+        primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), screen.getHeight()));
+        primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), screen.getWidth()));
         if (guiSettings.getWindowCoordinates() != null) {
             primaryStage.setX(guiSettings.getWindowCoordinates().getX());
             primaryStage.setY(guiSettings.getWindowCoordinates().getY());
