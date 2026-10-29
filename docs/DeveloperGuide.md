@@ -173,7 +173,7 @@ The `Storage` component,
 
 Before constructing a loaded student, `JsonAdaptedPerson` applies `Name#normalize`, also used by `ParserUtil#parseName`: surrounding Unicode whitespace is removed and internal whitespace is collapsed to one space before validation. `JsonSerializableAddressBook` then checks the normalized name and phone through the existing `isSamePerson` rule. A duplicate makes the complete file invalid; neither student's lessons or flag are silently merged or discarded. The same normalized name with a different phone remains a separate student.
 
-The adapter stably sorts loaded lessons by date, with missing dates before dated records in storage. Equal-date and undated records retain their relative saved order, including repeated occurrences. `view` and the details panel reverse this list as usual; subsequent log, edit and delete operations therefore use the same chronological indexes. Sorting and normalization change only the loaded model, and the file is not rewritten until a successful data-changing command saves it.
+The adapter stably sorts loaded lessons by date, with missing dates before dated records in storage. Equal-date and undated records retain their relative saved order, including repeated occurrences. `view` and the details panel reverse this list as usual; subsequent `loglesson`, `edit` and `delete` operations therefore use the same chronological indexes. Sorting and normalization change only the loaded model, and the file is not rewritten until a successful data-changing command saves it.
 
 `JsonAdaptedLesson` rejects dates before `Lesson.EARLIEST_DATE` with a storage-specific message using `YYYY-MM-DD`. Missing dates remain undated, and impossible dates and invalid date formats still fail loading. Existing future dates are accepted to keep saved records readable after a system-clock correction. The command-side future-date checks remain unchanged; loading does not depend on today's date.
 
@@ -205,7 +205,7 @@ This section describes some noteworthy details on how certain features are imple
 
 `loglesson INDEX c/CONTENT [date/DATE]` adds one dated lesson record to a student. The activity diagram below shows its steps. A failed save is left out; `LogicManager` then restores the previous data, as described in the [Logic component](#logic-component).
 
-<puml src="diagrams/LogActivityDiagram.puml" width="300" alt="Activity diagram of log: parsing, checking the index, using the given date or today's date, rejecting a future date, inserting the lesson by date and saving" />
+<puml src="diagrams/LogActivityDiagram.puml" width="300" alt="Activity diagram of loglesson: parsing, checking the index, using the given date or today's date, rejecting a future date, inserting the lesson by date and saving" />
 
 * **Parsing:** `LogCommandParser` tokenizes only `c/` and `date/`. It rejects a missing index or content, a repeated prefix, invalid content and an invalid date. `ParserUtil#parseLessonDate` accepts `D/M/YYYY` or `DD/MM/YYYY` with a four-digit year, and rejects dates that do not exist, such as `31/02/2026`, and dates before `Lesson.EARLIEST_DATE` (01/01/2000). `loglesson` and `editlesson` call it through `parseLessonDateWithNotesHint`, which adds a hint to reword `date/` if it was part of the lesson notes. `findlesson` gives the date error without the hint.
 * **Today's date by default:** `LogCommand` gets today's date from a `Clock`: the system clock in the app, and a fixed clock in tests. A lesson without `date/` is dated today, and a date after today is rejected with `Lesson dates cannot be in the future. ...`. The parser does not check for future dates, so that every check uses the same clock.
@@ -263,7 +263,7 @@ Failed commands skip these rules, so an error never changes the panel. A failed 
 
 ### Rejecting blank Unicode fields
 
-`Address#isValidAddress` and `Lesson#isValidContent` reject values composed entirely of Unicode whitespace (`\p{IsWhite_Space}`), format characters (`\p{Cf}`), or a mixture of the two. This includes non-breaking spaces, ZERO WIDTH SPACE (U+200B), WORD JOINER (U+2060) and a standalone BOM (U+FEFF). The check does not remove formatting characters inside real text: joiners in written languages and emoji sequences are preserved, along with internal spaces and the existing length and character rules. Both command parsing and the JSON adapters use these model validators, so add, edit, log and data loading share the same non-blank rule and existing field-specific messages.
+`Address#isValidAddress` and `Lesson#isValidContent` reject values composed entirely of Unicode whitespace (`\p{IsWhite_Space}`), format characters (`\p{Cf}`), or a mixture of the two. This includes non-breaking spaces, ZERO WIDTH SPACE (U+200B), WORD JOINER (U+2060) and a standalone BOM (U+FEFF). The check does not remove formatting characters inside real text: joiners in written languages and emoji sequences are preserved, along with internal spaces and the existing length and character rules. Both command parsing and the JSON adapters use these model validators, so `add`, `edit`, `loglesson` and data loading share the same non-blank rule and existing field-specific messages.
 
 ### Deleting an individual lesson record
 
@@ -988,7 +988,7 @@ Use a separate test folder with an empty student file and fictional data only.
 ### Searching lesson histories
 
 Before launching, prepare an isolated test folder with `data/addressbook.json`
-containing `{"persons": []}`. Add Amy Tan and Ben Lim, then log `Algebra` for Amy
+containing `{"persons": []}`. Add Amy Tan and Ben Lim, then use `loglesson` to record `Algebra` for Amy
 on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` on
 05/01/2020. Amy is student 1 and Ben is student 2.
 
@@ -1138,7 +1138,7 @@ Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim 
 1. Remove the empty directory and move `data/addressbook.saved.json` back to `data/addressbook.json`. Enter `list`. Expected: both students remain; the failed deletion was not saved by this later command.
 1. Enter `find amy`, then `delete 1`. Expected: Amy is deleted exactly once. `list` shows Ben, and a restart retains him.
 
-`SaveFailureRollbackTest` also covers IO and permission failures for add, edit, log, delete, deletelesson, editlesson, flag and unflag, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
+`SaveFailureRollbackTest` also covers IO and permission failures for `add`, `edit`, `loglesson`, `delete`, `deletelesson`, `editlesson`, `flag` and `unflag`, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
 
 Permission failures use `Storage#getAddressBookFilePath` in the existing permission message. Other `FileSystemException` failures use `Could not save data to file PATH due to the following error: REASON`, taking only `getReason()` rather than the exception's temporary-file paths. A missing or blank reason becomes `The file or folder could not be written.`. Other IO errors keep their existing messages, including the saving-disabled recovery explanation. The original exception remains the command error's cause, and rollback is unchanged.
 
@@ -1168,7 +1168,7 @@ Use disposable copies of `data/addressbook.json` while TutorLah is closed.
 1. Change a saved date to `1999-12-31`. Expected: protected recovery with a reason mentioning `2000-01-01` and `YYYY-MM-DD`. Restore it as `2000-01-01`: it loads normally. Undated legacy lessons and existing future dates also load; commands still reject newly entered future lesson dates.
 1. For a fresh destination, create `data/` and copy a valid `addressbook.json` from another disposable working folder, with TutorLah closed in both. Start from the destination folder and verify its students, lessons and flags using `list` and `view`.
 
-`StudentDataLoadingTest` covers sanitized startup reasons for truncated JSON, trailing commas, a UTF-8 BOM and invalid structures; unknown locations and read errors; preservation of validation messages; normalized duplicates, different-phone identities, stable ordering followed by log/edit/delete/search, exact byte preservation, blocked saves and repair/restart. Adapter tests cover the minimum date, future stored dates, undated records, normalization before length validation and stable same-day occurrences.
+`StudentDataLoadingTest` covers sanitized startup reasons for truncated JSON, trailing commas, a UTF-8 BOM and invalid structures; unknown locations and read errors; preservation of validation messages; normalized duplicates, different-phone identities, stable ordering followed by `loglesson`, `edit`, `delete` and search, exact byte preservation, blocked saves and repair/restart. Adapter tests cover the minimum date, future stored dates, undated records, normalization before length validation and stable same-day occurrences.
 
 ### Deleting lesson records
 

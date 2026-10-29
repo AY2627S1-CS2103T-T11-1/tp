@@ -223,8 +223,8 @@ wildcards or spelling corrections; other prefixes such as `p/` stay part of
 the name keywords.
 Each find searches the full address book and keeps the original list order.
 Displayed indexes restart at 1 and are used by commands and card clicks.
-`list` restores all students; add and edit also restore the full list. View,
-log, delete and deletelesson retain the filter. Find changes no stored
+`list` restores all students; add and edit also restore the full list. `view`,
+`loglesson`, `delete` and `deletelesson` retain the filter. Find changes no stored
 student or lesson data, and filters are not persisted. The empty-list panel says
 `No students to display.` and `Type list to show all students, or add one:`,
 followed by the add-command format and example. This offers useful guidance
@@ -261,7 +261,7 @@ Flagged cards show a red flag icon. The details panel shows the reason in a red
 banner, or `Flagged (no reason given)` for a reasonless flag. JSON omits the
 `flag` property for an unflagged student, stores `"flag": {}` without a reason,
 and stores `"flag": {"reason": "..."}` with one. Data without `flag` loads as
-unflagged. Edit, log and deletelesson preserve the flag when rebuilding a
+unflagged. `edit`, `loglesson` and `deletelesson` preserve the flag when rebuilding a
 student.
 
 ---
@@ -539,7 +539,7 @@ From [Appendix E][appendix-e] and the [SE-EDU review guide][reviewing].
   (`build/libs/TutorLah.jar`), and notes listing what changed since the
   previous release, with screenshots committed under `docs/images/`.
 - Before publishing, copy the JAR to an empty folder and run it with
-  `java -jar TutorLah.jar` under Java 25. Add, log, view and exit, then
+  `java -jar TutorLah.jar` under Java 25. Run `add`, `loglesson`, `view` and `exit`, then
   start it again and check that the data was kept.
 - For the feature freeze and final submission, read the live
   [Week 12 page][w12]. Do not rely on remembered limits.

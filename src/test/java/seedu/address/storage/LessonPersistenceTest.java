@@ -298,7 +298,7 @@ public class LessonPersistenceTest {
     }
 
     /**
-     * Runs a {@code log} command against storage that fails to save with {@code exception},
+     * Runs a {@code loglesson} command against storage that fails to save with {@code exception},
      * and checks the error message shown to the user.
      */
     private void assertLogSaveFailure(IOException exception, String expectedMessage) {

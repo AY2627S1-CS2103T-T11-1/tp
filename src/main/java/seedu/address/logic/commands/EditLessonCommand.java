@@ -138,7 +138,7 @@ public class EditLessonCommand extends Command {
     }
 
     /**
-     * Rejects a new date after today, as {@code log} does.
+     * Rejects a new date after today, as {@code loglesson} does.
      *
      * @throws CommandException if the new date is in the future
      */

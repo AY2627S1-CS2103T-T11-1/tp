@@ -27,7 +27,9 @@ public class Messages {
     /** Shown after a duplicate-field error, since prefix-like text in a value starts another field. */
     public static final String MESSAGE_PREFIX_TEXT_HINT = "A recognised prefix after a space starts another field. "
             + "If it was part of your text, please reword it.";
-    /** Shown after an invalid date in {@code log} or {@code editlesson}, where date/ may have been meant as notes. */
+    /**
+     * Shown after an invalid date in {@code loglesson} or {@code editlesson}, where date/ may have been meant as notes.
+     */
     public static final String MESSAGE_LESSON_DATE_TEXT_HINT =
             "If \"date/\" was part of your lesson notes, please reword it, for example \"date and time\".";
 
