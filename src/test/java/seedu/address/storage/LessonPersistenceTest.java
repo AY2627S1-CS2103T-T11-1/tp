@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TestLogicUtil.logicOver;
+import static seedu.address.testutil.TestStorageUtil.failingSaves;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -219,12 +220,7 @@ public class LessonPersistenceTest {
             startWith(new PersonBuilder(ALEX).withLessons("Algebra").build());
             logic.execute("list");
             String saved = Files.readString(dataFile);
-            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
-                @Override
-                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                    throw exception;
-                }
-            };
+            JsonAddressBookStorage failingStorage = failingSaves(dataFile, exception);
             LogicManager failingLogic = logicOver(model, failingStorage, testFolder);
             String format = exception instanceof AccessDeniedException
                     ? LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT : LogicManager.FILE_OPS_ERROR_FORMAT;
@@ -300,12 +296,7 @@ public class LessonPersistenceTest {
      * and checks the error message shown to the user.
      */
     private void assertLogSaveFailure(IOException exception, String expectedMessage) {
-        JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(dataFile) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                throw exception;
-            }
-        };
+        JsonAddressBookStorage failingStorage = failingSaves(dataFile, exception);
         LogicManager failingLogic = logicOver(model, failingStorage, testFolder);
 
         assertThrows(CommandException.class, expectedMessage, ()

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TestLogicUtil.logicOver;
+import static seedu.address.testutil.TestStorageUtil.savingForbidden;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +19,6 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
-import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.testutil.PersonBuilder;
@@ -105,12 +105,8 @@ public class SummaryCommandTest {
         model.addPerson(new PersonBuilder().withLessons("Algebra").build());
         model.updateFilteredPersonList(person -> false);
         AddressBook before = new AddressBook(model.getAddressBook());
-        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("students.json")) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) {
-                throw new AssertionError("Summary must not attempt a save");
-            }
-        };
+        JsonAddressBookStorage storage = savingForbidden(temporaryFolder.resolve("students.json"),
+                "Summary must not attempt a save");
         assertEquals("Summary:\nYou have 1 student and 1 lesson record in total.",
                 logicOver(model, storage, temporaryFolder).execute("summary").getFeedbackToUser());
         assertEquals(before, model.getAddressBook());

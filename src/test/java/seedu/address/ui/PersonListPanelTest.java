@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.LessonDateUtil.todayText;
 import static seedu.address.testutil.TestLogicUtil.logicOver;
+import static seedu.address.testutil.TestStorageUtil.failingSaves;
+import static seedu.address.testutil.TestStorageUtil.savingForbidden;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.io.IOException;
@@ -69,7 +71,6 @@ import seedu.address.logic.commands.FindLessonCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.ModelManager;
-import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Level;
@@ -421,12 +422,8 @@ public class PersonListPanelTest {
     @Test
     public void commandBox_saveUnavailable_filterHelpAndExitStillWork(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
-            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json")) {
-                @Override
-                public void saveAddressBook(ReadOnlyAddressBook addressBook) {
-                    throw new AssertionError("Read-only commands must not attempt a save");
-                }
-            };
+            JsonAddressBookStorage storage = savingForbidden(directory.resolve("students.json"),
+                    "Read-only commands must not attempt a save");
             MainWindow window = createClickableWindow(logicOver(clickTestModel(), storage, directory), directory);
             Stage stage = window.getPrimaryStage();
             stage.show();
@@ -1278,12 +1275,8 @@ public class PersonListPanelTest {
     @Test
     public void studentCard_saveUnavailable_viewsHistoryButRejectsMutation(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
-            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(directory.resolve("students.json")) {
-                @Override
-                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                    throw new IOException("disk unavailable");
-                }
-            };
+            JsonAddressBookStorage failingStorage = failingSaves(directory.resolve("students.json"),
+                    new IOException("disk unavailable"));
             MainWindow window = createClickableWindow(logicOver(clickTestModel(), failingStorage, directory),
                     directory);
             try {
@@ -1341,12 +1334,8 @@ public class PersonListPanelTest {
     @Test
     public void commandBox_saveFailure_keepsShownStudentHighlighted(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
-            JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(directory.resolve("students.json")) {
-                @Override
-                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                    throw new IOException("disk unavailable");
-                }
-            };
+            JsonAddressBookStorage failingStorage = failingSaves(directory.resolve("students.json"),
+                    new IOException("disk unavailable"));
             MainWindow window = createClickableWindow(logicOver(clickTestModel(), failingStorage, directory),
                     directory);
             try {

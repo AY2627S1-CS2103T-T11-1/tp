@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TestLogicUtil.logicOver;
+import static seedu.address.testutil.TestStorageUtil.savingForbidden;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +21,6 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ModelManager;
-import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -186,12 +186,7 @@ public class FindLessonCommandIntegrationTest {
 
     @Test
     public void execute_savingUnavailable_returnsResultsWithoutAttemptingWrite() throws Exception {
-        JsonAddressBookStorage unavailable = new JsonAddressBookStorage(dataFile) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) {
-                throw new AssertionError("Lesson searches must not save student data");
-            }
-        };
+        JsonAddressBookStorage unavailable = savingForbidden(dataFile, "Lesson searches must not save student data");
         assertEquals(ALGEBRA_MATCHES,
                 logicOver(model, unavailable, temporaryFolder).execute("findlesson 2 algebra").getFeedbackToUser());
         assertUnchanged();

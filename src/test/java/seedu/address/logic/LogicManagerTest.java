@@ -16,6 +16,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.LessonDateUtil.todayText;
 import static seedu.address.testutil.TestLogicUtil.logicOver;
+import static seedu.address.testutil.TestStorageUtil.failingSaves;
+import static seedu.address.testutil.TestStorageUtil.savingForbidden;
 import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
@@ -39,7 +41,6 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
-import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Name;
@@ -256,12 +257,8 @@ public class LogicManagerTest {
     @Test
     public void execute_unchangedEdit_doesNotAttemptSaving() throws Exception {
         model.addPerson(AMY);
-        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("students.json")) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) {
-                throw new AssertionError("Unchanged student data must not be saved");
-            }
-        };
+        JsonAddressBookStorage storage = savingForbidden(temporaryFolder.resolve("students.json"),
+                "Unchanged student data must not be saved");
         Logic readOnlyLogic = logicOver(model, storage, temporaryFolder);
         assertEquals("Edited student: " + Messages.format(AMY),
                 readOnlyLogic.execute("edit 1 n/" + AMY.getName().fullName).getFeedbackToUser());
@@ -359,12 +356,7 @@ public class LogicManagerTest {
         Path dataPath = temporaryFolder.resolve("ExceptionAddressBook.json");
 
         // Inject LogicManager with a JsonAddressBookStorage that throws the IOException e when saving
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(dataPath) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                throw e;
-            }
-        };
+        JsonAddressBookStorage addressBookStorage = failingSaves(dataPath, e);
 
         JsonUserPrefsStorage userPrefsStorage =
                 new JsonUserPrefsStorage(temporaryFolder.resolve("ExceptionUserPrefs.json"));
