@@ -55,13 +55,6 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_removedCommand_throwsUnknownCommand() {
-        for (String command : List.of("unlogged", "UNLOGGED", "UnLoGgEd", "unlogged 1")) {
-            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(command));
-        }
-    }
-
-    @Test
     public void parseCommand_summary() throws Exception {
         assertTrue(parser.parseCommand("summary") instanceof SummaryCommand);
         assertTrue(parser.parseCommand("  summary  ") instanceof SummaryCommand);
@@ -173,7 +166,9 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+        for (String command : List.of("unknownCommand", "UNKNOWNCOMMAND", "unknownCommand 1")) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(command));
+        }
     }
 
     @Test

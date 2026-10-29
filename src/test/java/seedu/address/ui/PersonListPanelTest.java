@@ -310,7 +310,7 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void commandBox_removedCommand_keepsPanelFilterAndSelection(@TempDir Path directory) throws Exception {
+    public void commandBox_unknownCommand_keepsPanelFilterAndSelection(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
             Logic logic = clickTestLogic(model,
@@ -322,7 +322,7 @@ public class PersonListPanelTest {
                 enterClickTestCommand(root, "find ben");
                 enterClickTestCommand(root, "view 1");
                 List<Person> before = List.copyOf(model.getAddressBook().getPersonList());
-                for (String command : List.of("unlogged", "UNLOGGED", "unlogged 1")) {
+                for (String command : List.of("unknownCommand", "UNKNOWNCOMMAND", "unknownCommand 1")) {
                     assertFeedback(root, command, Messages.MESSAGE_UNKNOWN_COMMAND, true);
                     assertDetail(root, "Ben", "Lessons (0)");
                     assertEquals(1, list.getItems().size());
