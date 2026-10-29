@@ -95,6 +95,66 @@ public class StudentDataLoadingTest {
                 }));
     }
 
+    @TestFactory
+    public Stream<DynamicTest> load_trailingContent_protectsOriginalFileAndSanitizesWarning() throws IOException {
+        String trailingStudents = "{\"persons\":[" + studentJson("Private Example", "81234567", "[]") + "]}";
+        return Stream.of(trailingStudents, "42", "null", "garbage")
+                .map(suffix -> DynamicTest.dynamicTest(suffix, () -> {
+                    String warning = assertProtectedRecovery("{\"persons\":[]}\n" + suffix,
+                            "Reason: The file is not valid JSON (line 2, column ");
+                    assertSanitizedWarning(warning);
+                }));
+    }
+
+    @Test
+    public void init_trailingStudentData_blocksMutationAndPreservesBytesAfterStop() throws Exception {
+        Path file = temporaryFolder.resolve("data/addressbook.json");
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, "{\"persons\":[]}\n{\"persons\":["
+                + studentJson("Private Example", "81234567", "[]") + "]}");
+        byte[] original = Files.readAllBytes(file);
+        MainApp app = new MainApp(temporaryFolder.resolve("preferences.json"), file);
+
+        app.init();
+        try {
+            String warning = app.getStartupWarning().orElseThrow();
+            assertTrue(warning.contains("Reason: The file is not valid JSON (line 2, column 1)."), warning);
+            assertSanitizedWarning(warning);
+            assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
+            assertEquals("No students found. Use add to create a student.",
+                    app.logic.execute("list").getFeedbackToUser());
+            app.logic.execute("help");
+            assertThrows(CommandException.class, LogicManager.FILE_OPS_ERROR_FORMAT.formatted(
+                    JsonAddressBookStorage.MESSAGE_SAVE_BLOCKED), () -> app.logic.execute(
+                            "add n/Ben Lim p/81230002 addr/2 Example Street l/Sec 3 sub/Math"));
+            assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
+        } finally {
+            app.stop();
+        }
+        assertArrayEquals(original, Files.readAllBytes(file));
+    }
+
+    @Test
+    public void load_legacyHistoryWithTrailingWhitespace_keepsRecordsAndAllowsSaving() throws Exception {
+        Path file = temporaryFolder.resolve("students.json");
+        Files.writeString(file, "{\"persons\":[" + studentJson("Amy Tan", "81230001",
+                "[{\"content\":\"Algebra\"}]") + "]} \t\r\n");
+        byte[] original = Files.readAllBytes(file);
+        StorageManager storage = storage(file);
+        MainApp app = new MainApp();
+        Model model = app.initModelManager(storage, new UserPrefs());
+        Logic logic = new LogicManager(model, storage);
+
+        assertTrue(app.getStartupWarning().isEmpty());
+        assertEquals("Lesson records for Amy Tan (1):\n1. (undated): Algebra",
+                logic.execute("view 1").getFeedbackToUser());
+        assertArrayEquals(original, Files.readAllBytes(file));
+        logic.execute("log 1 c/Geometry date/20/10/2026");
+        assertEquals(List.of(new Lesson("Algebra"), new Lesson("Geometry", LocalDate.of(2026, 10, 20))),
+                model.getAddressBook().getPersonList().getFirst().getLessons());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
     @Test
     public void load_sameNormalizedNameWithDifferentPhones_keepsBothStudentsAndReadOnlyBytes() throws Exception {
         Path file = temporaryFolder.resolve("students.json");
