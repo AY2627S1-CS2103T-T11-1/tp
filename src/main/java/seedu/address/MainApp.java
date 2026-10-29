@@ -76,7 +76,7 @@ public class MainApp extends Application {
         logger.info("=============================[ Initializing TutorLah ]===========================");
         super.init();
 
-        if (!acquireApplicationLock()) {
+        if (!tryAcquireApplicationLock()) {
             ui = new UiManager(startupFailure);
             return;
         }
@@ -98,7 +98,7 @@ public class MainApp extends Application {
         }
     }
 
-    private boolean acquireApplicationLock() {
+    private boolean tryAcquireApplicationLock() {
         startupFailure = null;
         try {
             Optional<? extends Closeable> acquiredLock = tryAcquireDataFolderLock();

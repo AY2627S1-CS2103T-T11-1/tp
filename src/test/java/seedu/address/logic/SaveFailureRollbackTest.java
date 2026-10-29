@@ -61,12 +61,12 @@ public class SaveFailureRollbackTest {
                 "editlesson 1 1 c/Revised geometry",
                 "flag 1 r/Call parent",
                 "unflag 1");
-        return Stream.of(false, true).flatMap(permissionFailure -> mutations.stream().map(command ->
-                DynamicTest.dynamicTest(command + (permissionFailure ? " (permission)" : " (IO)"), () ->
-                    assertRollbackAndRetry(command, permissionFailure))));
+        return Stream.of(false, true).flatMap(isPermissionFailure -> mutations.stream().map(command ->
+                DynamicTest.dynamicTest(command + (isPermissionFailure ? " (permission)" : " (IO)"), () ->
+                    assertRollbackAndRetry(command, isPermissionFailure))));
     }
 
-    private void assertRollbackAndRetry(String command, boolean permissionFailure) throws Exception {
+    private void assertRollbackAndRetry(String command, boolean isPermissionFailure) throws Exception {
         Path folder = Files.createTempDirectory(temporaryFolder, "mutation-");
         Model model = new ModelManager();
         model.addPerson(AMY);
@@ -80,11 +80,11 @@ public class SaveFailureRollbackTest {
         String savedData = Files.readString(storage.getAddressBookFilePath());
         var displayedList = model.getFilteredPersonList();
         var preferences = new UserPrefs(model.getUserPrefs());
-        IOException failure = permissionFailure ? new AccessDeniedException("students.json")
+        IOException failure = isPermissionFailure ? new AccessDeniedException("students.json")
                 : new IOException("simulated disk full");
         storage.failNextSave(failure);
 
-        String message = permissionFailure
+        String message = isPermissionFailure
                 ? String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, storage.getAddressBookFilePath())
                 : String.format(LogicManager.FILE_OPS_ERROR_FORMAT, failure.getMessage());
         assertThrows(CommandException.class, message, () -> logic.execute(command));
