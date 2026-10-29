@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -34,8 +35,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Flag;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -73,8 +72,7 @@ public class SaveFailureRollbackTest {
         model.addPerson(BEN);
         FailOnceStorage storage = new FailOnceStorage(folder.resolve("students.json"));
         storage.saveAddressBook(model.getAddressBook());
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(folder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, folder);
         logic.execute("find amy");
         AddressBook before = new AddressBook(model.getAddressBook());
         String savedData = Files.readString(storage.getAddressBookFilePath());
@@ -110,8 +108,7 @@ public class SaveFailureRollbackTest {
         model.addPerson(AMY);
         model.addPerson(BEN);
         FailOnceStorage storage = new FailOnceStorage(temporaryFolder.resolve("flagged.json"));
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("flagged");
         storage.failNextSave(new IOException("simulated failure"));
         assertThrows(CommandException.class, () -> logic.execute("unflag 1"));
@@ -131,8 +128,7 @@ public class SaveFailureRollbackTest {
         model.addPerson(BEN);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         storage.saveAddressBook(model.getAddressBook());
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("find amy");
         String originalBytes = Files.readString(file);
         Files.move(file, preservedFile);
@@ -163,8 +159,7 @@ public class SaveFailureRollbackTest {
                     FailOnceStorage storage = new FailOnceStorage(file);
                     storage.saveAddressBook(model.getAddressBook());
                     byte[] original = Files.readAllBytes(file);
-                    Logic logic = new LogicManager(model, new StorageManager(storage,
-                            new JsonUserPrefsStorage(file.resolveSibling("preferences.json"))));
+                    Logic logic = logicOver(model, storage, file.getParent());
                     storage.failNextSave(failure);
 
                     CommandException error = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, ()
@@ -196,8 +191,7 @@ public class SaveFailureRollbackTest {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         storage.saveAddressBook(model.getAddressBook());
         byte[] original = Files.readAllBytes(file);
-        Logic logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("find amy");
         Set<PosixFilePermission> previousPermissions = Files.getPosixFilePermissions(directory);
         try {
@@ -230,8 +224,7 @@ public class SaveFailureRollbackTest {
             model.addPerson(BEN);
             FailOnceStorage storage = new FailOnceStorage(folder.resolve("students.json"));
             storage.saveAddressBook(model.getAddressBook());
-            Logic logic = new LogicManager(model, new StorageManager(storage,
-                    new JsonUserPrefsStorage(folder.resolve("preferences.json"))));
+            Logic logic = logicOver(model, storage, folder);
             logic.execute("find ben");
             String savedData = Files.readString(storage.getAddressBookFilePath());
             storage.failNextSave(new IOException("simulated failure"));

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.LessonDateUtil.todayText;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.io.IOException;
@@ -117,7 +118,7 @@ public class PersonListPanelTest {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
             JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
-            MainWindow window = createClickableWindow(clickTestLogic(model, storage, directory), directory);
+            MainWindow window = createClickableWindow(logicOver(model, storage, directory), directory);
             Clipboard clipboard = Clipboard.getSystemClipboard();
             Map<DataFormat, Object> previousClipboard = new HashMap<>();
             clipboard.getContentTypes().forEach(format -> previousClipboard.put(format, clipboard.getContent(format)));
@@ -166,7 +167,7 @@ public class PersonListPanelTest {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
             JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
-            MainWindow window = createClickableWindow(clickTestLogic(model, storage, directory), directory);
+            MainWindow window = createClickableWindow(logicOver(model, storage, directory), directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
                 for (String separator : List.of(" ", "\u00a0", "\u202f")) {
@@ -226,7 +227,7 @@ public class PersonListPanelTest {
             throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -281,7 +282,7 @@ public class PersonListPanelTest {
             String[] records = new String[40];
             Arrays.fill(records, content);
             model.setPerson(amy, new PersonBuilder(amy).withLessons(records).build());
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -313,7 +314,7 @@ public class PersonListPanelTest {
     public void commandBox_unknownCommand_keepsPanelFilterAndSelection(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -340,7 +341,7 @@ public class PersonListPanelTest {
             throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -426,7 +427,7 @@ public class PersonListPanelTest {
                     throw new AssertionError("Read-only commands must not attempt a save");
                 }
             };
-            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), storage, directory), directory);
+            MainWindow window = createClickableWindow(logicOver(clickTestModel(), storage, directory), directory);
             Stage stage = window.getPrimaryStage();
             stage.show();
             try {
@@ -453,8 +454,7 @@ public class PersonListPanelTest {
     public void start_recoveryWarning_showsAfterWindowIsReady() throws Exception {
         runOnJavaFxThread(() -> {
             Path file = temporaryFolder.resolve("students.json");
-            Logic logic = new LogicManager(new ModelManager(), new StorageManager(new JsonAddressBookStorage(file),
-                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Logic logic = logicOver(new ModelManager(), new JsonAddressBookStorage(file), temporaryFolder);
             Stage stage = new Stage();
             List<String> shownWarning = new ArrayList<>();
             UiManager ui = new UiManager(logic, file, "Recovery instructions") {
@@ -478,8 +478,7 @@ public class PersonListPanelTest {
     public void start_normalSession_doesNotShowRecoveryWarning() throws Exception {
         runOnJavaFxThread(() -> {
             Path file = temporaryFolder.resolve("students.json");
-            Logic logic = new LogicManager(new ModelManager(), new StorageManager(new JsonAddressBookStorage(file),
-                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+            Logic logic = logicOver(new ModelManager(), new JsonAddressBookStorage(file), temporaryFolder);
             Stage stage = new Stage();
             List<String> warnings = new ArrayList<>();
             UiManager ui = new UiManager(logic, file) {
@@ -698,7 +697,7 @@ public class PersonListPanelTest {
     public void commandBox_studentCommands_keepDetailPanelInSync(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -815,7 +814,7 @@ public class PersonListPanelTest {
     public void commandBox_findThenClickAndList_usesDisplayedStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -845,7 +844,7 @@ public class PersonListPanelTest {
     public void commandBox_findNoMatches_showsEmptyFilterGuidance(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -871,7 +870,7 @@ public class PersonListPanelTest {
     public void commandBox_noSavedStudents_showsAddGuidanceAfterList(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = new ModelManager();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -897,7 +896,7 @@ public class PersonListPanelTest {
             throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -939,7 +938,7 @@ public class PersonListPanelTest {
     @Test
     public void mainWindow_minimumSize_fitsSmallestSupportedScreen(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
-            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(),
+            MainWindow window = createClickableWindow(logicOver(clickTestModel(),
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory), directory);
             try {
                 Stage stage = window.getPrimaryStage();
@@ -962,7 +961,7 @@ public class PersonListPanelTest {
     public void resultDisplay_longMessageAtMinimumSize_lastLineFitsScrollableContent(@TempDir Path directory)
             throws Exception {
         runOnJavaFxThread(() -> {
-            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(),
+            MainWindow window = createClickableWindow(logicOver(clickTestModel(),
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory), directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
@@ -989,7 +988,7 @@ public class PersonListPanelTest {
         runOnJavaFxThread(() -> {
             Rectangle2D screen = Screen.getPrimary().getVisualBounds();
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
 
             model.setGuiSettings(new GuiSettings(screen.getWidth() + 500, screen.getHeight() + 500, 0, 0));
@@ -1048,7 +1047,7 @@ public class PersonListPanelTest {
     public void commandBox_flagFilterAndUnflag_updatesCardsAndDisplayedList(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1080,7 +1079,7 @@ public class PersonListPanelTest {
     public void commandBox_viewMovesHighlight_retainsSelectionOnError(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1115,7 +1114,7 @@ public class PersonListPanelTest {
                     .withLessonAdded(newer);
             model.setPerson(amy, datedAmy);
             JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
-            Logic logic = clickTestLogic(model, storage, directory);
+            Logic logic = logicOver(model, storage, directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
@@ -1145,7 +1144,7 @@ public class PersonListPanelTest {
     public void commandBox_deleteLesson_updatesHistoryWithoutRemovingStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1181,7 +1180,7 @@ public class PersonListPanelTest {
     public void studentCard_firstPressAfterView_showsAndHighlightsStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1211,7 +1210,7 @@ public class PersonListPanelTest {
     public void studentCard_clickAndView_showsSameHistoryAndKeepsCommandText(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1250,7 +1249,7 @@ public class PersonListPanelTest {
     public void studentCard_afterDeleteAndFilter_viewsCurrentStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1285,7 +1284,7 @@ public class PersonListPanelTest {
                     throw new IOException("disk unavailable");
                 }
             };
-            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), failingStorage, directory),
+            MainWindow window = createClickableWindow(logicOver(clickTestModel(), failingStorage, directory),
                     directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
@@ -1306,7 +1305,7 @@ public class PersonListPanelTest {
     public void studentList_keyboardNavigation_viewsSelectedStudentInPanel(@TempDir Path directory)
             throws Exception {
         runOnJavaFxThread(() -> {
-            Logic logic = clickTestLogic(clickTestModel(),
+            Logic logic = logicOver(clickTestModel(),
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1348,7 +1347,7 @@ public class PersonListPanelTest {
                     throw new IOException("disk unavailable");
                 }
             };
-            MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(), failingStorage, directory),
+            MainWindow window = createClickableWindow(logicOver(clickTestModel(), failingStorage, directory),
                     directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
@@ -1391,14 +1390,6 @@ public class PersonListPanelTest {
     }
 
     /**
-     * Creates real logic with isolated student and preference storage for click tests.
-     */
-    private static Logic clickTestLogic(ModelManager model, JsonAddressBookStorage storage, Path directory) {
-        return new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(directory.resolve("preferences.json"))));
-    }
-
-    /**
      * Loads the real main window and settles its controls before clicking cards.
      */
     private static MainWindow createClickableWindow(Logic logic, Path directory) {
@@ -1415,7 +1406,7 @@ public class PersonListPanelTest {
     public void commandBox_lessonSearchSyntaxHint_keepsStudentAndRecovers(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1440,7 +1431,7 @@ public class PersonListPanelTest {
     public void commandBox_addUnsupportedPrefix_keepsInputAndStudent(@TempDir Path directory) throws Exception {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {
@@ -1735,7 +1726,7 @@ public class PersonListPanelTest {
         runOnJavaFxThread(() -> {
             ModelManager model = clickTestModel();
             List<Person> before = List.copyOf(model.getAddressBook().getPersonList());
-            Logic logic = clickTestLogic(model,
+            Logic logic = logicOver(model,
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory);
             MainWindow window = createClickableWindow(logic, directory);
             try {

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.Logic;
-import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -21,8 +21,6 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 public class SummaryCommandTest {
@@ -51,7 +49,7 @@ public class SummaryCommandTest {
         Path file = temporaryFolder.resolve("students.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         storage.saveAddressBook(model.getAddressBook());
-        Logic logic = logic(model, storage);
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("list");
         String savedData = Files.readString(file);
         AddressBook before = new AddressBook(model.getAddressBook());
@@ -83,7 +81,7 @@ public class SummaryCommandTest {
         ModelManager model = new ModelManager();
         Path file = temporaryFolder.resolve("students.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
-        Logic logic = logic(model, storage);
+        Logic logic = logicOver(model, storage, temporaryFolder);
         logic.execute("add n/Amy Tan p/81230001 addr/10 Example Street l/Sec 3 sub/E-Math");
         assertEquals("Summary:\n"
                 + "You have 1 student and 0 lesson records in total.",
@@ -114,13 +112,8 @@ public class SummaryCommandTest {
             }
         };
         assertEquals("Summary:\nYou have 1 student and 1 lesson record in total.",
-                logic(model, storage).execute("summary").getFeedbackToUser());
+                logicOver(model, storage, temporaryFolder).execute("summary").getFeedbackToUser());
         assertEquals(before, model.getAddressBook());
         assertTrue(model.getFilteredPersonList().isEmpty());
-    }
-
-    private Logic logic(ModelManager model, JsonAddressBookStorage storage) {
-        return new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
     }
 }

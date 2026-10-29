@@ -15,6 +15,7 @@ import static seedu.address.logic.commands.CommandTestUtil.SUBJECT_DESC_AMY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONTENT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.LessonDateUtil.todayText;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
@@ -261,8 +262,7 @@ public class LogicManagerTest {
                 throw new AssertionError("Unchanged student data must not be saved");
             }
         };
-        Logic readOnlyLogic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        Logic readOnlyLogic = logicOver(model, storage, temporaryFolder);
         assertEquals("Edited student: " + Messages.format(AMY),
                 readOnlyLogic.execute("edit 1 n/" + AMY.getName().fullName).getFeedbackToUser());
         assertEquals(AMY, model.getAddressBook().getPersonList().getFirst());

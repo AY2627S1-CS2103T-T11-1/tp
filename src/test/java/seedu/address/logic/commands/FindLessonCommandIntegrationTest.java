@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestLogicUtil.logicOver;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.Logic;
-import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -25,8 +25,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -62,7 +60,7 @@ public class FindLessonCommandIntegrationTest {
         storage = new JsonAddressBookStorage(dataFile);
         storage.saveAddressBook(model.getAddressBook());
         originalData = Files.readAllBytes(dataFile);
-        logic = logic(storage);
+        logic = logicOver(model, storage, temporaryFolder);
     }
 
     @Test
@@ -195,18 +193,13 @@ public class FindLessonCommandIntegrationTest {
             }
         };
         assertEquals(ALGEBRA_MATCHES,
-                logic(unavailable).execute("findlesson 2 algebra").getFeedbackToUser());
+                logicOver(model, unavailable, temporaryFolder).execute("findlesson 2 algebra").getFeedbackToUser());
         assertUnchanged();
         Path absent = temporaryFolder.resolve("not-created.json");
         assertFalse(Files.exists(absent));
-        assertEquals(ALGEBRA_MATCHES, logic(new JsonAddressBookStorage(absent))
+        assertEquals(ALGEBRA_MATCHES, logicOver(model, new JsonAddressBookStorage(absent), temporaryFolder)
                 .execute("findlesson 2 algebra").getFeedbackToUser());
         assertFalse(Files.exists(absent));
-    }
-
-    private Logic logic(JsonAddressBookStorage studentStorage) {
-        return new LogicManager(model, new StorageManager(studentStorage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
     }
 
     private String feedback(String command) throws Exception {
