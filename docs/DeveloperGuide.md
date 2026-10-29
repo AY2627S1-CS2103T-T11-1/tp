@@ -1333,7 +1333,7 @@ Use a separate test folder whose `data/addressbook.json` contains `{"persons": [
 
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
-1. Exit, keep a copy of the data file, and remove the `date` field from the student's newest lesson, as in a file saved by v1.3. Start the app and view the student.
-   Expected: that lesson shows `(undated)` in place of the date and is now listed last, because undated lessons are kept at the oldest end. Then enter `log INDEX c/Binomial theorem date/DD/MM/YYYY` with the date two days ago, and view the student. Expected: `Binomial theorem` is listed above the undated lesson, which stays last.
+1. Exit, keep a copy of the data file, and remove the `date` field from a lesson that is not already the oldest, as in a file saved by v1.3. Ensure that the student also has multiple dated lessons, including two with the same date, and at least one other lesson without a date. Start the app and view the student.
+   Expected: every undated lesson appears after all dated lessons. Dated lessons are newest first; among lessons on the same date and among undated lessons, the record saved later appears first. The lesson whose date was removed appears within the undated group according to that order, rather than necessarily last. No lesson is lost.
 1. Exit, and change a lesson's date to `18/10/2026` in the data file. Start the app.
    Expected: the data file is treated as invalid and the app starts with no students, as for other invalid fields. Restore your copy afterwards.
