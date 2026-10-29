@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.model.Model;
@@ -13,6 +14,14 @@ import seedu.address.model.person.Person;
  * A utility class for test cases.
  */
 public class TestUtil {
+
+    /**
+     * Values made only of Unicode whitespace or invisible formatting characters, which addresses and lesson
+     * content must reject.
+     */
+    public static final List<String> BLANK_OR_INVISIBLE_VALUES = List.of(" ", "　", " ", " ",
+            " ", " \t  　 ", "​", "‌", "‍", "⁠", "﻿",
+            "​‌‍⁠﻿", "   ​⁠ ");
 
     /**
      * Folder used for temp files created during testing. Ignored by Git.
