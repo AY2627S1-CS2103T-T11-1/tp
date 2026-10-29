@@ -21,7 +21,8 @@
 * Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, safe JSON replacement, their tests and documentation.
 * OpenAI Codex, used by cibichandar, assisted with the implementation, tests,
-  documentation and screenshots for searching lesson histories.
+  documentation and screenshots for searching lesson histories, and with Unicode
+  whitespace normalization in command-entered phone numbers and its regression tests.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -257,7 +258,15 @@ Deleting the final lesson therefore leaves the student present with an empty his
 
 ### Editing a student
 
-`EditCommand` and `EditCommandParser` are adapted from AB3, with tags replaced by `Level` and `Subject`. `EditCommandParser` tokenizes `n/`, `p/`, `addr/`, `l/` and `sub/`. The preamble must be one student index, checked by `ParserUtil#parseStudentIndex`, and a prefix given twice is rejected with the shared duplicate-prefix message. Each value goes through the same `ParserUtil` method as `add`, so names are trimmed and their repeated spaces collapsed, and spaces in phone numbers are removed. The parsed values are stored in an `EditPersonDescriptor`, and a descriptor with no fields is rejected with `At least one field to edit must be provided.`.
+`EditCommand` and `EditCommandParser` are adapted from AB3, with tags replaced by
+`Level` and `Subject`. `EditCommandParser` tokenizes `n/`, `p/`, `addr/`, `l/` and
+`sub/`. The preamble must be one student index, checked by `ParserUtil#parseStudentIndex`,
+and a prefix given twice is rejected with the shared duplicate-prefix message.
+Each value uses the same `ParserUtil` method as `add`: names have whitespace collapsed,
+and `parsePhone` removes Unicode `White_Space` before checking eight ASCII digits.
+Zero-width formatting characters remain invalid; stored phone values are validated
+without this normalization. The parsed values are stored in an `EditPersonDescriptor`,
+and a descriptor with no fields is rejected with `At least one field to edit must be provided.`.
 
 `EditCommand` looks up the student in `Model#getFilteredPersonList`, so the index is the displayed one. `createEditedPerson` takes each field from the descriptor if present and from the existing student otherwise, then builds the new `Person` with the existing lesson list and flag. A `Person` is immutable and the `Lesson` list it returns is unmodifiable, so sharing that list is safe, and lesson numbers and dates are unchanged. `assertLessonsKept` and `assertFlagKept` check this. If the edit changes the student's identity (name ignoring case, or phone) to match another student, the command is rejected with `This student already exists in the list.`.
 
@@ -1036,6 +1045,24 @@ flag 1 r/Weak in algebra
    Expected, in order: `At least one field to edit must be provided.`, `The student index provided is invalid.`, `Invalid command format!` followed by the edit usage, and `Phone numbers should be exactly 8 digits.`. No student changes.
 1. Enter `edit 1 n/Amelia Tan addr/5 New Road`, then exit and restart from the same folder.<br>
    Expected: Amelia Tan is shown with `5 New Road`, phone `91234567`, level `Sec 4`, the flag and the Algebra record. The edit was saved.
+
+### Phone whitespace in add and edit
+
+Use a separate test folder with one fictional student, Amy Tan, at index 1.
+
+1. Enter `edit 1 p/8123 0001`, then repeat with the internal space replaced by
+   U+00A0 (non-breaking space) and U+202F (narrow non-breaking space). Paste the
+   actual characters, not the literal `\u00a0` or `\u202f` text.
+   Expected: each edit succeeds and the details panel shows `81230001`.
+1. Add another fictional student using a phone containing either Unicode space.
+   Expected: the saved phone has eight digits without whitespace. Exit and restart;
+   both students retain their normalized phones.
+1. Try seven or nine digits, `+65`, a hyphen, a letter and U+200B (zero-width space)
+   inside a phone, using both `add` and `edit`.
+   Expected: the phone constraint message; students, lessons, flags and saved data
+   are unchanged. Unicode whitespace does not make other non-digit characters valid.
+1. Try adding `amy tan` with `8123` and `0001` separated by U+00A0.
+   Expected: the duplicate-student error; changing whitespace does not create a new identity.
 
 ### Deleting a student
 

@@ -118,6 +118,11 @@ such as `c/o` or `date/time` cannot appear after whitespace inside lesson notes.
 it (`care of`, `date and time`); the duplicate-field and `log`/`editlesson`
 date errors say so. This is a deliberate, documented limitation.
 
+`add` and `edit` remove Unicode whitespace, including non-breaking spaces,
+from phone values before checking for exactly eight ASCII digits. Zero-width
+characters remain invalid. Stored phone values must already be eight digits;
+loading does not normalize them.
+
 For invalid `add` phones, levels and subjects, a separate prefix-like token
 after an otherwise valid value adds guidance listing the supported fields.
 Names and addresses keep their normal errors. No extra fields are parsed.

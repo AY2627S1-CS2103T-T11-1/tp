@@ -52,6 +52,16 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_phoneWithUnicodeSpaces_normalizesPhoneOnly() {
+        Person expected = new PersonBuilder(BOB).withAddress("Block\u00a01 Road").build();
+        for (String separator : new String[]{" ", "\u00a0", "\u202f", "\u2007", "\u2003"}) {
+            String phone = VALID_PHONE_BOB.substring(0, 4) + separator + VALID_PHONE_BOB.substring(4);
+            assertParseSuccess(parser, NAME_DESC_BOB + " p/" + phone + " addr/Block\u00a01 Road"
+                    + LEVEL_DESC_BOB + SUBJECT_DESC_BOB, new AddCommand(expected));
+        }
+    }
+
+    @Test
     public void parse_unsupportedPrefixInInvalidField_keepsErrorAndAddsHint() {
         String hint = "If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.";
         for (String separator : new String[]{" ", "\u00a0", "\t", "\u2003"}) {

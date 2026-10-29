@@ -49,6 +49,17 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_phoneWithUnicodeSpaces_normalizesPhoneOnly() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_AMY)
+                .withAddress("Block\u00a01 Road").build();
+        for (String separator : new String[]{" ", "\u00a0", "\u202f", "\u2007", "\u2003"}) {
+            String phone = VALID_PHONE_AMY.substring(0, 4) + separator + VALID_PHONE_AMY.substring(4);
+            assertParseSuccess(parser, "1 p/" + phone + " addr/Block\u00a01 Road",
+                    new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
     public void parse_nameWithAlOrAp_editsNameOnly() {
         // a/l and a/p are kept in the name and must not change the address
         for (String name : new String[]{"Muthu a/l Raju", "Siti a/p Ahmad"}) {

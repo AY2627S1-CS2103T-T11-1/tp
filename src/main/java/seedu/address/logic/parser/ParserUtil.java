@@ -107,13 +107,15 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String phone} into a {@code Phone}.
-     * All whitespaces, including those between digits such as in "9123 4567", will be removed.
+     * Removes Unicode White_Space characters, including non-breaking and narrow non-breaking spaces,
+     * before validating the eight ASCII digits. Other characters, including zero-width formatting
+     * characters, are kept for validation. Stored phone values do not use this command-input parser.
      *
      * @throws ParseException if the given {@code phone} is invalid.
      */
     public static Phone parsePhone(String phone) throws ParseException {
         requireNonNull(phone);
-        String phoneWithoutSpaces = phone.replaceAll("\\s+", "");
+        String phoneWithoutSpaces = phone.replaceAll("(?U)\\s+", "");
         if (!Phone.isValidPhone(phoneWithoutSpaces)) {
             throw new ParseException(Phone.MESSAGE_CONSTRAINTS);
         }
