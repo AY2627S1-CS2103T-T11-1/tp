@@ -29,7 +29,6 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.SummaryCommand;
 import seedu.address.logic.commands.UnflagCommand;
-import seedu.address.logic.commands.UnloggedCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.Lesson;
@@ -56,13 +55,10 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_unlogged() throws Exception {
-        assertTrue(parser.parseCommand("unlogged") instanceof UnloggedCommand);
-        assertTrue(parser.parseCommand("UNLOGGED") instanceof UnloggedCommand);
-        assertTrue(parser.parseCommand("UnLoGgEd") instanceof UnloggedCommand);
-        assertTrue(parser.parseCommand("  unlogged \u00a0") instanceof UnloggedCommand);
-        assertThrows(ParseException.class, UnloggedCommand.MESSAGE_INVALID_ARGUMENTS, () ->
-                parser.parseCommand("unlogged 1"));
+    public void parseCommand_removedCommand_throwsUnknownCommand() {
+        for (String command : List.of("unlogged", "UNLOGGED", "UnLoGgEd", "unlogged 1")) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(command));
+        }
     }
 
     @Test

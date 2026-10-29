@@ -10,7 +10,6 @@ import seedu.address.model.person.Person;
 public class StudentSummary {
     private final int studentCount;
     private final long lessonCount;
-    private final int studentsWithoutLessons;
 
     /**
      * Counts all students in {@code addressBook}, including their undated lesson records.
@@ -20,16 +19,10 @@ public class StudentSummary {
         requireNonNull(addressBook);
         studentCount = addressBook.getPersonList().size();
         long totalLessons = 0;
-        int withoutLessons = 0;
         for (Person student : addressBook.getPersonList()) {
-            int count = student.getLessonCount();
-            totalLessons += count;
-            if (count == 0) {
-                withoutLessons++;
-            }
+            totalLessons += student.getLessonCount();
         }
         lessonCount = totalLessons;
-        studentsWithoutLessons = withoutLessons;
     }
 
     /** Returns the number of students in the complete collection. */
@@ -40,10 +33,5 @@ public class StudentSummary {
     /** Returns the number of lesson records across all students. */
     public long getLessonCount() {
         return lessonCount;
-    }
-
-    /** Returns the number of students whose lesson history is empty. */
-    public int getStudentsWithoutLessons() {
-        return studentsWithoutLessons;
     }
 }

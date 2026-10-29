@@ -110,7 +110,6 @@ ask the team. Do not guess.
 | Log | `log INDEX c/CONTENT [date/DATE]` | `Logged lesson for {NAME} on {DATE}: {CONTENT}` |
 | Summary | `summary` | `Summary:` then a single summary paragraph on the next line |
 | Unflag | `unflag INDEX` | `Unflagged student: {NAME}.` |
-| Unlogged | `unlogged` | `Listed {COUNT} students with no recorded lessons.`, `Listed 1 student with no recorded lessons.`, or `No students without lesson records found. Use list to show all students.` |
 | **View** | **`view INDEX`** | Header `Lesson records for {NAME} ({COUNT}):` then one line per lesson, `{NUMBER}. {DATE}: {CONTENT}`, or `No lessons logged yet for {NAME}.` |
 
 Command words ignore case, so `list`, `LIST` and `LiSt` select the same command.
@@ -129,11 +128,9 @@ and index or content errors get no date hint. The UG suggests `care of` and
 `date and time`. Valid commands with a different meaning, such as
 `edit 1 addr/Unit l/2`, are a documented limitation; escaping is future work.
 
-**Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one), then `K students have no lessons recorded.` (use `1 student has` for one), or `Every student has at least one lesson recorded.` when none have empty histories. An empty collection instead says `No students yet. Add a student to start recording lessons.`.
+**Summary paragraph (#146):** after the heading, show `You have N students and M lesson records in total.` (use `student` and `lesson record` for one). An empty collection instead says `No students yet. Add a student to start recording lessons.`.
 
 **Summary (#146):** count the complete address book, regardless of `find` or `flagged`, and keep the current filter and displayed indexes. Include undated and repeated lesson occurrences. `SummaryCommandParser` accepts only whitespace; arguments give the invalid command format with `SummaryCommand.MESSAGE_USAGE`: `summary: Shows totals for all students and lesson records. Accepts no parameters.`, then `Example: summary` on a new line. Summary values are derived and never stored in JSON; the command changes no student data and does not attempt to save.
-
-**Students without recorded lessons (#171):** `unlogged` replaces the active filter over all students with an empty-history predicate, keeping original order and renumbering matches from 1. Undated records count as history. Logging a first lesson removes its student and renumbers the remaining matches, while the details panel keeps the just-logged student without highlighting another card. `list` restores all students; `find` and `flagged` replace the filter; `summary` keeps the filter and still counts everyone. `UnloggedCommandParser` accepts only Unicode whitespace; arguments give `The unlogged command does not accept parameters.` without changing the filter. No data changes, save attempts or new JSON fields are introduced. The filter is not persisted.
 
 **Card lesson status (#146):** below the subject, show `No lessons yet`, `1 lesson, last DD/MM/YYYY` or `N lessons, last DD/MM/YYYY`. With only undated records, show `1 lesson (undated)` or `N lessons (undated)`. Count all records and use the greatest recorded date, not the last command time. Logging, editing and deleting a lesson refresh the line through the existing immutable student replacement. Keep the flag icon independent.
 
@@ -355,7 +352,7 @@ accepted by the parser. Commands apply these errors consistently:
   whether it is present. `withFlag(Flag)` and `withoutFlag()` return immutable
   copies and preserve all other fields. A `Flag` has an optional reason; reasons
   use `Flag#isValidReason` and `Flag.MAX_REASON_LENGTH`.
-- `StudentSummary(ReadOnlyAddressBook)` captures immutable student, lesson and empty-history totals through `getStudentCount()`, `getLessonCount()` (a `long`) and `getStudentsWithoutLessons()`. It is not a persisted model field.
+- `StudentSummary(ReadOnlyAddressBook)` captures immutable student and lesson totals through `getStudentCount()` and `getLessonCount()` (a `long`). It is not a persisted model field.
 - `Person#getLessonCount()` includes undated records; `getLatestLessonDate()` returns the greatest recorded `LocalDate`, or empty if none are dated. `Messages#formatLessonStatus(Person)` formats the card line.
 - `Person#getLessons()` returns an unmodifiable list, oldest first.
   `Person#withLessonAdded(Lesson)` returns a new `Person` with the lesson
