@@ -1489,10 +1489,10 @@ public class PersonListPanelTest {
      * Creates mouse events with button state matching the press or release phase.
      */
     private static MouseEvent mouseEvent(EventType<MouseEvent> type, MouseButton button) {
-        boolean pressed = type == MouseEvent.MOUSE_PRESSED;
+        boolean isPressed = type == MouseEvent.MOUSE_PRESSED;
         return new MouseEvent(type, 1, 1, 1, 1, button, 1, false, false, false, false,
-                pressed && button == MouseButton.PRIMARY, pressed && button == MouseButton.MIDDLE,
-                pressed && button == MouseButton.SECONDARY, false, false, true, null);
+                isPressed && button == MouseButton.PRIMARY, isPressed && button == MouseButton.MIDDLE,
+                isPressed && button == MouseButton.SECONDARY, false, false, true, null);
     }
 
     /**
