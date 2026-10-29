@@ -156,7 +156,7 @@ public class Person {
     }
 
     /**
-     * Returns a copy of this student without the lesson at {@code zeroBasedIndex} in logging order.
+     * Returns a copy of this student without the lesson at {@code zeroBasedIndex} in stored order.
      * This student and the order of the remaining lessons are unchanged.
      *
      * @throws IndexOutOfBoundsException if the index does not identify an existing lesson
