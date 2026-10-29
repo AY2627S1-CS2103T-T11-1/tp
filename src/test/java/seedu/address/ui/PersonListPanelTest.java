@@ -941,14 +941,25 @@ public class PersonListPanelTest {
     }
 
     @Test
-    public void resultDisplay_multiLineMessage_hasLineSpacing(@TempDir Path directory) throws Exception {
+    public void resultDisplay_longMessageAtMinimumSize_lastLineFitsScrollableContent(@TempDir Path directory)
+            throws Exception {
         runOnJavaFxThread(() -> {
             MainWindow window = createClickableWindow(clickTestLogic(clickTestModel(),
                     new JsonAddressBookStorage(directory.resolve("students.json")), directory), directory);
             try {
                 Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                root.resize(window.getPrimaryStage().getMinWidth(),
+                        window.getPrimaryStage().getMinHeight() - TITLE_BAR_ALLOWANCE);
                 enterClickTestCommand(root, "find");
-                assertEquals(3, ((Text) root.lookup("#resultDisplay .text")).getLineSpacing());
+                // The text area sizes its scrollable content without line spacing, so any extra spacing would
+                // leave the last line below the content's end, where scrolling cannot reach it (#167)
+                Region content = (Region) root.lookup("#resultDisplay .content");
+                Text text = (Text) root.lookup("#resultDisplay .text");
+                double textHeight = content.snappedTopInset() + text.getLayoutBounds().getHeight()
+                        + content.snappedBottomInset();
+                double scrollableHeight = content.prefHeight(content.getWidth());
+                assertTrue(textHeight <= scrollableHeight + LAYOUT_TOLERANCE,
+                        "Last line ends " + (textHeight - scrollableHeight) + "px below the scrollable content");
             } finally {
                 window.getPrimaryStage().close();
             }
