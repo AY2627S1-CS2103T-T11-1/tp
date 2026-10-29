@@ -331,7 +331,7 @@ accepted by the parser. Commands apply these errors consistently:
 
 ## 5. Agreed Java interfaces (as on `master`)
 
-- `JsonUtil#fromJsonString` reads exactly one JSON value, allowing only whitespace after it. Extra root values and malformed trailing content are JSON parse failures. Student-file loading then uses the existing sanitized recovery warning and save guard; the ignored suffix is never discarded by a later save. Preferences use the same strict reader and retain their existing fallback policy.
+- `JsonUtil#fromJsonString` reads exactly one JSON value, allowing only whitespace after it. Extra root values and malformed trailing content are JSON parse failures. Student-file loading then uses the existing sanitized recovery warning and save guard; the ignored suffix is never discarded by a later save. Preferences use the same strict reader and retain their existing fallback policy. `"guiSettings": null` is also treated as an unreadable preferences file, so startup uses the defaults instead of failing (#209).
 
 - `LogicManager` saves student data only when it differs from the snapshot taken before command execution. Read-only commands and edits that leave stored values unchanged skip saving, so help, exit and filters still work during recovery or write failures. First-run sample data is saved by the first data-changing command.
 

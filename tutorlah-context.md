@@ -69,7 +69,7 @@ Student data and preferences are serialized completely, written to a unique temp
 
 ## Where the changes land in the code
 
-Saved JSON files contain exactly one root value followed only by whitespace. Extra values or malformed trailing content are rejected. An invalid student file enters protected recovery, preserving its original bytes; invalid preferences retain the existing default-preferences fallback.
+Saved JSON files contain exactly one root value followed only by whitespace. Extra values or malformed trailing content are rejected. An invalid student file enters protected recovery, preserving its original bytes; invalid preferences retain the existing default-preferences fallback. Null GUI settings count as invalid preferences (#209).
 
 - **Model:** the `Person` fields change, `Level` and `Subject` are added, the
   duplicate rule changes, a `Lesson` list sits on each student, and an optional

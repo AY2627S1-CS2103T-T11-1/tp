@@ -107,6 +107,45 @@ public class MainAppTest {
     }
 
     @Test
+    public void init_preferencesWithNullGuiSettings_usesDefaultsAndPreservesStudentFile() throws Exception {
+        Path file = temporaryFolder.resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Files.writeString(file, "{\"persons\":[]}");
+        byte[] original = Files.readAllBytes(file);
+        Files.writeString(preferences, "{\"guiSettings\":null}");
+        MainApp app = new MainApp(preferences, file);
+
+        app.init();
+        try {
+            assertNotNull(app.ui);
+            assertTrue(app.getStartupWarning().isEmpty());
+            assertEquals(new UserPrefs(), app.model.getUserPrefs());
+            assertEquals(new UserPrefs(), app.storage.readUserPrefs().orElseThrow());
+        } finally {
+            app.stop();
+        }
+        assertArrayEquals(original, Files.readAllBytes(file));
+    }
+
+    @Test
+    public void init_validPreferences_keepsSavedGuiSettings() throws Exception {
+        Path file = temporaryFolder.resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Files.writeString(file, "{\"persons\":[]}");
+        UserPrefs savedPrefs = new UserPrefs();
+        savedPrefs.setGuiSettings(new GuiSettings(800, 500, 10, 20));
+        Files.writeString(preferences, JsonUtil.toJsonString(savedPrefs));
+        MainApp app = new MainApp(preferences, file);
+
+        app.init();
+        try {
+            assertEquals(savedPrefs, app.model.getUserPrefs());
+        } finally {
+            app.stop();
+        }
+    }
+
+    @Test
     public void init_sameDataFolderAlreadyLocked_blocksSecondInstanceUntilFirstStops() throws Exception {
         Path file = temporaryFolder.resolve("data").resolve("students.json");
         Path preferences = temporaryFolder.resolve("preferences.json");
