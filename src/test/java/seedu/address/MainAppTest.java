@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.ExitCommand;
@@ -79,6 +81,29 @@ public class MainAppTest {
         assertEquals(app.model.getAddressBook(), new AddressBook(app.storage.readAddressBook().orElseThrow()));
         assertEquals(1, app.model.getAddressBook().getPersonList().size());
         assertTrue(Files.exists(preferences));
+    }
+
+    @Test
+    public void init_preferencesWithTrailingContent_usesDefaultsAndPreservesStudentFile() throws Exception {
+        Path file = temporaryFolder.resolve("students.json");
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Files.writeString(file, "{\"persons\":[]}");
+        byte[] original = Files.readAllBytes(file);
+        UserPrefs savedPrefs = new UserPrefs();
+        savedPrefs.setGuiSettings(new GuiSettings(800, 500, 10, 20));
+        Files.writeString(preferences, JsonUtil.toJsonString(savedPrefs) + "\n{}");
+        MainApp app = new MainApp(preferences, file);
+
+        app.init();
+        try {
+            assertNotNull(app.ui);
+            assertTrue(app.getStartupWarning().isEmpty());
+            assertEquals(new UserPrefs(), app.model.getUserPrefs());
+            assertEquals(new UserPrefs(), app.storage.readUserPrefs().orElseThrow());
+        } finally {
+            app.stop();
+        }
+        assertArrayEquals(original, Files.readAllBytes(file));
     }
 
     @Test
