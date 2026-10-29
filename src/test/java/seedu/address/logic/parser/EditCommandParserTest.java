@@ -110,6 +110,8 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_ADDRESS_DESC, Address.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1" + INVALID_LEVEL_DESC, Level.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1" + INVALID_SUBJECT_DESC, Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 l/中二", Level.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 sub/தமிழ்", Subject.MESSAGE_CONSTRAINTS);
 
         // invalid phone followed by valid level
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC + LEVEL_DESC_AMY, Phone.MESSAGE_CONSTRAINTS);

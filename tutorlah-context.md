@@ -38,6 +38,7 @@ recorded about them, not building a new kind of app.
 | **Entity** | `Person` (a contact) | Student |
 | **Fields** | name, phone, email, address, tags | name, phone, address, **level**, **subject**, and an optional follow-up **flag** with an optional reason. Email and tags are not in the spec. |
 | **Name rule** | letters and digits only (`[\p{Alnum}][\p{Alnum} ]*`) | Unicode letters, spaces, `'` `-` `.` `/`, with no digits, so names like Mary-Anne, O'Brien and Ramesh s/o Kumar work |
+| **Level and subject rules** | not in AB3 | English letters (A-Z, a-z), digits 0 to 9 and spaces, up to 40 characters for a level and 50 for a subject. Subjects also allow `-` `&` `(` `)` `+` and commas, and start with an English letter or a digit 0 to 9. Other scripts, such as Chinese or Tamil, are not accepted (#211). |
 | **Phone rule** | digits only, at least 3 | exactly 8 digits, since every Singapore number is 8 digits and a fixed length catches typos |
 | **Duplicate** | same name (`isSamePerson`) | same phone **and** same name ignoring case, since two students can both be "Tan Wei Ming" |
 | **`list`** | ignores any extra text | rejects parameters; reports `Listed {COUNT} students.` (`Listed 1 student.` for one) or `No students found. Use add to create a student.` |
