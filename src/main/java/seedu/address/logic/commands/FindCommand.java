@@ -23,14 +23,12 @@ public class FindCommand extends Command {
     public static final String COMMAND_WORD = "find";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Finds students matching all the given keywords, ignoring case.\n"
-            + "Keywords before any prefix, and those after " + PREFIX_NAME + ", search names; "
-            + PREFIX_SUBJECT + " searches subjects and " + PREFIX_LEVEL + " searches levels.\n"
-            + "Keywords can match part of a field and appear in any order.\n"
+            + ": Shows students matching all the given keywords (any case, part of a word is enough).\n"
             + "Parameters: [KEYWORD]... [" + PREFIX_NAME + "NAME] [" + PREFIX_SUBJECT + "SUBJECT] ["
             + PREFIX_LEVEL + "LEVEL] (at least one)\n"
-            + "Example: " + COMMAND_WORD + " tan " + PREFIX_SUBJECT + "Physics " + PREFIX_LEVEL + "Sec 3\n"
-            + "Use list to show all students again.";
+            + "  Words before any prefix, or after " + PREFIX_NAME + ", search names.\n"
+            + "  " + PREFIX_SUBJECT + " searches subjects. " + PREFIX_LEVEL + " searches levels.\n"
+            + "Example: " + COMMAND_WORD + " tan " + PREFIX_SUBJECT + "Physics " + PREFIX_LEVEL + "Sec 3";
     public static final String MESSAGE_SUCCESS = "Found %1$d students.";
     public static final String MESSAGE_SUCCESS_SINGLE = "Found 1 student.";
     public static final String MESSAGE_NO_MATCHES = "No matching students found. Use list to show all students.";

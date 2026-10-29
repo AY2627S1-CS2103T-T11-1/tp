@@ -14,10 +14,10 @@
     <padding>
       <Insets top="16" right="16" bottom="16" left="16" />
     </padding>
-    <Label styleClass="empty-state-title" text="No student selected." />
-    <Label styleClass="empty-state-text" wrapText="true"
-           text="Click a student, or type view INDEX, to see their details and lessons here." />
-    <Label styleClass="empty-state-command" text="view 1" />
+    <!-- StudentDetailPanel sets the guidance and command to suit the displayed and saved students -->
+    <Label fx:id="noStudentTitle" styleClass="empty-state-title" text="No student selected." />
+    <Label fx:id="noStudentText" styleClass="empty-state-text" wrapText="true" />
+    <Label fx:id="noStudentCommand" styleClass="empty-state-command" wrapText="true" />
   </VBox>
 
   <ScrollPane fx:id="detailScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="detail-scroll">

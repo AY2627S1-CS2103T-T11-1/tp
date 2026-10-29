@@ -89,6 +89,9 @@ Student data and preferences are serialized completely, written to a unique temp
   the panel. Successful views highlight the matching card and scroll it into view.
   Card presses are handled before selection updates, so switching from typed
   commands needs only one click. `view` still lists the records in the result box.
+  With no student selected, the panel suggests `view 1`, `list` or the `add` format,
+  whichever works for the current list. The window can shrink to 700 x 420 pixels
+  and opens no larger than the screen, for 1280x720 displays at 150% scale.
 
 The README, website home page and User Guide share `docs/images/Ui.png`,
 a screenshot of the current GUI using fictional student and lesson details.

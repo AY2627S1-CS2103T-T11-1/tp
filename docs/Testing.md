@@ -85,7 +85,7 @@ To check the GUI manually, launch from a separate writable folder containing
    ```
 
 2. Enter `view 2`. Resize the window between 1000 and its minimum width of 700 pixels several times,
-   keeping its height at least 600 pixels. Charlotte's card should grow when its name or level/subject
+   at any height down to the minimum of 420 pixels. Charlotte's card should grow when its name or level/subject
    wraps, then return to its compact height when widened. Alicia's short card should stay compact.
    Phone numbers and addresses appear in the details panel, not the cards; check Charlotte's full address
    there, scrolling the details panel if needed.

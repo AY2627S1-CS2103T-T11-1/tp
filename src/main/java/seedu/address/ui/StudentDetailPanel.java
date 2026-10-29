@@ -1,12 +1,19 @@
 package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
+import javafx.beans.InvalidationListener;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -18,7 +25,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
@@ -30,15 +40,29 @@ import seedu.address.model.person.Person;
 public class StudentDetailPanel extends UiPart<Region> {
 
     static final String NO_FLAG_REASON = "Flagged (no reason given)";
+    static final String SELECT_GUIDANCE = "Click a student, or type view INDEX, to see their details and lessons here.";
+    static final String FILTERED_GUIDANCE = "No students are displayed. Type list to show all students.";
+    static final String NO_STUDENTS_GUIDANCE = "Add a student first. Their details and lessons will show here.";
+    private static final String ADD_FORMAT = AddCommand.COMMAND_WORD + " " + PREFIX_NAME + "NAME " + PREFIX_PHONE
+            + "PHONE " + PREFIX_ADDRESS + "ADDRESS " + PREFIX_LEVEL + "LEVEL " + PREFIX_SUBJECT + "SUBJECT";
 
     private static final String FXML = "StudentDetailPanel.fxml";
 
+    /** More than the width of the details panel's vertical scroll bar. */
+    private static final double SCROLL_BAR_ALLOWANCE = 20;
+
     private final Logger logger = LogsCenter.getLogger(StudentDetailPanel.class);
 
+    private final ObservableList<Person> displayedStudents;
+    private final ObservableList<Person> allStudents;
     private Person student;
 
     @FXML
     private VBox noStudentState;
+    @FXML
+    private Label noStudentText;
+    @FXML
+    private Label noStudentCommand;
     @FXML
     private ScrollPane detailScrollPane;
     @FXML
@@ -75,14 +99,20 @@ public class StudentDetailPanel extends UiPart<Region> {
     private Label noLessonsCommand;
 
     /**
-     * Creates a panel that starts with no student selected.
+     * Creates a panel that starts with no student selected. Its guidance suggests a command that works
+     * for the {@code displayedStudents} and {@code allStudents} saved, and follows changes to either list.
      */
-    public StudentDetailPanel() {
+    public StudentDetailPanel(ObservableList<Person> displayedStudents, ObservableList<Person> allStudents) {
         super(FXML);
+        this.displayedStudents = requireNonNull(displayedStudents);
+        this.allStudents = requireNonNull(allStudents);
         // A chip wider than the panel wraps its own text instead of being cut off
         level.maxWidthProperty().bind(chips.widthProperty());
         subject.maxWidthProperty().bind(chips.widthProperty());
         chips.widthProperty().addListener((unused1, unused2, unused3) -> arrangeChips());
+        displayedStudents.addListener((InvalidationListener) unused -> updateGuidance());
+        allStudents.addListener((InvalidationListener) unused -> updateGuidance());
+        updateGuidance();
         clear();
     }
 
@@ -167,15 +197,36 @@ public class StudentDetailPanel extends UiPart<Region> {
     /**
      * Places the level and subject chips side by side when both fit on one line, and otherwise stacks
      * them, so that a chip which still does not fit can wrap its text within the full width.
+     * Stacked chips return side by side only with room to spare for the scroll bar, which stacking
+     * can add or remove; otherwise the two layouts would keep replacing each other.
      */
     private void arrangeChips() {
-        boolean isSideBySide = level.prefWidth(-1) + chipRow.getSpacing() + subject.prefWidth(-1) <= chips.getWidth();
+        boolean isStacked = !chips.getChildren().contains(chipRow);
+        double availableWidth = chips.getWidth() - (isStacked ? SCROLL_BAR_ALLOWANCE : 0);
+        boolean isSideBySide = level.prefWidth(-1) + chipRow.getSpacing() + subject.prefWidth(-1) <= availableWidth;
         if (isSideBySide && !chips.getChildren().contains(chipRow)) {
             chipRow.getChildren().setAll(level, subject);
             chips.getChildren().setAll(chipRow);
         } else if (!isSideBySide && chips.getChildren().contains(chipRow)) {
             chipRow.getChildren().clear();
             chips.getChildren().setAll(level, subject);
+        }
+    }
+
+    /**
+     * Suggests viewing the first displayed student, or else listing the students a filter hides,
+     * or else adding a first student.
+     */
+    private void updateGuidance() {
+        if (!displayedStudents.isEmpty()) {
+            noStudentText.setText(SELECT_GUIDANCE);
+            noStudentCommand.setText(ViewCommand.COMMAND_WORD + " 1");
+        } else if (!allStudents.isEmpty()) {
+            noStudentText.setText(FILTERED_GUIDANCE);
+            noStudentCommand.setText(ListCommand.COMMAND_WORD);
+        } else {
+            noStudentText.setText(NO_STUDENTS_GUIDANCE);
+            noStudentCommand.setText(ADD_FORMAT);
         }
     }
 
