@@ -19,9 +19,9 @@ public class TestUtil {
      * Values made only of Unicode whitespace or invisible formatting characters, which addresses and lesson
      * content must reject.
      */
-    public static final List<String> BLANK_OR_INVISIBLE_VALUES = List.of(" ", "　", " ", " ",
-            " ", " \t  　 ", "​", "‌", "‍", "⁠", "﻿",
-            "​‌‍⁠﻿", "   ​⁠ ");
+    public static final List<String> BLANK_OR_INVISIBLE_VALUES = List.of("\u2003", "\u3000", "\u00a0", "\u2007",
+            "\u202f", " \t\u2003\u00a0\u3000 ", "\u200b", "\u200c", "\u200d", "\u2060", "\ufeff",
+            "\u200b\u200c\u200d\u2060\ufeff", " \u2003\u00a0\u200b\u2060 ");
 
     /**
      * Folder used for temp files created during testing. Ignored by Git.
