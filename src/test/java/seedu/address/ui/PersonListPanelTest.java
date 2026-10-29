@@ -161,6 +161,36 @@ public class PersonListPanelTest {
     }
 
     @Test
+    public void commandBox_unicodeSpacedPhone_updatesDetailsAndKeepsThemAfterInvalidInput(@TempDir Path directory)
+            throws Exception {
+        runOnJavaFxThread(() -> {
+            ModelManager model = clickTestModel();
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("students.json"));
+            MainWindow window = createClickableWindow(clickTestLogic(model, storage, directory), directory);
+            try {
+                Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+                for (String separator : List.of(" ", "\u00a0", "\u202f")) {
+                    assertFeedback(root, "edit 1 p/9123" + separator + "0001",
+                            "Edited student: Amy; Phone: 91230001; Address: 123, Jurong West Ave 6, #08-111; "
+                                    + "Level: Sec 4; Subject: E-Math", false);
+                    assertEquals("Phone: 91230001", text(root, "#phone"));
+                    assertEquals(3, model.getFilteredPersonList().getFirst().getLessons().size());
+                }
+                assertFeedback(root, "edit 1 p/9123\u200b0001", "Phone numbers should be exactly 8 digits.", true);
+                assertEquals("Phone: 91230001", text(root, "#phone"));
+                assertEquals("91230001", model.getFilteredPersonList().getFirst().getPhone().value);
+                try {
+                    assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+                } catch (Exception exception) {
+                    throw new AssertionError(exception);
+                }
+            } finally {
+                window.getPrimaryStage().close();
+            }
+        });
+    }
+
+    @Test
     public void commandBox_replacingText_keepsCaretUndoAndExplicitSubmission() throws Exception {
         runOnJavaFxThread(() -> {
             List<String> executed = new ArrayList<>();

@@ -121,7 +121,11 @@ Format: `add n/NAME p/PHONE addr/ADDRESS l/LEVEL sub/SUBJECT`
 * All five fields are required.
 * `NAME` is 1 to 100 characters of letters, spaces, apostrophes, hyphens, periods and slashes, with at least one letter and no digits. Repeated spaces are reduced to one. Names such as `Ramesh s/o Kumar`, `Muthu a/l Raju` and `Siti a/p Ahmad` work.
 * The address prefix is `addr/`, not `a/`, so `a/l` and `a/p` in a name are kept as part of the name. If you type `a/` and leave out `addr/`, the error message reminds you to use `addr/`.
-* `PHONE` must be exactly 8 digits. Spaces between digits are removed, so `9123 4567` is saved as `91234567`. Do not add `+65` or another country code.
+* `PHONE` must contain exactly 8 digits from `0` to `9`. In `add` and `edit`,
+  ordinary spaces and other Unicode whitespace, including non-breaking and narrow
+  non-breaking spaces copied from documents, are removed before checking the digits.
+  For example, `9123 4567` is saved as `91234567`. Zero-width characters are not removed.
+  Do not add `+65`, another country code, hyphens or other non-digit characters.
 * `ADDRESS` is 1 to 200 characters. It cannot contain only whitespace or invisible formatting characters, such as non-breaking spaces and zero-width spaces.
 * `LEVEL` is 1 to 40 characters of letters, digits and spaces, such as `Sec 3`, `JC1` or `Sec 4 Normal Academic`.
 * `SUBJECT` is 1 to 50 characters of letters, digits, spaces, hyphens, `&`, `(`, `)`, `+` and commas, starting with a letter or digit, such as `E-Math`, `H2 Chemistry` or `E-Math & A-Math`.
@@ -524,6 +528,9 @@ An abrupt shutdown, such as force-quitting TutorLah before the replacement finis
 TutorLah data is saved automatically as a JSON file `data/addressbook.json`, relative to the folder from which you launch the app. If you follow the Quick start steps, this is the folder containing the JAR. Advanced users are welcome to update data directly by editing that data file.
 
 Keep all students inside one root JSON object. Only whitespace may follow its closing brace; a second object or any other trailing content makes the file invalid and activates the recovery protection described below. Do not concatenate separate data files.
+
+Phone values in the data file must already contain exactly eight digits from `0` to `9`,
+without spaces. Whitespace is removed only from phone values entered through commands.
 
 In the data file, a lesson's date is stored as `"date" : "YYYY-MM-DD"`, for example `"date" : "2026-10-18"`. A lesson without a `date` field is shown as `(undated)`. Stored dates must be real dates from `2000-01-01` onwards. Earlier dates, impossible dates and dates in another format make the data file invalid. Existing future dates are kept when loading, so a system-clock correction does not make saved records unreadable; `log` and date changes through `editlesson` still reject future dates.
 

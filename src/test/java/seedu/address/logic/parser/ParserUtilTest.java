@@ -9,8 +9,12 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.time.LocalDate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -151,6 +155,35 @@ public class ParserUtilTest {
         String phoneWithWhitespace = WHITESPACE + VALID_PHONE + WHITESPACE;
         Phone expectedPhone = new Phone(VALID_PHONE);
         assertEquals(expectedPhone, ParserUtil.parsePhone(phoneWithWhitespace));
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> parsePhone_unicodeWhitespace_returnsDigitsOnly() {
+        return IntStream.of(0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x0020, 0x0085, 0x00a0, 0x1680,
+                0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009,
+                0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000)
+                .mapToObj(codePoint -> DynamicTest.dynamicTest("Whitespace U+%04X".formatted(codePoint), () -> {
+                    String separator = Character.toString(codePoint);
+                    String input = separator + String.join(separator, VALID_PHONE.split("")) + separator;
+                    assertEquals(new Phone(VALID_PHONE), ParserUtil.parsePhone(input));
+                }));
+    }
+
+    @Test
+    public void parsePhone_mixedWhitespace_preservesLeadingZero() throws Exception {
+        assertEquals(new Phone("01234567"), ParserUtil.parsePhone("\u00a00\t123\u202f45\u200367\u3000"));
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> parsePhone_invalidAfterNormalization_keepsPhoneError() {
+        return Stream.of("", " \u00a0\u202f", "812\u00a00001", "81234\u202f0001", "+65\u00a081230001",
+                "8123\u00a0O001", "8123-0001", "8123/0001", "8123\u200b0001", "8123\u200c0001",
+                "8123\u200d0001", "8123\u20600001", "8123\ufeff0001", "8123\u180e0001",
+                "8123\u00ad0001", "8123\u00000001", "8123\u001c0001", "８１２３０００１", "٨١٢٣٠٠٠١",
+                "8123\\u00a00001")
+                .map(phone -> DynamicTest.dynamicTest("Invalid phone: " + phone, () ->
+                        assertThrows(ParseException.class, Phone.MESSAGE_CONSTRAINTS, () ->
+                                ParserUtil.parsePhone(phone))));
     }
 
     @Test

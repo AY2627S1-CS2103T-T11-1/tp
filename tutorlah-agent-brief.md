@@ -271,7 +271,7 @@ spaces before the command box removes them; pasting never executes a command.
 | Field | Prefix | Accepted | Invalid-value message |
 |---|---|---|---|
 | Name | `n/` | 1 to 100 characters after collapsing repeated spaces. Unicode letters, spaces, `'`, `-`, `.` and `/`, with at least one letter. No digits. | `Names should be 1 to 100 characters long, contain at least one letter, and use only letters, spaces, apostrophes, hyphens, periods and slashes.` |
-| Phone | `p/` | Exactly 8 digits. Spaces inside are removed first. No `+` or country code. | `Phone numbers should be exactly 8 digits.` |
+| Phone | `p/` | Exactly 8 ASCII digits after removing Unicode whitespace. No `+` or country code. | `Phone numbers should be exactly 8 digits.` |
 | Address | `addr/` | 1 to 200 printable characters | `Addresses must not be blank and must be at most 200 characters.` |
 | Level | `l/` | 1 to 40 characters: letters, digits, spaces | `Levels should be 1 to 40 characters long and use only letters, digits and spaces.` |
 | Subject | `sub/` | 1 to 50 characters, starting with a letter or digit: letters, digits, spaces, hyphens, `&`, `(`, `)`, `+`, commas | `Subjects should be 1 to 50 characters long, start with a letter or digit, and use only letters, digits, spaces, hyphens, &, (, ), + and commas.` |
@@ -279,6 +279,10 @@ spaces before the command box removes them; pasting never executes a command.
 | Lesson date | `date/` | Optional. A real date as `D/M/YYYY` or `DD/MM/YYYY` (digits only, four-digit year), from 01/01/2000 (`Lesson.EARLIEST_DATE`), not in the future | `Lesson dates should be real dates from 01/01/2000 onwards, in the format DD/MM/YYYY, for example 21/10/2026.` |
 | Flag reason | `r/` | Optional. 1 to 100 characters after trimming surrounding Unicode whitespace; not blank and no control characters | `Flag reasons must not be blank and must be at most 100 characters.` |
 
+- `ParserUtil#parsePhone` removes Unicode `White_Space` in `add` and `edit`,
+  including non-breaking and narrow non-breaking spaces. Zero-width formatting
+  characters are not removed. JSON phone values still require eight ASCII digits
+  without whitespace; storage does not use command-input normalization.
 - Addresses and lesson content cannot consist entirely of Unicode whitespace
   or format characters, including non-breaking spaces, ZERO WIDTH SPACE
   (U+200B), WORD JOINER (U+2060) and BOM (U+FEFF). The model validators enforce
