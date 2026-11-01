@@ -22,7 +22,7 @@ You can reach us via zikiai at the email `e1525973@u.nus.edu`
 
 ### aerodart
 
-<img src="images/aerodart.png" width="200px">
+<img src="images/aerodart.png" width="200px" alt="Profile photo of aerodart">
 
 [[github](https://github.com/aerodart)]
 
