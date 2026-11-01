@@ -9,32 +9,29 @@ and optional date;
 'Since the beta syntax does not support placing the condition outside the
 'diamond we place it as the true branch instead.
 
-if () then ([input is
-invalid])
+if () then ([valid input])
+else ([else])
     :Show the error;
     stop
-else ([else])
 endif
 
-if () then ([index is not
-in the list])
+if () then ([student index in list])
+else ([else])
     :Show the invalid
     student index error;
     stop
-else ([else])
 endif
 
-if () then ([date/ given])
-    :Use the given date;
+if () then ([date supplied])
+    :Use the supplied date;
 else ([else])
     :Use today's date;
 endif
 
-if () then ([date is
-after today])
+if () then ([date on or before today])
+else ([else])
     :Show the future-date error;
     stop
-else ([else])
 endif
 
 :Insert the lesson before
