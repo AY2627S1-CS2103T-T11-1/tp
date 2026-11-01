@@ -22,13 +22,25 @@ activate logicManager
 logicManager -> addressBookParser : parseCommand(...)
 activate addressBookParser
 
+create parser
+addressBookParser -> parser : DeleteLessonCommandParser()
+activate parser
+parser --> addressBookParser
+deactivate parser
+
 addressBookParser -> parser : parse("1 2")
 activate parser
 
 create command
 parser -> command : DeleteLessonCommand(...)
+activate command
+command --> parser
+deactivate command
+
 parser --> addressBookParser : command
 deactivate parser
+parser -[hidden]-> addressBookParser
+destroy parser
 
 addressBookParser --> logicManager : command
 deactivate addressBookParser

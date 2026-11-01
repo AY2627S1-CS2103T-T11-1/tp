@@ -281,7 +281,7 @@ Format: `flag INDEX [r/REASON]`
 
 Marks a student needing follow-up. Their card and details show a red flag; the details panel shows the reason or `Flagged (no reason given)`.
 
-- A reason is optional. If given, use 1–100 characters after removing surrounding spaces; it cannot be blank or contain only invisible characters. Pasted tabs and line breaks become spaces in the command box; other control characters are rejected.
+- A reason is optional. If given, use 1–100 characters after removing surrounding spaces; it cannot be blank or contain only invisible characters. Pasted tabs and line breaks become spaces in the command box; other control characters cannot be part of a reason.
 - Only `r/` is recognised as a field, so reasons can contain text such as `a/level`, `date/` or `c/homework`.
 - Flagging again with a different reason replaces the reason. The same reason gives an already-flagged message. Omitting `r/` keeps an existing reason and reports that the student is already flagged.
 - Flags are saved and kept when you edit student details or change lessons.

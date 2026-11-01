@@ -22,13 +22,25 @@ activate logicManager
 logicManager -> addressBookParser : parseCommand(...)
 activate addressBookParser
 
+create parser
+addressBookParser -> parser : DeleteCommandParser()
+activate parser
+parser --> addressBookParser
+deactivate parser
+
 addressBookParser -> parser : parse("1")
 activate parser
 
 create command
 parser -> command : DeleteCommand(...)
+activate command
+command --> parser
+deactivate command
+
 parser --> addressBookParser : command
 deactivate parser
+parser -[hidden]-> addressBookParser
+destroy parser
 
 addressBookParser --> logicManager : command
 deactivate addressBookParser
@@ -48,7 +60,7 @@ deactivate model
 note over command, model
   Deleting this student also deletes
   their lesson records from the
-  saved student data.
+  student data.
 end note
 
 command --> logicManager : commandResult

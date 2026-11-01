@@ -120,11 +120,11 @@ Invalid input raises `ParseException`; execution or save failures raise `Command
 
 The sequence diagram below follows the successful execution of `deletelesson 1 2`. `AddressBookParser` creates a `DeleteLessonCommandParser`, which parses both displayed indexes and creates the command. During execution, the command resolves student 1 against the filtered list. It converts lesson 2 from the newest-first display to stored position `lessons.size() - 2`, creates an immutable student without that lesson, and passes both student values to `Model#setPerson`. These data-object operations are described here rather than expanded in the diagram, which treats Model as a black box. The common persistence path is shown in the architecture sequence diagram.
 
-<puml src="diagrams/DeleteLessonSequenceDiagram.puml" alt="Successful lesson-deletion sequence from parser and command creation through replacing the student in Model" width="850" />
+<puml src="diagrams/DeleteLessonSequenceDiagram.puml" alt="Successful lesson-deletion sequence from parser and command creation through replacing the student in Model" width="950" />
 
 Student deletion follows a related but distinct path. For a successful `delete 1`, `AddressBookParser` creates a `DeleteCommandParser`, which parses the displayed index and creates the command. `DeleteCommand` resolves that index against the filtered list, selects the corresponding `Person`, and passes the person rather than the numeric index to `Model#deletePerson`. Removing the student also removes their owned lesson records. The common persistence path is omitted as above.
 
-<puml src="diagrams/DeleteStudentSequenceDiagram.puml" alt="Successful student-deletion sequence from parser and command creation through deleting the selected Person" width="850" />
+<puml src="diagrams/DeleteStudentSequenceDiagram.puml" alt="Successful student-deletion sequence from parser and command creation through deleting the selected Person" width="950" />
 
 The following diagram focuses on parser selection and command creation:
 
@@ -414,8 +414,12 @@ When a search finds no one, `FindCommand` may add guidance:
 
 **Design considerations: representing follow-up state**
 
-* **Alternative 1 (current choice):** store an optional `Flag`, whose reason is also optional. This represents unflagged, flagged without a reason and flagged with a reason without permitting a reason on an unflagged student.
-* **Alternative 2:** store a boolean and a nullable reason directly on `Person`. This makes the flag check simple, but permits inconsistent states such as `isFlagged == false` with a non-null reason and requires two fields to change together.
+* **Alternative 1 (current choice):** store an optional `Flag`, whose reason is also optional.
+  * Pros: one field cannot contradict another.
+  * Cons: callers must unwrap an `Optional`.
+* **Alternative 2:** store a boolean and a nullable reason directly on `Person`.
+  * Pros: callers can check the boolean directly.
+  * Cons: the two fields can disagree, such as `isFlagged == false` with a non-null reason, and must change together.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -1157,7 +1161,7 @@ Use a separate test directory containing two fictional students. Enter the follo
 1. Enter `flag 2 r/Call parent about a/level worksheet`, then repeat the command. Expected: the literal `a/level` reason replaces the old reason; the repeated command reports that the student is already flagged with that reason and makes no change.
 1. Enter `flagged`, then `unflag 1`. Expected: both flagged students initially appear in their original order; after unflagging, the first student leaves the filtered list but remains open without a flag. Enter `list` to confirm both students still exist and only the second is flagged.
 1. Try an empty `r/`, two `r/` prefixes, a 101-character reason, `flag 0`, `unflag 01`, and `flagged extra`. Expected: each command reports the corresponding error without changing any flag.
-1. Enter `edit 2 l/Sec 4`, `loglesson 2 c/Algebra`, and `deletelesson 2 1`, then exit and restart. Expected: student 2's flag and reason remain, but the `flagged` filter is not restored. Enter `unflag 2` and restart again; the student remains unflagged.
+1. Enter `edit 2 l/Sec 4`, `loglesson 2 c/Algebra`, `deletelesson 2 1`, and `flagged`, then exit and restart. Expected: before exiting, only student 2 is displayed. After restarting, both students appear, with only student 2 still flagged with the same reason. Enter `unflag 2` and restart again; the student remains unflagged.
 
 ### Saving data
 
