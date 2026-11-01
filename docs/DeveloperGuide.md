@@ -41,7 +41,13 @@ Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
 <puml src="diagrams/ArchitectureDiagram.puml" width="280" alt="Architecture diagram showing Main, UI, Logic, Model, Storage and Commons, the dependencies between them, the user and the data file" />
 
-The ***Architecture Diagram*** given above explains the high-level design of the App. Each arrow shows a dependency: UI uses Logic and Model, Logic uses Model and Storage, Storage uses Model, and Main sets up all four. Logic, Model and Storage do not depend on UI. Every component also uses Commons; those arrows are left out to keep the diagram readable.
+The ***Architecture Diagram*** given above explains the high-level design of the App.
+
+* **Solid arrows** point to a component whose objects the source keeps a reference to: Main holds all four components, Logic holds Model and Storage, and UI holds the `Person` objects it displays.
+* **Dashed arrows** point to something the source only uses: Storage converts Model objects to and from the data file without keeping them, Storage reads and writes the file, and the user works through UI.
+* Arrow colors only show which component an arrow starts from.
+
+Logic, Model and Storage do not depend on UI. Every component also uses Commons; those arrows are left out to keep the diagram readable.
 
 The following provides a quick overview of the main components and their interactions.
 
@@ -62,9 +68,9 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other when the user successfully logs a lesson for an existing student with the command `loglesson 1 c/Vectors`. `Logic` updates the student in `Model`, then asks `Storage` to save the whole address book to the data file. Error paths, such as an invalid index or a failed save, are omitted.
+The *Sequence Diagram* below shows how the components interact with each other when the user successfully logs a lesson for an existing student with the command `loglesson 1 c/Vectors`. `Logic` updates the student in `Model`, then asks `Storage` to save all student data to the data file. Error paths, such as an invalid index or a failed save, are omitted.
 
-<puml src="diagrams/ArchitectureSequenceDiagram.puml" width="666" />
+<puml src="diagrams/ArchitectureSequenceDiagram.puml" width="666" alt="Sequence diagram of loglesson 1 c/Vectors: the user types the command into UI, UI asks Logic to execute it, Logic updates the student in Model, then asks Storage to save, and the feedback returns to the user" />
 
 Each of the four main components (also shown in the diagram above),
 
@@ -331,10 +337,14 @@ On success the command calls `Model#setPerson`, restores the full list as AB3 do
 
 `EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does: both call `LessonCommandUtil#getStoredLessonIndex`, which also rejects a student with no lessons or a number beyond their history. Messages shared by several commands, such as the no-lessons and future-date messages, live in `Messages`. `EditLessonCommand` then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
 
-The command keeps each student's lessons in date order with one of two operations:
+**Design considerations: keeping date order when a lesson is edited**
 
-* If the date is unchanged, `Person#withLessonReplaced` puts the edited lesson in the same position. Removing and adding it again would move it after the other lessons on its date, which would change its number even though only its content changed. `withLessonReplaced` asserts that the date is unchanged, so it cannot break date order.
-* If the date changes, the command calls `Person#withLessonRemoved` and then `Person#withLessonAdded`, which inserts the lesson after every lesson dated on or before its new date. This is the same rule `loglesson` uses for a backdated lesson.
+* **Alternative 1 (current choice):** replace the lesson in place with `Person#withLessonReplaced` when its date is unchanged, and use `Person#withLessonRemoved` then `Person#withLessonAdded` only when the date changes. `withLessonAdded` inserts the lesson after every lesson dated on or before its new date, the same rule `loglesson` uses.
+  * Pros: a content-only edit keeps the lesson's number, so the number the tutor saw in `view` stays valid.
+  * Cons: two code paths. `withLessonReplaced` must assert that the date is unchanged so that it cannot break date order.
+* **Alternative 2:** always remove the lesson and add it again.
+  * Pros: one code path, shared with `loglesson`.
+  * Cons: the re-added lesson goes after the other lessons on its date, so correcting only its content can change its number.
 
 `Lesson#withContent` keeps an undated legacy lesson undated, so a content-only edit never adds a date. After `Model#setPerson`, the command finds the edited lesson by identity, because another lesson can be equal to it, and reports its new displayed number. Assertions check that the student's identity and number of lessons are unchanged.
 
@@ -1291,12 +1301,10 @@ loglesson 1 c/Trigonometry date/23/10/2026
    Expected: `Edited lesson 3 for Amy Tan (now lesson 2). 22/10/2026: Vectors and scalars`. On a date that already has a lesson, the edited lesson goes after it in storage, so `view` shows it first.
 1. Enter `editlesson 1 2 c/Vectors and scalars`.<br>
    Expected: `The lesson already has those details.`, and nothing changes.
-1. Try `editlesson 1 1`, `editlesson 1 1 c/`, `editlesson 1 1 date/31/02/2026`, `editlesson 1 1 c/A c/B`, `editlesson 1 4 c/Algebra`, `editlesson 2 1 c/Algebra` and `editlesson 1 1 date/` followed by tomorrow's date.<br>
-   Expected: in order, the missing-field, content, date, duplicate-prefix, lesson-index, student-index and future-date errors. Amy's records are unchanged after every rejected command.
+1. Try `editlesson 1 1`, `editlesson 1 4 c/Algebra` and `editlesson 1 1 date/` followed by tomorrow's date.<br>
+   Expected: in order, `At least one field to edit must be provided.`, `The lesson index provided is invalid.` and `Lesson dates cannot be in the future. Log a lesson on or after the day it is taught.` Amy's records are unchanged.
 1. Exit and restart from the same folder, then enter `view 1`.<br>
    Expected: the edited content, dates and order were saved.
-
-Automated coverage is in `EditLessonCommandParserTest`, `EditLessonCommandTest`, `PersonTest`, `LessonTest` and `AddressBookParserTest`.
 
 ### Finding students and restoring the full list
 
@@ -1330,12 +1338,10 @@ add n/Ben Lim p/81230012 addr/12 Example Street l/JC1 sub/H2 Math
 
 1. Enter `view 1`. Expected: `No lessons logged yet for Amy Tan.` and Amy's card highlighted, even though her history is empty.
 1. Enter `loglesson 1 c/Algebra`, `loglesson 1 c/Geometry`, then `loglesson 1 c/Algebra`. Enter `view 1`. Expected: `Lesson records for Amy Tan (3):`, followed by Algebra, Geometry and Algebra, each with today's date. Both Algebra occurrences remain.
-1. Enter `view 2`, then `view 1`. Expected: Ben's empty-history message and highlight first, then Amy's three records and highlight. Press Ben's card once, then Amy's once. Each first press updates both the feedback and highlight to the chosen student.
-1. Enter `loglesson 2 c/Calculus`. Type `loglesson 2 c/unfinished` without pressing Enter, then press Ben's card twice. Expected: each press shows Ben's single Calculus record and keeps `loglesson 2 c/unfinished` in the command box. Enter `view 2` instead: the same history appears and the successfully submitted command clears.
-1. Enter `view 999`, then `view abc`. Expected: the student-index error, then usage feedback, with the failed command retained and styled as an error. The previous selection is not changed by either failed typed view. Enter `view 1`: Amy's unchanged history returns and the successful command clears.
+1. Enter `loglesson 2 c/Calculus`. Type `loglesson 2 c/unfinished` without pressing Enter, then press Ben's card. Expected: Ben's single Calculus record appears and `loglesson 2 c/unfinished` stays in the command box. Press Amy's card: her three records appear.
+1. Enter `view 999`, then `view abc`. Expected: the student-index error, then usage feedback, each shown as an error with the command kept for correction. The details panel still shows the previous student.
 1. Enter `find ben`, then `view 1` and press Ben's card. Expected: both show Ben's Calculus record while only Ben is displayed. Enter `list`, then `delete 1` to remove Amy. Ben becomes student 1; `view 1` and a single press on his card still show only his Calculus record. `view 2` reports an invalid student index.
-1. Prepare a separate fictional student with 40 lesson records, including a 300-character record. View the student and scroll to the bottom. Expected: the header shows count 40, the records are newest first, the long content wraps, and row 40 is reachable. Press the same card again, then view another student: both updates reset the result area to its beginning without losing records.
-1. Repeat the scrolling and selection checks in a smaller and a larger window, moving the horizontal divider both ways. The command box and student list must remain usable, and all records must remain reachable. Check the screen resolutions and scaling levels listed under Non-Functional Requirements as well.
+1. Prepare a separate fictional student with 40 lesson records, including a 300-character record. View the student and scroll to the bottom. Expected: the header shows count 40, the records are newest first, the long content wraps, and row 40 is reachable.
 
 ### Student details panel
 
@@ -1375,10 +1381,36 @@ Use a separate test folder whose `data/addressbook.json` contains `{"persons": [
    Expected: the first gives the repeated `c/` error with the hint to reword prefix text, and the second gives the date error with the `date/` hint. No lesson is added. Then enter `loglesson INDEX c/Worksheet collected care of Mum`: the lesson is logged as typed.
 1. Enter `findlesson INDEX from/31/02/2026`.
    Expected: only the lesson-date message, without the `date/` notes hint.
-
 1. Log a lesson for a test student, exit and restart.
    Expected: `view` shows the lesson with the same date, and the data file stores it as `"date" : "YYYY-MM-DD"`.
 1. Exit, keep a copy of the data file, and remove the `date` field from a lesson that is not already the oldest, as in a file saved by v1.3. Ensure that the student also has multiple dated lessons, including two with the same date, and at least one other lesson without a date. Start the app and view the student.
    Expected: every undated lesson appears after all dated lessons. Dated lessons are newest first; among lessons on the same date and among undated lessons, the record saved later appears first. The lesson whose date was removed appears within the undated group according to that order, rather than necessarily last. No lesson is lost.
 1. Exit, and change a lesson's date to `18/10/2026` in the data file. Start the app.
-   Expected: the data file is treated as invalid and the app starts with no students, as for other invalid fields. Restore your copy afterwards.
+   Expected: a warning says `The student data file could not be loaded:` with the file's location and `Reason: Lesson dates should be real dates from 2000-01-01 onwards, in the format YYYY-MM-DD.` TutorLah starts with no students and saving is disabled. Close TutorLah, restore your copy and restart.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Appendix: Effort**
+
+**Difficulty compared with AB3**
+
+* **Two linked entity types.** AB3 manages one entity type, a contact with tags. Each student owns a dated, ordered history of lesson records with its own commands (`loglesson`, `view`, `editlesson`, `deletelesson`, `findlesson`). Lessons are addressed by a second, newest-first index while being stored oldest first, so every lesson command, search result and the details panel must use the same numbering, including after a lesson is edited onto another date.
+* **Dates.** Lesson dates are parsed strictly, cannot be in the future when entered through `loglesson` or `editlesson`, default to today through an injected `Clock`, and must stay ordered when logged, edited or loaded. Records saved by v1.3 have no date and still load.
+* **Data safety.** AB3 overwrites its data file directly. TutorLah writes to a temporary file and replaces the original atomically, rolls back the student data and filter if a save fails, refuses to save after a file fails to load so the original is preserved, and uses an operating-system lock so that two copies cannot use the same data folder.
+* **Input from real users.** Commands accept Unicode spaces copied from documents, command words ignore case, names such as `Muthu a/l Raju` work because the address prefix became `addr/`, and errors explain prefix-like text inside values.
+* **A richer GUI.** A details panel follows the student that each command acts on, card clicks run `view` through Logic, and the window can shrink to fit a 1280x720 screen at 150% scaling.
+
+**Effort**
+
+* Production Java: 4,016 lines added and 687 removed across 78 files under `src/main/java` since the fork (`git diff --shortstat`, including comments and blank lines).
+* Test code: 10,516 lines added across 105 files under `src/test`. `@Test` methods grew from 239 to 769, plus 14 `@TestFactory` methods.
+* Commands: 9 new commands, 1 AB3 command (`clear`) removed, and `add`, `edit`, `find`, `list` and `delete` adapted to students.
+* Process: 112 merged pull requests, most reviewed by a teammate, and an alpha test that led to further fixes before v1.5.
+
+**Reuse**
+
+`find` was adapted from AB3, and AI tools assisted parts of the implementation, tests and documentation, as listed under [Acknowledgements](#acknowledgements). The lesson, flag, summary, recovery and locking features are new.
+
+**Achievements**
+
+* About 97% line coverage, with save failures, file recovery and concurrent launches tested automatically.
