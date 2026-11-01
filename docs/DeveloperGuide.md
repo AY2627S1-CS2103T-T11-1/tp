@@ -16,20 +16,18 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * Libraries used: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for reading and writing JSON data files, and [JUnit 5](https://github.com/junit-team/junit5) for automated tests.
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
-* OpenAI Codex (GPT) was used by cibichandar, zikiai and fuhlie. It assisted with the
-  implementation, tests and documentation for student-name search, deleting individual
-  lesson records, Unicode blank-field validation, student follow-up flags and save-failure
-  rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
-* OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and
-  screenshots for student summaries and per-student lesson counts, and with unreadable-file
-  recovery, safe JSON replacement, their tests and documentation.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date, editing lesson records and name, level and subject validation, and with the Developer Guide's architecture, common classes and lesson-logging sections.
-* Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level, handling null GUI settings, renaming `log` to `loglesson` and sharing test helpers, and with pull request reviews and Developer Guide updates.
-* The TutorLah logo (`tutorlah_icon.png`) was created by srivatsanj27 using Google Gemini.
-* OpenAI Codex, used by cibichandar, assisted with the implementation, tests,
-  documentation and screenshots for searching lesson histories, and with Unicode
-  whitespace normalization in command-entered phone numbers and its regression tests.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
+
+All five team members used AI assistance across all commits they authored, rather than
+only for selected features. Assistance included implementation, testing, debugging,
+diagrams, documentation, pull request reviews and repository maintenance, as applicable.
+
+* cibichandar used OpenAI Codex (GPT).
+* zikiai used OpenAI Codex (GPT).
+* fuhlie used OpenAI Codex (GPT).
+* aerodart used Anthropic Claude Code.
+* srivatsanj27 used Anthropic Claude Code.
+* The TutorLah logo (`tutorlah_icon.png`) was created by srivatsanj27 using Google Gemini.
 
 --------------------------------------------------------------------------------------------------------------------
 
