@@ -166,7 +166,7 @@ Examples:
 
 Format: `delete INDEX`
 
-Removes the student at that number in the current list, **including all their lessons and their flag**. Deletion is saved automatically and cannot be undone in the app. Check the displayed list first; use `list` if you want everyone's original list order.
+Removes the student at that number in the current list, **including all their lessons and their flag**. Deletion is saved automatically and cannot be undone in the app. Check the student's number in the list currently shown. To choose from everyone, enter `list` first, then check the number again.
 
 **Screenshot:** starting from the six-student list above, `delete 2` removes Priya Ramesh. Marcus Lim becomes student 2.
 
@@ -205,10 +205,6 @@ Opens the student's details and complete lesson history on the right, and lists 
 - Records are numbered newest date first. For example, `1. 18/10/2026: Quadratic inequalities`. Older records without dates show `(undated)` after the dated records. Repeated entries remain separate.
 - With no lessons, the message is `No lessons logged yet for NAME.`, and the details panel suggests a `loglesson` command.
 - You can also click a student card. After clicking the list, use Up, Down, Page Up, Page Down, Home or End to view another student. This keeps any command you are typing.
-
-**Screenshot:** `view 1` opens Alex Tan and highlights his card.
-
-<a href="images/Ui.png"><img src="images/Ui.png" alt="Alex Tan highlighted in the student list, with his details and three dated lesson records in the details panel after view 1" width="726"></a>
 
 ##### The details panel
 
@@ -324,7 +320,7 @@ Closes TutorLah. There is no manual save step. Extra text after `help` or `exit`
 
 Drag the divider below the result box to give long results more room, or scroll inside it. Each command starts its feedback at the top. Drag the divider between the student list and details panel to adjust their widths; scroll inside the details panel for a long history.
 
-The window can shrink to 700 × 420 pixels and opens no larger than your primary screen. If a saved position no longer fits on a connected screen, TutorLah opens in the centre of the primary screen.
+The window can shrink to 700 × 420 pixels and opens no larger than your primary screen. If a saved position no longer fits on a connected screen, TutorLah opens in the center of the primary screen.
 
 ## Keeping your data safe
 
@@ -338,7 +334,7 @@ Only one copy can use the same data folder at a time. If a second copy reports a
 
 ### If saving fails
 
-The failed change is cancelled: your students, lessons and displayed list return to their previous state. Check the reported file location, folder permissions and available disk space, fix the problem, then retry. Do not assume the failed command was saved. The previous saved file is kept if writing or replacing it fails; a failed first save leaves no empty student file.
+The failed change is canceled: your students, lessons and displayed list return to their previous state. Check the reported file location, folder permissions and available disk space, fix the problem, then retry. Do not assume the failed command was saved. The previous saved file is kept if writing or replacing it fails; a failed first save leaves no empty student file.
 
 ### If your saved students cannot be opened
 
@@ -358,11 +354,11 @@ Use the commands above for normal updates. If you edit `data/addressbook.json` d
 - Keep one complete outer object with all students inside it. Do not join two data files together or add text after the closing `}`; only spaces or line breaks may follow it.
 - Student fields follow the [add rules](#adding-a-student-add). Phones in the file must already be exactly eight digits, without spaces. Names are tidied before checking duplicates; duplicates make the whole file unreadable rather than being merged.
 - Lesson dates are stored as `"date": "YYYY-MM-DD"`, for example `"date": "2026-10-18"`. Missing dates mean undated lessons. Dates before `2000-01-01`, impossible dates and other formats are rejected. Existing future dates still load in case your computer clock changed; recording or changing a date through commands still rejects future dates.
-- Lessons load in date order and display newest first, with undated records last. For equal dates and undated records, their file order is reversed for display. Repeated entries are kept. Reading the file does not rewrite it; the next successful change saves the loaded order and tidied names.
+- Lessons display newest first, with undated records last. For records with the same date, or without dates, the last entry in the file appears first. Repeated records are kept. After editing the file, use `view` to check the lesson numbers before changing a record.
 - A flag with a reason uses `"flag": {"reason": "REASON"}`; one without a reason uses `"flag": {}`. An unflagged student has no `flag` field. Older files without flags still load.
 - Blank or invisible-only addresses, lesson content and flag reasons are invalid. An invalid file produces the protected recovery state described above; the warning may mention JSON and a line and column to help locate the problem.
 
-Saving requires the folder to support replacing a file in one step. If this is unavailable, saving reports an error. A forced shutdown may leave hidden `.tutorlah-*.tmp` files; TutorLah does not read them as student data or remove them on restart. After closing all copies, these temporary files can be deleted. Keep `addressbook.json` and `preferences.json`.
+If saving fails, follow [If saving fails](#if-saving-fails). After a forced shutdown, hidden `.tutorlah-*.tmp` files may remain. TutorLah does not use or remove them on restart. Close all copies before deleting these temporary files; keep `addressbook.json` and `preferences.json`.
 
 </panel>
 
@@ -381,7 +377,7 @@ If the Help window is minimised, running `help`, choosing Help from the menu or 
 
 ## Command summary
 
-Groups and commands follow the same order as [Features](#features). Use current displayed student numbers; lesson numbers come from `view`. Brackets mean optional parts.
+Use current displayed student numbers; lesson numbers come from `view`. Brackets mean optional parts.
 
 **Finding students and viewing totals**
 

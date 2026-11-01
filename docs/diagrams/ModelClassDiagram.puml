@@ -46,16 +46,16 @@ show Flag methods
 hide empty members
 
 ModelManager .up.|> Model
-ModelManager -down-> "1" AddressBook
-AddressBook *-down-> "1" UniquePersonList
-UniquePersonList -down-> "0..*" Person : students
-ModelManager -right-> "0..*" Person : filtered view
+ModelManager -down-> "1\n" AddressBook
+AddressBook *-down-> "1   " UniquePersonList
+UniquePersonList -down-> "   internalList\n   0..*" Person
+ModelManager -right-> "filteredPersons\n0..*   " Person
 
-Person *-down-> "1" Name
-Person *-down-> "1" Phone
-Person *-down-> "1" Address
-Person *-down-> "1" Level
-Person *-down-> "1" Subject
-Person *-down-> "0..*" Lesson : lessons
-Person *-down-> "0..1" Flag : follow-up flag
+Person *-down-> "1\n" Name
+Person *-down-> "1\n" Phone
+Person *-down-> "1\n" Address
+Person *-down-> "1\n" Level
+Person *-down-> "1\n" Subject
+Person *-down-> "lessons\n0..*\n" Lesson
+Person *-down-> "flag\n0..1\n" Flag
 @enduml
