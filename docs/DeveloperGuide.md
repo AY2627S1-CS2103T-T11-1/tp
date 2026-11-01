@@ -1361,20 +1361,18 @@ Use a separate test folder whose `data/addressbook.json` contains `{"persons": [
 
 ## **Appendix: Effort**
 
-TutorLah started from AB3, which manages one entity type (a contact with tags) and saves it with no protection against failed or concurrent writes. The main effort went into a second entity, lesson records, and into keeping student data safe.
-
 **Difficulty compared with AB3**
 
-* **Two linked entity types.** Each student owns a dated, ordered history of lesson records with its own commands (`loglesson`, `view`, `editlesson`, `deletelesson`, `findlesson`). Lessons are addressed by a second, newest-first index while being stored oldest first, so every lesson command, search result and the details panel must use the same numbering, including after a lesson is edited onto another date.
-* **Dates.** Lesson dates are parsed strictly, cannot be in the future, default to today through an injected `Clock`, and must stay ordered when logged, edited or loaded. Records saved by v1.3 have no date and still load.
+* **Two linked entity types.** AB3 manages one entity type, a contact with tags. Each student owns a dated, ordered history of lesson records with its own commands (`loglesson`, `view`, `editlesson`, `deletelesson`, `findlesson`). Lessons are addressed by a second, newest-first index while being stored oldest first, so every lesson command, search result and the details panel must use the same numbering, including after a lesson is edited onto another date.
+* **Dates.** Lesson dates are parsed strictly, cannot be in the future when entered through `loglesson` or `editlesson`, default to today through an injected `Clock`, and must stay ordered when logged, edited or loaded. Records saved by v1.3 have no date and still load.
 * **Data safety.** AB3 overwrites its data file directly. TutorLah writes to a temporary file and replaces the original atomically, rolls back the student data and filter if a save fails, refuses to save after a file fails to load so the original is preserved, and uses an operating-system lock so that two copies cannot use the same data folder.
 * **Input from real users.** Commands accept Unicode spaces copied from documents, command words ignore case, names such as `Muthu a/l Raju` work because the address prefix became `addr/`, and errors explain prefix-like text inside values.
 * **A richer GUI.** A details panel follows the student that each command acts on, card clicks run `view` through Logic, and the window can shrink to fit a 1280x720 screen at 150% scaling.
 
 **Effort**
 
-* Functional code: 4,440 lines added and 936 removed across 86 files under `src/main` since the fork.
-* Test code: 10,516 lines added across 105 files under `src/test`. Test methods grew from 241 to 785.
+* Production Java: 4,016 lines added and 687 removed across 78 files under `src/main/java` since the fork (`git diff --shortstat`, including comments and blank lines).
+* Test code: 10,516 lines added across 105 files under `src/test`. `@Test` methods grew from 239 to 769, plus 14 `@TestFactory` methods.
 * Commands: 9 new commands, 1 AB3 command (`clear`) removed, and `add`, `edit`, `find`, `list` and `delete` adapted to students.
 * Process: 112 merged pull requests, most reviewed by a teammate, and an alpha test that led to further fixes before v1.5.
 
