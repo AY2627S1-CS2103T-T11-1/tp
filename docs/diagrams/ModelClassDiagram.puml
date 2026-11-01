@@ -17,7 +17,7 @@ package "Model (partial)" {
         + isSamePerson(otherPerson : Person) : boolean
         + withLessonAdded(lesson : Lesson) : Person
         + withLessonRemoved(zeroBasedIndex : int) : Person
-        + withFlag(flag : Flag) : Person
+        + withFlag(updatedFlag : Flag) : Person
         + withoutFlag() : Person
     }
 
