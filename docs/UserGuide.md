@@ -277,7 +277,7 @@ Format: `flag INDEX [r/REASON]`
 
 Marks a student needing follow-up. Their card and details show a red flag; the details panel shows the reason or `Flagged (no reason given)`.
 
-- A reason is optional. If given, use 1–100 characters after removing surrounding spaces; it cannot be blank, only invisible characters, or contain control characters such as tabs.
+- A reason is optional. If given, use 1–100 characters after removing surrounding spaces; it cannot be blank or contain only invisible characters. Pasted tabs and line breaks become spaces in the command box; other control characters cannot be part of a reason.
 - Only `r/` is recognised as a field, so reasons can contain text such as `a/level`, `date/` or `c/homework`.
 - Flagging again with a different reason replaces the reason. The same reason gives an already-flagged message. Omitting `r/` keeps an existing reason and reports that the student is already flagged.
 - Flags are saved and kept when you edit student details or change lessons.
@@ -292,13 +292,15 @@ Format: `unflag INDEX`
 
 Removes the flag and reason. If the student is not flagged, TutorLah says so. Both `flag` and `unflag` use the current displayed number and open the student on the right.
 
+Example: `unflag 2` removes student 2's flag and its reason.
+
 #### Listing flagged students: `flagged`
 
 Format: `flagged`
 
 Shows all flagged students, replacing any previous student search. Results keep their original order and are numbered from 1; use those displayed numbers in other commands. If none are flagged, TutorLah suggests `list`.
 
-After `unflag` in this list, the student disappears from the list but stays open on the right. Use `list` to show everyone. Extra text is rejected, and the flagged-only view is not kept after restarting.
+Example: enter `flagged`, then `unflag 1` to resolve the first displayed student's follow-up. The student leaves the flagged-only list but stays open on the right without a flag. Use `list` to show everyone. Extra text is rejected, and the flagged-only view is not kept after restarting.
 
 ### Help and exit
 
