@@ -153,7 +153,7 @@ The **API** of this component is specified in [`Model.java`](https://github.com/
 
 <puml src="diagrams/ModelClassDiagram.puml" alt="Partial Model class diagram showing students, value fields, optional follow-up flags and owned lesson records" width="950" />
 
-This partial class diagram focuses on student and lesson data. `ModelManager` implements the `Model` API and owns one `AddressBook`; user-preference classes are omitted. The address book delegates uniqueness and list operations to `UniquePersonList`, while `ModelManager` exposes a filtered view of the same students for searches and displayed indexes.
+This partial class diagram focuses on student and lesson data. `ModelManager` implements the `Model` API and owns one `AddressBook`; user-preference classes are omitted. `AddressBook` delegates uniqueness and list operations to `UniquePersonList`, while `ModelManager` exposes a filtered view of the same students for searches and displayed indexes.
 
 `Person` is the Java class representing a student. It is an immutable value containing `Name`, `Phone`, `Address`, `Level`, `Subject`, an immutable list of zero or more `Lesson` values, and zero or one `Flag`. A `Flag` marks unresolved follow-up and may contain one validated reason. A `Lesson` contains content and an optional date: records saved by v1.3 have no date, while newer records have a `LocalDate`. Lessons and flags belong to their student, so deleting a student also deletes them.
 
@@ -168,28 +168,46 @@ Lesson records are stored oldest first by date. Undated legacy records remain at
 
 <puml src="diagrams/StorageClassDiagram.puml" alt="Storage class diagram showing StorageManager, the two JSON storages and the student, lesson and flag adapters" width="550" />
 
-The `Storage` component,
-* can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
-* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+`StorageManager` delegates student data to `JsonAddressBookStorage` and window preferences to `JsonUserPrefsStorage`. Both read and write JSON, using Model classes to validate and reconstruct values.
 
-`JsonSerializableAddressBook` holds a `persons` list of `JsonAdaptedPerson`, which stores each student's `name`, `phone`, `address`, `level` and `subject` as strings, a `lessons` list and, for a flagged student, a `flag`. Each `JsonAdaptedLesson` stores `content` and a `date` in `YYYY-MM-DD` form (`LocalDate#toString`), although users type and see `DD/MM/YYYY`. `JsonAdaptedFlag` stores an optional `reason`. Absent values are left out of the file rather than written as `null`: an undated lesson has no `date`, an unflagged student has no `flag`, and a flag without a reason has no `reason`. Saving writes lessons in the student's stored order.
+**Stored values**
 
-Before constructing a loaded student, `JsonAdaptedPerson` applies `Name#normalize`, also used by `ParserUtil#parseName`: surrounding Unicode whitespace is removed and internal whitespace is collapsed to one space before validation. `JsonSerializableAddressBook` then checks the normalized name and phone through the existing `isSamePerson` rule. A duplicate makes the complete file invalid; neither student's lessons or flag are silently merged or discarded. The same normalized name with a different phone remains a separate student.
+* `JsonSerializableAddressBook` contains a `persons` list of `JsonAdaptedPerson`. Each adapter holds the student's five detail fields, lessons and optional flag.
+* `JsonAdaptedLesson` stores content and an optional date as `YYYY-MM-DD` (`LocalDate#toString`); commands and the UI use `DD/MM/YYYY`. `JsonAdaptedFlag` stores an optional reason.
+* Optional values are omitted rather than saved as `null`: undated lessons have no `date`, unflagged students have no `flag`, and reasonless flags have no `reason`. A legacy student without `lessons` loads with an empty history.
 
-The adapter stably sorts loaded lessons by date, with missing dates before dated records in storage. Equal-date and undated records retain their relative saved order, including repeated occurrences. `view` and the details panel reverse this list as usual; subsequent `loglesson`, `edit` and `delete` operations therefore use the same chronological indexes. Sorting and normalization change only the loaded model, and the file is not rewritten until a successful data-changing command saves it.
+**Loading and ordering**
 
-`JsonAdaptedLesson` rejects dates before `Lesson.EARLIEST_DATE` with a storage-specific message using `YYYY-MM-DD`. Missing dates remain undated, and impossible dates and invalid date formats still fail loading. Existing future dates are accepted to keep saved records readable after a system-clock correction. The command-side future-date checks remain unchanged; loading does not depend on today's date.
+* `JsonAdaptedPerson` uses `Name#normalize`, shared with `ParserUtil#parseName`, to trim surrounding Unicode whitespace and collapse internal whitespace before validation. `JsonSerializableAddressBook` rejects normalized duplicates using `isSamePerson`; it never merges students or drops their records. Equal names with different phones remain separate students.
+* Loaded lessons are stably sorted oldest first, with undated records first and saved order retained for ties. `view` and the details panel reverse that order. `editlesson` and `deletelesson` use the same displayed lesson numbers through `LessonCommandUtil#getStoredLessonIndex`; `loglesson` inserts new records by date.
+* `JsonAdaptedLesson` rejects invalid dates and dates before `Lesson.EARLIEST_DATE`, reporting stored-date errors in `YYYY-MM-DD`. Undated legacy records and existing future dates still load, so a clock correction does not invalidate saved history. Lesson-writing commands retain their future-date checks.
+* Each `toModelType` validates its values; an invalid student or lesson rejects the complete file. Loading and read-only commands do not rewrite it. Sorting and normalized names are first saved after a successful data change.
 
-Loading reverses this conversion. Each `toModelType` method checks that required fields are present and validates normalized values, so an invalid student or lesson makes the whole file fail to load. Older files stay readable: a student without `lessons` loads with no lessons, a lesson without `date` loads as an undated `Lesson` (records saved by v1.3), and a student without `flag` loads unflagged.
+**Atomic saves**
 
-`JsonUtil` serializes the complete object before calling `FileUtil#writeToFile`. `AtomicFileWriter` creates a unique temporary file in the destination directory, writes UTF-8 content and uses `Files.move` with `ATOMIC_MOVE` and `REPLACE_EXISTING`. Both student data and preferences use this path, including first saves with missing parent directories. The destination is never pre-created or truncated. If writing or replacement fails, the original file is retained and the temporary file is removed where possible; cleanup errors are suppressed on the original save exception. With `ATOMIC_MOVE`, the other options are ignored and replacement of an existing target is filesystem-provider-specific. We rely on a provider that supports atomic replacement; a provider that cannot do so reports a save failure, with no non-atomic fallback. An abrupt process termination between staging and replacement can bypass cleanup and leave a `.tutorlah-*.tmp` file in the same directory. Startup does not load or remove these files; users may remove them after closing all TutorLah instances. This protects against incomplete writes, but does not provide a second-instance lock or a guarantee against power loss. `AtomicFileWriterTest` injects partial-write, replacement and cleanup failures, while the storage round-trip tests cover both JSON callers.
+`JsonUtil` serializes the complete value before `FileUtil#writeToFile` calls `AtomicFileWriter`. For both student data and preferences, the writer creates missing parent directories, stages UTF-8 content in a unique sibling file, then replaces the destination using `Files.move` with `ATOMIC_MOVE` and `REPLACE_EXISTING`. It never pre-creates or truncates the destination.
 
-If `JsonAddressBookStorage#readAddressBook` fails with malformed JSON, a null root, null student entries, invalid stored values or a read error, the storage instance blocks subsequent saves for the rest of that session. Both save overloads check the guard before creating or writing a file. `MainApp` prepares an empty model and recovery instructions, including a safe explanation after `Reason:`. `MainApp#getDataLoadingReason` keeps non-blank `IllegalValueException` messages from our field validators. For syntax errors it follows Jackson wrappers to a `JsonParseException` and reports `The file is not valid JSON (line N, column M).` when both coordinates are known, or `The file is not valid JSON.` otherwise. Invalid structures, such as a null `persons` list, and other read errors use the general readability/data-format guidance. Raw Jackson messages, source excerpts and internal class names are never included in the dialog. `UiManager` shows these instructions in a warning after the main window is ready. The original data file remains untouched by later commands. Recovery requires closing the app, repairing or restoring the file and restarting with a new storage instance. Read-only commands continue to work because `LogicManager` skips saving when student data is unchanged; mutating commands are rejected by storage and rolled back. `MainApp` and `UiManager` hold a nullable warning string (null means no warning), while the startup-warning accessor returns an `Optional`. A genuinely missing file still loads sample students, which are first written when a command changes the data; a valid saved empty list remains empty.
+* A write or replacement failure preserves the original destination, including leaving no empty destination after a failed first save. Cleanup is attempted; a cleanup failure is suppressed on the original exception.
+* With `ATOMIC_MOVE`, replacement of an existing target is provider-specific. Unsupported atomic replacement reports a save failure; there is no non-atomic fallback or power-loss guarantee.
+* Abrupt termination can leave a `.tutorlah-*.tmp` file. Startup neither loads nor removes it; it may be deleted after all TutorLah instances close. Atomic replacement protects file writes; the separate `ApplicationLock` provides exclusive session access.
 
-Preferences use a simpler policy, because they hold only the window size and position. If `JsonUserPrefsStorage#readUserPrefs` cannot read the file, finds content after the JSON value or finds `"guiSettings": null`, it throws `DataLoadingException`. `MainApp#initPrefs` then logs a warning, uses the default `UserPrefs` and saves them, so startup continues without a dialog and the student data file is not touched. The null check is needed because `JsonUtil` sets fields directly, bypassing the null check in `UserPrefs#setGuiSettings`; without it, the null settings would only fail later, when `ModelManager` copies the preferences. Unusual numbers, such as a zero or very large width, need no check: `MainWindow` limits the window to its minimum size and to the screen.
+**Protected recovery**
 
-Before loading preferences or student data, `MainApp` asks `ApplicationLock` to obtain an operating-system lock on `data/.tutorlah.lock`. The channel and lock remain open for the application's lifetime and are released in `MainApp#stop`; the lock file itself may remain. If another process or application object already holds the lock, initialization stops before creating `Storage`, `Model`, `Logic` or the main window, and a failure-only `UiManager` shows an error. A failure to create or lock the file is also fatal rather than allowing an instance to save without exclusive access. This prevents two copies from loading the same snapshot and silently overwriting each other's later changes.
+If `JsonAddressBookStorage#readAddressBook` fails, that storage instance blocks both save overloads for the session before any file is created or written. `MainApp` uses an empty model, and `UiManager` shows recovery instructions after the window opens. The original file is preserved. Read-only commands continue to work; mutations fail saving and are rolled back. Recovery requires closing TutorLah, repairing or restoring the file, then restarting with a new storage instance.
+
+`MainApp#getDataLoadingReason` selects a safe reason:
+
+* Non-blank `IllegalValueException` messages retain the field-validation explanation.
+* Syntax failures are unwrapped to `JsonParseException` and reported as `The file is not valid JSON (line N, column M).`, or without coordinates if unavailable.
+* Invalid structures, such as a null `persons` list, and other read failures receive general readability/data-format guidance. Raw Jackson messages, source excerpts and internal class names are never shown.
+
+A genuinely missing file loads sample students without a warning; the first data change saves them. A valid saved empty collection stays empty.
+
+**Preferences and session locking**
+
+Unreadable preferences, trailing JSON content or `"guiSettings": null` cause `DataLoadingException`. `MainApp#initPrefs` logs a warning and saves default `UserPrefs`, without a dialog or a student-data write. `MainWindow` limits restored dimensions and positions to usable screen bounds.
+
+Before loading either file, `MainApp` obtains an operating-system lock through `ApplicationLock` on `data/.tutorlah.lock`. Failure or an existing lock stops initialization before Storage, Model, Logic or the main window are created; a failure-only UI explains the problem. The channel and lock are held until `MainApp#stop`. A leftover lock file is harmless after the operating-system lock is released. This prevents concurrent sessions from overwriting each other's changes.
 
 ### Common classes
 
@@ -231,13 +249,18 @@ Both `view INDEX` and a primary press on a student card reach `MainWindow#execut
 
 <puml src="diagrams/ViewHistorySequenceDiagram.puml" alt="Successful view sequence showing typed input and a student-card press joining the same UI execution path" width="950" />
 
-The sequence shows a successful view of displayed student 1. The `User` actor represents the person entering a command or pressing a student card. Both entry paths share the same execution flow in `MainWindow`. The diagram expands only the UI component; `Logic` is shown through its interface. Parsing, model access, saving, JavaFX internals and error paths are omitted. Activation bars and the private self-call from `handlePersonClick` to `executeCommand` are omitted. Solid arrows show input events or calls; dashed arrows show returns. A return labeled `return` carries no value. The final alternatives complete the same entry path chosen at the top.
+The sequence shows both entry paths viewing displayed student 1 through `MainWindow`. It expands UI internals and treats `Logic` as an interface. Parsing, Model internals, saving, JavaFX internals and errors are outside its scope. Activation bars and the private self-call from `handlePersonClick` are omitted for clarity; the final alternatives return through the entry path chosen at the top.
 
 `MainWindow` passes the command to `Logic#execute`. A successful `ViewCommand` returns a `CommandResult` containing the feedback and the viewed `Person`. `MainWindow` displays the feedback, then finds the student's position in the displayed list, shows the student in `StudentDetailPanel` and passes the position to `PersonListPanel#selectPerson` to synchronize the highlight and scroll position. The student is present even when their history is empty. This selection does not invoke the click callback, so it cannot execute the command again.
 
 `ViewCommand` reads the student from `Model#getFilteredPersonList`, leaving the current filter and student data unchanged. It traverses the stored lessons backwards: the most recent lesson date appears first, with the most recently logged record first among equal dates. Existing undated records appear at the oldest end when lessons have been added in date order. Each row shows its displayed lesson number, formatted date and content; undated records use `(undated)`. An empty history returns `No lessons logged yet for NAME.`.
 
 If parsing or execution fails, `MainWindow` displays the error in the error style and leaves the details panel and highlight unchanged. For typed input, `CommandBox` keeps the failed command and marks it as an error. Card-click failures are displayed through the same execution path without clearing typed text. Viewing changes no student or lesson data, so `LogicManager` returns its result without attempting to save.
+
+**Design considerations: handling card clicks**
+
+* **Current choice:** build `view INDEX` from the card's displayed index and use the existing Logic execution path. Typed commands and clicks share validation, feedback and selection behavior, while the callback preserves typed text.
+* **Alternative:** update the panel directly from the clicked card. This avoids a command call but duplicates viewing behavior and can drift from command validation and feedback.
 
 ### Keeping the details panel in sync
 
@@ -249,7 +272,7 @@ Every command that views or changes exactly one student therefore returns that s
 1. Otherwise, the panel keeps its current student if the displayed list still contains that same value, and refreshes the highlight because positions may have shifted.
 1. Otherwise, for example after `find` hides the student or `delete` removes them, the panel and the highlight are cleared.
 
-Failed commands skip these rules, so an error never changes the panel. A failed save is a special case: `LogicManager` restores the previous address book, which replaces the list contents and clears the JavaFX selection. `MainWindow#restoreShownStudentHighlight` therefore highlights the panel's student again after any failed command, without scrolling if the highlight was not lost. Commands that affect no single student, such as `list`, `summary` and `add`, need no changes.
+Failed commands skip these rules, so an error never changes the panel. A failed save is a special case: `LogicManager` restores the previous student data, which replaces the list contents and clears the JavaFX selection. `MainWindow#restoreShownStudentHighlight` therefore highlights the panel's student again after any failed command, without scrolling if the highlight was not lost. Commands that affect no single student, such as `list`, `summary` and `add`, need no changes.
 
 **Design considerations:**
 
@@ -1027,22 +1050,29 @@ testers are expected to do more *exploratory* testing.
 
 Use Java `25` and a separate empty test folder. Copy `TutorLah.jar` there and open a terminal in that folder. Keep real student data out of this test folder.
 
-1. Run `java -jar TutorLah.jar` with no existing data file. Expected: the GUI opens with sample students and a command box. Enter `list` to display the students.
-1. Resize and move the window, then enter `exit`. Expected: the window closes. Run the same launch command from the same folder. The saved students, window size and window location are retained.
-1. Close TutorLah, then edit `preferences.json` so that the saved X/Y coordinates put the window beyond the right and bottom edges of every connected screen. Restart. Expected: the window is centred within the primary screen's usable bounds. Repeat with coordinates wholly beyond the left and top edges.
-1. With a secondary screen connected, move TutorLah fully onto that screen, exit and restart. Expected: its saved position on the secondary screen is retained, including when that screen is left of the primary screen and has negative X coordinates. Disconnect that screen and restart. Expected: TutorLah is centred within the primary screen's usable bounds.
+1. Run `java -jar TutorLah.jar` with no existing data file. Expected: sample students and a command box. Enter `list`, then `loglesson 1 c/Restart check` to make a change that saves the students and lesson.
+1. Resize and move the window, then enter `exit`. Relaunch from the same folder and enter `view 1`. Expected: the students and Restart check lesson remain. The window size and location are retained when they fit the connected screens.
+1. Close TutorLah and edit `preferences.json` to place the window wholly beyond the right/bottom of every screen. Restart: it is centered within the primary screen's usable bounds. Repeat beyond the left/top edges.
+1. With a secondary screen connected, move the whole window onto it, exit and restart. Expected: its position is retained, including on a screen with negative coordinates. Disconnect that screen and restart: the window is centered on the primary screen.
 
 ### Student and lesson summaries
 
-Use a separate test folder with an empty student file and fictional data only.
+Use a separate test folder with `data/addressbook.json` containing `{"persons": []}`, prepared before launch.
 
-1. Enter `summary`. Expected: the summary says `No students yet. Add a student to start recording lessons.`.
-1. Add Amy Tan and Ben Lim, then log two dated lessons for Amy. Expected: Amy's card shows `2 lessons, last DATE` using the later date, and Ben's shows `No lessons yet`. `summary` reports 2 students and 2 lesson records: `You have 2 students and 2 lesson records in total.`.
-1. Enter `find ben`, then `summary`. Expected: the same totals, with only Ben still displayed as student 1. Repeat after flagging Ben and entering `flagged`, and after a search that finds no students.
-1. Enter `summary 1`. Expected: the summary usage, with the preceding filter and student data unchanged.
-1. Enter `list`, edit Amy's latest lesson to an earlier date, then remove her lessons one at a time using `deletelesson`. Expected: the card immediately follows the most recent remaining date, the count decreases, and removing the last record shows `No lessons yet`. `summary` then reports 2 students and 0 lesson records.
-1. Restart with a valid legacy file containing undated lessons. Expected: these records count in the totals, and a student with only undated records shows `N lessons (undated)` (or `1 lesson (undated)`). Logging a dated lesson keeps those records and supplies the new last date.
-1. Check the status alongside a flag icon, selected and hovered cards, long student names and the supported display sizes/scales. Expected: the status and flag icon remain readable without overlapping other fields.
+1. Enter `summary`. Expected feedback: `No students yet. Add a student to start recording lessons.`
+1. Enter these commands:
+
+   ```text
+   add n/Amy Tan p/81230001 addr/18 Example Street l/Sec 3 sub/Physics
+   add n/Ben Lim p/81230002 addr/24 Example Street l/Sec 4 sub/Chemistry
+   loglesson 1 c/Algebra date/10/10/2026
+   loglesson 1 c/Geometry date/20/10/2026
+   ```
+
+   Expected: Amy's card shows `2 lessons, last 20/10/2026`; Ben's shows `No lessons yet`. Summary feedback: `You have 2 students and 2 lesson records in total.`
+1. Enter `find ben`, then `summary`. Expected: the same totals, with only Ben displayed as student 1. Enter `flag 1`, `flagged` and `summary`: the totals still cover both students. `summary 1` gives the summary usage without changing this filter.
+1. Enter `list`, then `editlesson 1 1 date/09/10/2026`. Expected: Amy's latest date becomes `10/10/2026`. Enter `deletelesson 1 1` twice: the count decreases to zero and her card shows `No lessons yet`. `summary` reports 2 students and 0 lesson records.
+1. Repeat with a student whose records all lack dates, using the date-removal procedure in [Lesson dates and data saved by v1.3](#lesson-dates-and-data-saved-by-v1-3). Expected: the records count in the totals and the card shows `N lessons (undated)` (singular for one). Adding a dated lesson keeps the old records and supplies the last date.
 
 ### Searching lesson histories
 
@@ -1165,57 +1195,40 @@ Use a separate test directory containing two fictional students. Enter the follo
 
 ### Saving data
 
+Use a separate disposable folder for each scenario. For the concurrent-copy and failed-save checks, prepare `data/addressbook.json` containing `{"persons": []}`, launch TutorLah, and add Amy Tan and Ben Lim using the two add commands in [Student and lesson summaries](#student-and-lesson-summaries-2). Their successful additions create the saved fixture.
+
 #### Preventing concurrent copies
 
-Use a separate test folder with a valid `data/addressbook.json` containing `{"persons": []}`.
-
-1. Launch TutorLah and add Ben Lim, but leave that copy open.
-1. From the same working folder, launch the same JAR again. Expected: the second copy reports that another copy is already using the data folder and exits without showing the main window or changing the JSON file.
-1. In the first copy, add Amy Tan and exit. Expected: both students are saved.
-1. Launch TutorLah again. Expected: it starts normally and lists both students. The presence of `data/.tutorlah.lock` does not block startup after the first process releases its operating-system lock.
-
-`ApplicationLockTest` covers unavailable and failed lock attempts and verifies that their channels are closed. `MainAppTest` acquires the same folder lock from two application objects, verifies that the second initialization creates no logic, releases the first lock and verifies that a new application can start. `PersonListPanelTest` verifies that the failure-only UI reports the problem without showing the main window.
+1. Leave the first copy open and launch the same JAR again from that working folder. Expected: the second copy reports that another copy is using the data folder, exits without a main window, and leaves the student file unchanged.
+1. In the first copy, enter `loglesson 1 c/Concurrent copy check` and `exit`. Relaunch and use `list` and `view 1`. Expected: both students and Amy's lesson remain. A leftover `data/.tutorlah.lock` file does not block a new session once the first process releases its lock.
 
 #### Recovering from a failed save
 
-Use a separate test folder and fictional students only. Add Amy Tan and Ben Lim with different phone numbers, then enter `find amy`.
+1. Enter `find amy`. While the app runs, move `data/addressbook.json` to `data/addressbook.saved.json` and create an empty directory named `data/addressbook.json` at the old location.
+1. Enter `delete 1`. Expected: a save error, with Amy still displayed as student 1 and the backup file unchanged with both students.
+1. Remove the empty directory and restore the saved file to its original name. Enter `list`: both students remain; the read-only command has not persisted the failed deletion.
+1. Enter `find amy`, `delete 1` and `list`. Expected: Amy is deleted once, only Ben remains, and restarting retains him.
 
-1. Keep the app running. Move `data/addressbook.json` to `data/addressbook.saved.json`, then create an empty directory named `data/addressbook.json` at the old file location.
-1. Enter `delete 1`. Expected: a save error, with Amy still visible as student 1. The preserved JSON file still contains both students.
-1. Remove the empty directory and move `data/addressbook.saved.json` back to `data/addressbook.json`. Enter `list`. Expected: both students remain; the failed deletion was not saved by this later command.
-1. Enter `find amy`, then `delete 1`. Expected: Amy is deleted exactly once. `list` shows Ben, and a restart retains him.
-
-`SaveFailureRollbackTest` also covers IO and permission failures for `add`, `edit`, `loglesson`, `delete`, `deletelesson`, `editlesson`, `flag` and `unflag`, preservation of find/flagged filters and lesson data, subsequent commands and successful retries.
-
-Permission failures use `Storage#getAddressBookFilePath` in the existing permission message. Other `FileSystemException` failures use `Could not save data to file PATH due to the following error: REASON`, taking only `getReason()` rather than the exception's temporary-file paths. A missing or blank reason becomes `The file or folder could not be written.`. Other IO errors keep their existing messages, including the saving-disabled recovery explanation. The original exception remains the command error's cause, and rollback is unchanged.
-
-On a POSIX filesystem, make the disposable `data/` directory read-only while TutorLah is open and enter `loglesson 1 c/Permission test`. Expected: the error names `addressbook.json` and contains no `.tutorlah-` filename; the student, selected index and saved bytes are unchanged, with no temporary files left behind. Restore directory permissions before retrying or removing the test folder. `SaveFailureRollbackTest` covers this real permission failure where supported, plus deterministic full-disk, unsupported-atomic-move and missing-reason failures on every platform, preserving the original exception and verifying successful retries.
+Where folder permissions can be enforced (for example on a POSIX filesystem), make this disposable `data/` directory read-only and enter `loglesson 1 c/Permission test`. Expected: the error identifies `addressbook.json`, not a `.tutorlah-` path; the student data, selection and saved bytes remain unchanged, with no temporary files left behind. Restore permissions before retrying or deleting the fixture. Record this check as skipped if the account can bypass those permissions.
 
 #### Missing or corrupted files
 
-Use a separate test folder and fictional data only. Keep a valid copy of the student file before changing it.
-
-1. Launch with no `data/addressbook.json`. Expected: sample students and no recovery warning. `list` works without creating the student file; logging a lesson creates it and saves the complete collection.
-1. Save a fictional Amy Tan with an Algebra record, exit, and keep an exact copy of the JSON file. Remove a closing brace from the working copy and restart. Expected: a warning with the file location, a short JSON syntax reason with its line and column, and repair/restart instructions; an empty list and saving disabled. The warning must not quote the JSON contents, `[Source: ...]` or internal class names.
-1. Dismiss the warning and try `list`, `find amy`, `flagged` and `help`. Expected: normal feedback for the empty collection, with the help window opening normally and the original file remaining byte-for-byte unchanged.
-1. Try adding a fictional student. Expected: the saving-disabled error, with the model still empty and the original file unchanged. Enter `exit`. Expected: the app closes normally without overwriting that file.
-1. Restore the valid file and restart. Expected: Amy and Algebra return, no recovery warning appears, and new changes save normally.
-1. Repeat with valid JSON containing Amy's phone as `12`. Expected: the same protection and warning, now including `Reason: Phone numbers should be exactly 8 digits.`, because stored field validation also failed.
-1. Prepare a valid `{"persons": []}` file and restart. Expected: an empty list with no warning and normal saving. Valid legacy lesson records without a date still load as undated.
-
-`MainAppTest` and `JsonAddressBookStorageTest` exercise startup and subsequent commands with malformed JSON, a null root, null student entries and invalid values, exact byte preservation, missing/legacy data, repair and restart. `PersonListPanelTest` checks that the recovery warning is requested after the window is shown and is absent during a normal start.
+1. Start in a fresh folder without `data/addressbook.json`. Expected: sample students and no warning. `list` leaves the student file absent; `loglesson 1 c/Recovery check` creates it. Exit and back up the complete file.
+1. Remove a closing brace from the working file and restart. Expected: a warning naming the file, a short JSON syntax reason with line/column and repair/restart instructions. The list is empty and saving is disabled. No JSON contents, `[Source: ...]` text or internal class names appear.
+1. Try `list`, `find amy`, `flagged` and `help`. Expected: read-only commands work, Help opens, and the file remains byte-for-byte unchanged. Try the Amy add command from the summary fixture: it gives the saving-disabled error, the model remains empty, and `exit` leaves the file untouched.
+1. Restore the valid backup and restart. Expected: the saved students and Recovery check lesson return without a warning, and a new lesson saves normally.
+1. With TutorLah closed, change one stored phone to `12` and restart. Expected: the same protection, with the warning containing `Reason: Phone numbers should be exactly 8 digits.` Restore the backup before continuing.
+1. Restart with a valid `{"persons": []}` file. Expected: an empty list without a warning, and successful saving when the Amy add command is entered.
 
 ### Importing and repairing student data
 
-Use disposable copies of `data/addressbook.json` while TutorLah is closed.
+Work on disposable copies of `data/addressbook.json` with TutorLah closed; keep a valid backup for restoring each invalid-file scenario.
 
-1. Give one fictional student stored lessons dated `2026-10-20` and `2026-10-10`, in that order, plus undated records and repeated same-day records. Restart and enter `view 1`. Expected: dated lessons appear newest first, followed by undated lessons; no occurrences disappear. Within a date, the last saved occurrence appears first. Read-only commands leave the file unchanged.
-1. Enter `loglesson 1 c/Mid date/15/10/2026`, then `view 1`. Expected: Mid appears between the dated records. Edit and delete using these displayed lesson numbers, restart and verify the same remaining records and flags.
-1. Give two students the same phone and names `Amy Tan` and ` Amy  Tan `. Restart. Expected: an empty protected session with the duplicate-person reason, and the original bytes preserved. Different phone numbers allow both students to load with normalized names.
-1. Change a saved date to `1999-12-31`. Expected: protected recovery with a reason mentioning `2000-01-01` and `YYYY-MM-DD`. Restore it as `2000-01-01`: it loads normally. Undated legacy lessons and existing future dates also load; commands still reject newly entered future lesson dates.
-1. For a fresh destination, create `data/` and copy a valid `addressbook.json` from another disposable working folder, with TutorLah closed in both. Start from the destination folder and verify its students, lessons and flags using `list` and `view`.
-
-`StudentDataLoadingTest` covers sanitized startup reasons for truncated JSON, trailing commas, a UTF-8 BOM and invalid structures; unknown locations and read errors; preservation of validation messages; normalized duplicates, different-phone identities, stable ordering followed by `loglesson`, `edit`, `delete` and search, exact byte preservation, blocked saves and repair/restart. Adapter tests cover the minimum date, future stored dates, undated records, normalization before length validation and stable same-day occurrences.
+1. Give a fictional student lessons dated `2026-10-20` then `2026-10-10`, plus undated and repeated same-day records. Restart and enter `view 1`. Expected: newest dates first, undated records last and no lost occurrences. For ties, the last saved occurrence appears first. Read-only commands leave the file unchanged.
+1. Enter `loglesson 1 c/Mid date/15/10/2026` and `view 1`: Mid appears between the dated records. Use `editlesson` and `deletelesson` with the displayed lesson numbers, then restart. Expected: the remaining lessons and flag are preserved.
+1. Give two students the same phone and names `Amy Tan` and ` Amy  Tan `. Restart: the duplicate-person warning opens an empty protected session without rewriting the file. Restore the fixture and give them different phones: both load with normalized names.
+1. Change a saved date to `1999-12-31` and restart. Expected: protected recovery with a reason mentioning `2000-01-01` and `YYYY-MM-DD`. A date of `2000-01-01` loads; undated records and existing future dates also load. Lesson-writing commands still reject future dates.
+1. Close both copies of TutorLah. Copy a valid file into `data/addressbook.json` in a fresh destination folder, backing up any destination file first. Launch there and use `list` and `view` to verify students, lessons and flags.
 
 ### Deleting lesson records
 
