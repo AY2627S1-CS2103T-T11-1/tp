@@ -336,6 +336,8 @@ Only one copy can use the same data folder at a time. If a second copy reports a
 
 The failed change is canceled: your students, lessons and displayed list return to their previous state. Check the reported file location, folder permissions and available disk space, fix the problem, then retry. Do not assume the failed command was saved. The previous saved file is kept if writing or replacing it fails; a failed first save leaves no empty student file.
 
+Saving also needs a folder that supports replacing a file in one step.
+
 ### If your saved students cannot be opened
 
 TutorLah shows a warning with the file's location and a short reason, then opens with an empty student list. **Saving is disabled to protect the original file.** Commands that only read data still work, but changes cannot be saved.

@@ -49,7 +49,7 @@ ModelManager .up.|> Model
 ModelManager -down-> "1\n" AddressBook
 AddressBook *-down-> "1   " UniquePersonList
 UniquePersonList -down-> "   internalList\n   0..*" Person
-ModelManager -right-> "filteredPersons\n0..*   " Person
+ModelManager -right-> "filteredPersons   \n0..*   " Person
 
 Person *-down-> "1\n" Name
 Person *-down-> "1\n" Phone
