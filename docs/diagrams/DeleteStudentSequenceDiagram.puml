@@ -8,18 +8,28 @@ skinparam SequenceBoxFontColor #222222
 box Logic #F2F2FC
     participant ":LogicManager" as logicManager LOGIC_COLOR
     participant ":AddressBookParser" as addressBookParser LOGIC_COLOR
-    participant "command:\nDeleteCommand" as command LOGIC_COLOR
+    participant ":DeleteCommandParser" as parser LOGIC_COLOR
+    participant ":DeleteCommand" as command LOGIC_COLOR
 end box
 
 box Model #FBF1F2
-    participant "model:Model" as model MODEL_COLOR
+    participant ":Model" as model MODEL_COLOR
 end box
 
 [-> logicManager : execute("delete 1")
 activate logicManager
 
-logicManager -> addressBookParser : parseCommand("delete 1")
+logicManager -> addressBookParser : parseCommand(...)
 activate addressBookParser
+
+addressBookParser -> parser : parse("1")
+activate parser
+
+create command
+parser -> command : DeleteCommand(...)
+parser --> addressBookParser : command
+deactivate parser
+
 addressBookParser --> logicManager : command
 deactivate addressBookParser
 
@@ -30,30 +40,21 @@ activate model
 model --> command : displayedStudents
 deactivate model
 
-note right of command
-  Resolve targetIndex against displayedStudents.
-  Displayed index 1 maps to zero-based position 0.
-  Validate it, then select personToDelete.
-  This happens before the Model is changed.
-end note
-
 command -> model : deletePerson(personToDelete)
 activate model
 model --> command : return
 deactivate model
 
-note right of model
-  Removing the Person also removes their owned
-  lesson history from the address book data.
+note over command, model
+  Deleting this student also deletes
+  their lesson records from the
+  saved student data.
 end note
 
 command --> logicManager : commandResult
 deactivate command
-
-note right of logicManager
-  The subsequent save is shown in the
-  architecture sequence diagram.
-end note
+command -[hidden]-> logicManager
+destroy command
 
 [<-- logicManager : commandResult
 deactivate logicManager
