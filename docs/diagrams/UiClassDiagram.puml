@@ -21,9 +21,7 @@ package "UI (partial)" {
         - onPersonClick : Consumer<Index>
     }
     class PersonCard
-    class StudentDetailPanel {
-        - student : Person [0..1]
-    }
+    class StudentDetailPanel
 }
 
 package Logic {
@@ -44,4 +42,5 @@ MainWindow -down-> "1" PersonListPanel
 MainWindow -down-> "1" StudentDetailPanel
 PersonListPanel .down.> PersonCard : <<create>>
 PersonCard -right-> "1" Person
+StudentDetailPanel -down-> "0..1<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>" Person
 @enduml

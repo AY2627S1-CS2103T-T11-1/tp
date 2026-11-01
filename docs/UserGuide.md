@@ -77,7 +77,7 @@ Use part of a name, subject or level to find students:
 
 | Example | Matches |
 |---|---|
-| `find tan` or `find n/tan` | Names containing `tan`, such as Alex Tan and Ethan Tan. |
+| `find tan` or `find n/tan` | Students whose names contain `tan`. |
 | `find alex tan` | Names containing both `alex` and `tan`, in any order. |
 | `find sub/Physics l/Sec 3` | Students taking Physics whose level contains both `Sec` and `3`. |
 | `find tan sub/math` | Students named Tan taking a subject such as E-Math or H2 Math. |

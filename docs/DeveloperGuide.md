@@ -19,7 +19,8 @@
 * OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
 * OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries and per-student lesson counts.
 * Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date, editing lesson records and name, level and subject validation, and with the Developer Guide's architecture, common classes and lesson-logging sections.
-* Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level.
+* Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level, handling null GUI settings, renaming `log` to `loglesson` and sharing test helpers, and with pull request reviews and Developer Guide updates.
+* The TutorLah logo (`tutorlah_icon.png`) was created using Google Gemini.
 * OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, safe JSON replacement, their tests and documentation.
 * OpenAI Codex, used by cibichandar, assisted with the implementation, tests,
   documentation and screenshots for searching lesson histories, and with Unicode
@@ -80,9 +81,9 @@ The sections below give more details of each component.
 
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/java/seedu/address/ui/Ui.java).
 
-<puml src="diagrams/UiClassDiagram.puml" alt="Partial UI class diagram showing the main window, callback fields, student cards, the student detail panel and feedback display" width="850" />
+<puml src="diagrams/UiClassDiagram.puml" alt="Partial UI class diagram showing the main window, callback fields, student cards, the student detail panel and feedback display" width="1000" />
 
-This partial class diagram focuses on command input, student cards, the details panel and feedback. `MainWindow` supplies a `CommandExecutor` callback to `CommandBox` and a `Consumer<Index>` callback to `PersonListPanel`. The fields shown on those classes hold the callbacks; neither input part needs a reference to the concrete `MainWindow` class. Solid arrows show held references, with `1` identifying a single referenced object; dashed arrows with `<<create>>` show creation dependencies. `PersonListPanel` creates `PersonCard` objects for visible students, and each card displays one `Person` from the Model component. `StudentDetailPanel` holds at most one `Person`, the student it currently shows. The creation dependency does not describe how many cards are visible. `Person` remains the Java class name for a student.
+This partial class diagram focuses on command input, student cards, the details panel and feedback. `MainWindow` supplies a `CommandExecutor` callback to `CommandBox` and a `Consumer<Index>` callback to `PersonListPanel`, so neither input part needs a reference to the concrete `MainWindow` class. `PersonListPanel` creates `PersonCard` objects for visible students, and each card displays one `Person` from the Model component. `StudentDetailPanel` holds at most one `Person`, the student it currently shows. `Person` remains the Java class name for a student.
 
 `UiManager` implements `Ui` and creates `MainWindow`. `MainWindow` and its visible UI parts inherit from `UiPart`; the window also creates `HelpWindow` and `StatusBarFooter`. These startup, shared-base and supporting classes are omitted from the focused diagram. The UI uses JavaFX, with layouts in `src/main/resources/view`, such as [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T11-1/tp/blob/master/src/main/resources/view/MainWindow.fxml).
 
@@ -90,10 +91,12 @@ The UI responsibilities are:
 
 * `CommandBox` submits typed commands and clears its text only after successful execution. A failed typed command remains available for correction and receives error styling.
 * `PersonListPanel` observes the filtered student list supplied by `Logic`. Compact cards show each student's displayed index, initials, name, level and subject, and lesson status. A flagged card also shows a red flag icon. The indexes follow the displayed list, including after filtering or deletion.
-* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance that works for the current list: `view 1` while students are displayed, `list` when a filter hides every saved student, or the `add` format when there are no students. It listens to `Logic#getFilteredPersonList` and the address book's student list, so the guidance follows `find`, `list`, `add` and `delete` without a restart. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state. The level and subject chips sit side by side when both fit; otherwise the panel stacks them so that a long chip wraps its text within the panel width instead of being cut off. Stacked chips return side by side only when they fit with 20 pixels to spare, more than the vertical scroll bar's width. Stacking can add the scroll bar and narrow the panel, so without this margin the two layouts would keep replacing each other (#202).
+* `StudentDetailPanel` shows one student's level, subject, phone, address, flag reason and lesson records, numbered newest first as `view` numbers them. With no student selected, it shows guidance that works for the current list: `view 1` while students are displayed, `list` when a filter hides every saved student, or the `add` format when there are no students. It listens to `Logic#getFilteredPersonList` and the full student list, so the guidance follows `find`, `list`, `add` and `delete` without a restart. It renders whichever immutable `Person` `MainWindow` gives it and keeps no other state.
+* The level and subject chips sit side by side when both fit; otherwise `StudentDetailPanel` stacks them so that a long chip wraps its text within the panel width instead of being cut off. Stacked chips return side by side only when they fit with 20 pixels to spare, more than the vertical scroll bar's width. Stacking can add the scroll bar and narrow the panel, so without this margin the two layouts would keep replacing each other.
 * A primary mouse press on a populated card sends its displayed index to `MainWindow`. The callback runs before selection can rebuild the cell, so changing students after a typed `view` needs only one press. Repeated presses view the student again; empty cells and other mouse buttons do not execute the shortcut. Releasing a navigation key (arrows, Page Up/Down, Home, End) in the focused list sends the newly selected index through the same callback, so keyboard selection cannot leave the list and details panel showing different students. Programmatic selection and list changes fire no key events, so they never execute a command.
 * `ResultDisplay` shows command feedback as wrapping, read-only text. Each update resets the caret and scroll position to the beginning, including when the feedback is unchanged. Error feedback uses a red style until the next command. Long histories remain accessible by scrolling, and the result area can be resized with the horizontal divider. The student list and details panel share the area below, separated by a vertical divider.
-* `MainWindow` has a minimum size of 700 x 420 pixels. Its contents need about 350 pixels of height, leaving room for the title bar, so by calculation the window fits a `1280x720` screen at 150% scaling (about 853 x 480 logical pixels) with a taskbar. At startup, the saved or default window size is reduced to fit the primary screen's usable area. A saved position is restored when the complete window fits within any connected screen's usable bounds, including a secondary screen with negative coordinates. Otherwise, `MainWindow` centres it within the primary screen's usable bounds, which excludes areas reserved for taskbars and similar system UI.
+* `MainWindow` has a minimum size of 700 x 420 pixels. Its contents need about 350 pixels of height, leaving room for the title bar, so by calculation the window fits a `1280x720` screen at 150% scaling (about 853 x 480 logical pixels) with a taskbar.
+* At startup, the saved or default window size is reduced to fit the primary screen's usable area. A saved position is restored when the complete window fits within any connected screen's usable bounds, including a secondary screen with negative coordinates. Otherwise, `MainWindow` centers it within the primary screen's usable bounds, which excludes areas reserved for taskbars and similar system UI.
 * After a successful command, `MainWindow` updates the details panel and the list highlight, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync). Programmatic selection and list changes do not execute a view command.
 
 ### Logic component
@@ -339,12 +342,16 @@ The command keeps each student's lessons in date order with one of two operation
 
 `ArgumentTokenizer` starts a new field at every prefix the command recognizes when it follows whitespace, including non-breaking spaces and tabs. Free-text values can therefore not contain those prefixes after a space: `loglesson 1 c/Worksheet collected c/o Mum` has two `c/` fields, and `loglesson 1 c/Revised date/time conversions` gives `time conversions` as the date. Other slashes, such as `a/l` in a name or `d/dx` in notes, are ordinary text.
 
-We keep this rule for every command rather than special-casing lesson content:
+**Design considerations: prefix text in values**
 
-* It is the same rule for every command, so users learn one rule. Exceptions for `c/o` or `date/time` would invite the same request for `n/a` in addresses, `r/` in flag reasons and many other abbreviations.
-* Duplicate-field and strict date validation stay unchanged. Guessing whether a prefix was meant as text could store a mistyped date or a pasted second field as notes without any error.
+* **Alternative 1 (current choice):** keep the same rule for every command, and explain it in error messages.
+  * Pros: users learn one rule. Duplicate-field and strict date validation stay unchanged.
+  * Cons: users must reword text such as `c/o`, as `care of`.
+* **Alternative 2:** special-case likely text, such as `c/o` or `date/time` in lesson content.
+  * Pros: these common phrases work as typed.
+  * Cons: the same request would follow for `n/a` in addresses, `r/` in flag reasons and many other abbreviations. Guessing could also store a mistyped date or a pasted second field as notes without any error.
 
-Instead, the error messages explain the limitation:
+The error messages explain the limitation:
 
 * `Messages#getErrorMessageForDuplicatePrefixes` adds `MESSAGE_PREFIX_TEXT_HINT` on a new line, so every command's duplicate-field error suggests rewording prefix text. The first line still names the repeated prefixes.
 * `LogCommandParser` and `EditLessonCommandParser` call `ParserUtil#parseLessonDateWithNotesHint` for `date/`. It calls `parseLessonDate` and, on failure, throws a new `ParseException` with the original message, `MESSAGE_LESSON_DATE_TEXT_HINT` on a new line, and the original exception as its cause. Only the date call is wrapped, so index and content errors have no date hint, and `findlesson` keeps using `parseLessonDate` without the hint.
@@ -390,13 +397,35 @@ or storage field is introduced; `LogicManager` skips saving unchanged data.
 
 ### Finding students by name, subject and level
 
-`AddressBookParser` routes `find` input to `FindCommandParser`, which first turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space so that search keywords use a consistent separator. It then passes the normalized text to `ArgumentTokenizer` for the `n/`, `sub/` and `l/` prefixes. The shared tokenizer itself recognizes a configured prefix after Unicode whitespace, as described in [Prefix text inside values](#prefix-text-inside-values); the normalization is specific to how `find` prepares its keywords, not a requirement for prefix recognition. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on whitespace into literal keywords. A prefix given twice is rejected with the shared duplicate-prefix message, and a prefix whose value is blank, including Unicode spaces and invisible formatting characters, is rejected with that field's constraint message. A search with no keywords at all shows the usage. Other prefixes are not recognized, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
+`AddressBookParser` routes `find` input to `FindCommandParser`, which works in three steps:
 
-`StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched, and `isNameSearchOnly()` reports when only name keywords were given, so that `FindCommand` can add a hint about `sub/` and `l/` when such a search finds no one. Because every word after `sub/` or `l/` belongs to that field, a name typed afterwards, as in `find sub/Physics ng`, makes the search find no one. `withTrailingFieldWordsAsNames()` therefore returns the searches that move the last one or more words of a multi-word subject or level search to the names, fewest words first (subject before level for the same number of words) and keeping at least one word in each field. When a search that used `sub/` or `l/` finds no one, `FindCommand` tests these alternatives against `Model#getAddressBook`, without changing the displayed list, and suggests the first one that matches, written with name keywords first. Moving words is only a suggestion, never applied automatically, because multi-word values such as `Sec 3` and `H2 Math` are valid. All three fields share `StringUtil#containsIgnoreCase`, which compares each candidate substring with `String#regionMatches(true, ...)`, avoiding context-sensitive lowercase conversion such as Greek final sigma. Matching is locale-independent and literal, without regular expressions or spelling correction. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
+1. It turns every Unicode whitespace character, such as a non-breaking space or tab, into a plain space, so that search keywords use a consistent separator. The shared tokenizer already recognizes a configured prefix after Unicode whitespace, as described in [Prefix text inside values](#prefix-text-inside-values), so this step is only about keywords.
+1. It passes the normalized text to `ArgumentTokenizer` for the `n/`, `sub/` and `l/` prefixes. Text before the first of these prefixes and the `n/` value become name keywords; the `sub/` and `l/` values become subject and level keywords. Each part is split on whitespace into literal keywords.
+1. It rejects invalid searches. A prefix given twice gets the shared duplicate-prefix message, a prefix whose value is blank (including Unicode spaces and invisible formatting characters) gets that field's constraint message, and a search with no keywords at all shows the usage.
 
-`FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to the full address book, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
+Other prefixes are not recognized, so a search for `a/l` stays part of the name keywords and cannot be read as an address.
+
+`StudentContainsKeywordsPredicate` stores immutable copies of the name, subject and level keywords as typed, and needs at least one keyword in total. A student matches when each field contains every keyword given for it, in any order, and every field that has keywords matches. A field with no keywords is not searched. Predicate equality and hashing use all three keyword lists, so the same keyword in a different field is a different search.
+
+All three fields share `StringUtil#containsIgnoreCase`, so matching is locale-independent and literal, without regular expressions or spelling correction.
+
+When a search finds no one, `FindCommand` may add guidance:
+
+* `isNameSearchOnly()` reports when only name keywords were given, so `FindCommand` adds a hint about `sub/` and `l/`.
+* Every word after `sub/` or `l/` belongs to that field, so a name typed afterwards, as in `find sub/Physics ng`, finds no one. `withTrailingFieldWordsAsNames()` returns the searches that move the last one or more words of a multi-word subject or level search to the names, fewest words first (subject before level for the same number of words), keeping at least one word in each field. `FindCommand` tests these against `Model#getAddressBook`, without changing the displayed list, and suggests the first one that matches, written with name keywords first.
+
+`FindCommand` passes this predicate to `Model#updateFilteredPersonList`. The existing `FilteredList` applies it to all saved students, so a later search replaces the previous search instead of narrowing it further. The GUI observes this list and updates the cards and their displayed indexes automatically. An empty filtered list shows guidance to type `list`; it does not imply that stored students have been deleted.
 
 `view`, `loglesson`, `edit`, `delete`, `deletelesson` and student-card clicks continue to use displayed indexes. `list` restores all students. Adding or editing also restores the full list, while viewing, logging and deleting students or lessons retain the filter. The search changes no student or lesson data and is not persisted across restarts; read-only searches do not rewrite the student data file.
+
+**Design considerations: when keywords match**
+
+* **Alternative 1 (current choice):** a student must match every keyword. A failed search may suggest a corrected one, which is never applied automatically.
+  * Pros: each extra word narrows the results, and valid multi-word values such as `Sec 3` and `H2 Math` keep their meaning.
+  * Cons: a name typed after `sub/` or `l/` finds no one until the user corrects it.
+* **Alternative 2:** a student may match any keyword.
+  * Pros: a misplaced or extra word still finds students.
+  * Cons: `find sub/H2 Math` would also list every student whose subject contains `Math`, so results grow as the search gets more specific.
 
 ### Flagging students for follow-up
 
@@ -1067,9 +1096,6 @@ Use a separate test directory with `data/addressbook.json` containing `{"persons
    Expected: the student is added with the full name `Muthu a/l Raju`; the edit changes only the name to `Siti a/p Ahmad`, and the address stays `13 Example Street`. `delete 3` then removes this student, so the two Amy Tan students remain for the following steps.
 1. Enter `add n/Ben Lim p/81230014 a/14 Example Street l/Sec 2 sub/E-Math`, using the old `a/` prefix.<br>
    Expected: the add-command usage followed by `The address prefix is addr/, for example addr/1 Example Street.` No student is added.
-1. Enter `add n/Eve Lee p/81230015 addr/6 St l/Sec 3 sub/Math t/friend`.<br>
-   Expected: the subject error followed by `If t/ was intended as a field, add accepts only n/, p/, addr/, l/ and sub/.`
-   No student is added. Slash-containing names and addresses in valid commands still work.
 1. Try omitting each required prefix in turn. Also try `p/123`, `l/`, `sub/`, a 101-character name and an address containing only spaces.<br>
    Expected: each command is rejected with either the add-command usage or the relevant field constraint. Neither existing student changes.
 
@@ -1097,9 +1123,7 @@ flag 1 r/Weak in algebra
 
 1. Enter `find amy`, then `edit 1 p/91234567 l/Sec 4`.<br>
    Expected: `Edited student: Amy Tan; Phone: 91234567; Address: 21 Example Street; Level: Sec 4; Subject: E-Math`. The full list returns with Amy and Ben, and the details panel shows Amy with her flag banner and her `20/10/2026` Algebra record.
-1. Enter `view 1`, then `flagged`.<br>
-   Expected: `Lesson records for Amy Tan (1):` followed by `1. 20/10/2026: Algebra`, then `Listed 1 flagged student.`. The edit kept Amy's lesson and flag.
-1. Enter `list`, then `edit 2 n/amy tan p/91234567`.<br>
+1. Enter `edit 2 n/amy tan p/91234567`.<br>
    Expected: `This student already exists in the list.`, because the name differs from Amy's only by case and the phone is the same. Ben is unchanged.
 1. Try `edit 1`, `edit 3 n/Cara Ong`, `edit 1 a/1 New Road` and `edit 1 p/123`.<br>
    Expected, in order: `At least one field to edit must be provided.`, `The student index provided is invalid.`, `Invalid command format!` followed by the edit usage, and `Phone numbers should be exactly 8 digits.`. No student changes.
@@ -1114,9 +1138,6 @@ Use a separate test folder with one fictional student, Amy Tan, at index 1.
    U+00A0 (non-breaking space) and U+202F (narrow non-breaking space). Paste the
    actual characters, not the literal `\u00a0` or `\u202f` text.
    Expected: each edit succeeds and the details panel shows `81230001`.
-1. Add another fictional student using a phone containing either Unicode space.
-   Expected: the saved phone has eight digits without whitespace. Exit and restart;
-   both students retain their normalized phones.
 1. Try seven or nine digits, `+65`, a hyphen, a letter and U+200B (zero-width space)
    inside a phone, using both `add` and `edit`.
    Expected: the phone constraint message; students, lessons, flags and saved data
@@ -1135,8 +1156,7 @@ loglesson 1 c/Algebra
 loglesson 2 c/Calculus
 ```
 
-1. Try `delete 0`, `delete 01` and `delete 3`. Expected: `The student index provided is invalid.`, with both students and their lesson records unchanged.
-1. Try `delete` and `delete abc`. Expected: `Invalid command format!` followed by the delete usage, with the data unchanged.
+1. Try `delete 0`, `delete 3` and `delete abc`. Expected: `The student index provided is invalid.` for the first two, then `Invalid command format!` followed by the delete usage. Both students and their lesson records are unchanged.
 1. Enter `find ben`, then `delete 1`. Expected: confirmation beginning `Deleted student: Ben Lim;` with Ben's saved details. Ben and his Calculus record are deleted. The filter remains and shows no students; Amy and her Algebra record are kept.
 1. Enter `list`, then `view 1`. Expected: `Listed 1 student.`, with Amy numbered 1, followed by her single dated Algebra record.
 1. Exit and restart from the same folder. Confirm Amy and her record remain, then enter `delete 1` and `list`. Expected: Amy and her record are deleted, and the list reports `No students found. Use add to create a student.`.
@@ -1272,13 +1292,13 @@ add n/Alicia Lim p/81230003 addr/30 Example Street l/JC1 sub/H2 Math
 
 1. Enter `find WEI`. Expected: only the two Wei students, numbered 1 and 2, with `Found 2 students.`.
 1. Enter `find ming tan`. Expected: only `Tan Wei Ming`, with `Found 1 student.`. Both keywords must occur in the name, ignoring case and keyword order.
-1. Enter `find ali`. Expected: only `Alicia Lim`, numbered 1, even though the previous search hid her. Enter `view 1`, then press her card. Both show `No lessons logged yet for Alicia Lim.` and highlight her card. Enter `view 2`: the student-index error appears and Alicia's card remains displayed.
-1. Enter `find` without keywords. Expected: usage feedback with Alicia still displayed. The failed command remains in the command box.
-1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students. To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`. The hint appears because the search used names only; `find sub/chemistry` gives the message without it. The empty panel offers both `list` and the add-command format and example.
+1. Enter `find ali`. Expected: only `Alicia Lim`, numbered 1, even though the previous search hid her.
+1. Enter `find` without keywords. Expected: usage feedback with the displayed list unchanged. The failed command remains in the command box.
+1. Enter `find unknown`. Expected: no cards and `No matching students found. Use list to show all students. To search by subject or level, use sub/ or l/, e.g. find sub/Physics.`. The hint appears because the search used names only; `find sub/chemistry` gives the message without it. The empty panel offers `list`.
 1. Enter `find sub/math`. Expected: all three students, with `Found 3 students.`, because `E-Math`, `A-Math` and `H2 Math` all contain `math`.
-1. Enter `find sub/math l/sec`. Expected: only the two Wei students. Then enter `find tan l/4`. Expected: only `Tan Wei Jie`, combining a bare name keyword with a level.
+1. Enter `find tan l/4`. Expected: only `Tan Wei Jie`, combining a bare name keyword with a level.
 1. Enter `find sub/math sub/h2`. Expected: `Multiple values specified for the following single-valued field(s): sub/`, then the hint to reword prefix text, and the previous results stay displayed. Enter `find l/`. Expected: the level constraint message, also without changing the displayed list.
-1. Enter `list`. Expected: `Listed 3 students.` and all three students in their original order, with Alicia numbered 3. Press Alicia's card once: her empty-history message appears and her card is highlighted.
+1. Enter `list`. Expected: `Listed 3 students.` and all three students in their original order, with Alicia numbered 3.
 1. Enter `find WEI`, then exit and restart. Expected: all three students return; searching did not remove hidden students or persist the filter.
 
 ### Lesson-history command sequences
@@ -1312,18 +1332,15 @@ Use a separate test folder and fictional students only.
    ```
 
    Expected: after the first `add`, the hint changes to `Click a student, or type view INDEX, to see their details and lessons here.` with `view 1`. No student opens in the panel.
-1. Exit and relaunch TutorLah. Expected: Amy and Ben are listed as students 1 and 2, no card is highlighted, and the panel shows `No student selected.` with `view 1`.
 1. Enter `view 2`. Expected: the panel shows Ben's initials, name, level and subject chips, phone and address, `Lessons (0)` and the hint `loglesson 2 c/Topic covered`. Ben's card is highlighted.
 1. Enter `loglesson 1 c/Algebra date/1/10/2026`, then `loglesson 1 c/Vectors date/8/10/2026`. Expected: the panel switches to Amy after the first command and lists `1. 08/10/2026 Vectors` and `2. 01/10/2026 Algebra` after the second, without another `view`.
-1. Enter `editlesson 1 2 date/9/10/2026`, then `deletelesson 1 1`. Expected: Algebra first moves to lesson 1, and after the deletion only Vectors remains as lesson 1.
 1. Enter `flag 2 r/Call parent`. Expected: the panel switches to Ben, with a red flag beside his name and the banner `Call parent`. His card shows a red flag icon.
 1. Enter `flagged`, then `unflag 1`. Expected: the displayed list becomes empty, but the panel still shows Ben, now without the flag or banner.
 1. Enter `list`, then `view 1`, then `find ben`. Expected: Amy is hidden by the search, so the panel returns to `No student selected.`.
 1. Enter `find nobody`. Expected: the list is empty, and the panel's hint is `No students are displayed. Type list to show all students.` with `list`, not `view 1`. Enter `flagged` while no student is flagged: the same hint appears.
-1. Enter `list`, `view 1`, then `edit 1 n/Amelia Tan`. Expected: the panel shows `Amelia Tan` and keeps her lesson. Enter `view 9`: the result box turns red with the student-index error, and the panel still shows Amelia.
+1. Enter `list`, `view 1`, then `edit 1 n/Amelia Tan`. Expected: the panel shows `Amelia Tan` and keeps her lessons. Enter `view 9`: the result box turns red with the student-index error, and the panel still shows Amelia.
 1. Click Amelia's card, then press the Down arrow. Expected: Ben's card is highlighted and the panel shows Ben. Press Up: both return to Amelia.
 1. Resize the window to its minimum width and drag the vertical divider both ways. Expected: long names and lesson content wrap, and nothing overlaps or is cut off.
-1. Enter `edit 2 l/Secondary Four Normal Technical Stream 1 sub/Math`. Slowly shrink the window to its minimum width, pausing at several widths. Expected: at each width, the level and subject chips settle side by side or stacked, and stay in that layout while the window is still. The panel's scroll bar does not flash on and off.
 1. Shrink the window to its minimum height of 420 pixels. Expected: the command box, result box, student list, details panel and status bar all remain visible, and the result box, list and panel scroll instead of cutting off text.
 1. Enter `view 1`, then `delete 1`. Expected: the panel returns to `No student selected.` with `view 1`, because Ben is now student 1.
 1. Enter `delete 1` again. Expected: the list is empty, and the panel's hint asks you to add a student first, with the `add` format.
