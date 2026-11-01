@@ -24,8 +24,8 @@ in the list])
 else ([else])
 endif
 
-if () then ([date/ given])
-    :Use the given date;
+if () then ([date supplied])
+    :Use the supplied date;
 else ([else])
     :Use today's date;
 endif
