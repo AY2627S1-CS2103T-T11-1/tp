@@ -122,7 +122,7 @@ How command execution works:
 1. `LogicManager` calls `Command#execute(Model)`, which reads or updates the model and returns a `CommandResult`.
 1. `LogicManager` compares the complete address book with its snapshot from before execution. If student data changed, it saves through `Storage` before returning the result. Otherwise it returns without saving, so `list`, `view`, `find`, `flagged`, `help` and `exit` work even when saving is unavailable. An edit that leaves the stored values unchanged also skips saving.
 
-`CommandResult` contains feedback and the help/exit flags. Commands that view or change exactly one student (`view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`) also supply that `Person` as it is after the command, through `getStudent()`, even when the student has no lessons. Other commands leave it absent (`0..1`). The UI shows that student in the details panel and highlights their card, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync).
+`CommandResult` contains feedback and the help/exit flags. `view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` also supply the `Person` they act on, as it is after the command, through `getStudent()`, even when the student has no lessons. Other commands, including `add` and `delete`, leave it absent (`0..1`). The UI shows that student in the details panel and highlights their card, as described in [Keeping the details panel in sync](#keeping-the-details-panel-in-sync).
 
 Invalid input raises `ParseException`; execution or save failures raise `CommandException`. Before executing a parsed command, `LogicManager` copies the address book and captures the current filter through `Model#getFilteredPersonListPredicate`. Student, lesson and flag values are immutable, so the copied list preserves the previous values. If saving throws `IOException`, including `AccessDeniedException`, the manager restores changed data through `Model#setAddressBook` and reapplies the captured predicate before reporting the existing save error. Capturing the predicate, rather than only the visible students, preserves its meaning for later updates. The existing observable list remains connected to the UI, and a retry uses the original displayed indexes.
 
@@ -274,13 +274,13 @@ If parsing or execution fails, `MainWindow` displays the error in the error styl
 
 `StudentDetailPanel` must reflect the latest data after any command, but student values are immutable: `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` each replace the student in the Model with a new `Person`. A panel that kept the old object would show stale data.
 
-Every command that views or changes exactly one student therefore returns that student, as it is after the command, through `CommandResult#getStudent`. These are `view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag`. After each successful command, `MainWindow#updateSelectedStudent` applies these rules:
+`view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` therefore return the student they act on, as it is after the command, through `CommandResult#getStudent`. After each successful command, `MainWindow#updateSelectedStudent` applies these rules:
 
 1. If the result names a student, the panel shows that student. The list highlights the student's current position in `Logic#getFilteredPersonList`, or clears the highlight if a filter now hides them. For example, `unflag 1` in the `flagged` results removes the student from the list but keeps them in the panel.
 1. Otherwise, the panel keeps its current student if the displayed list still contains that same value, and refreshes the highlight because positions may have shifted.
 1. Otherwise, for example after `find` hides the student or `delete` removes them, the panel and the highlight are cleared.
 
-Failed commands skip these rules, so an error never changes the panel. A failed save is a special case: `LogicManager` restores the previous student data, which replaces the list contents and clears the JavaFX selection. `MainWindow#restoreShownStudentHighlight` therefore highlights the panel's student again after any failed command, without scrolling if the highlight was not lost. Commands that affect no single student, such as `list`, `summary` and `add`, need no changes.
+Failed commands skip these rules, so an error never changes the panel. A failed save is a special case: `LogicManager` restores the previous student data, which replaces the list contents and clears the JavaFX selection. `MainWindow#restoreShownStudentHighlight` therefore highlights the panel's student again after any failed command, without scrolling if the highlight was not lost. Commands that return no student, such as `add`, `delete`, `list`, `find` and `flagged`, are handled by rules 2 and 3.
 
 **Design considerations:**
 
@@ -350,7 +350,7 @@ On success the command calls `Model#setPerson`, restores the full list as AB3 do
 
 ### Editing a lesson record
 
-`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDate`, the same rules as `loglesson`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
+`EditLessonCommandParser` tokenizes only `c/` and `date/`, so lesson content can contain text such as `a/level`. The text before the first prefix must be exactly two indexes, which are checked with the same `ParserUtil#parseCommandIndex` rules and messages as `deletelesson`. Content and dates go through `ParserUtil#parseLessonContent` and `ParserUtil#parseLessonDateWithNotesHint`, the same rules as `loglesson`. The parsed values are stored in an `EditLessonDescriptor`, modeled on `EditCommand.EditPersonDescriptor`, and a descriptor with no fields is rejected.
 
 `EditLessonCommand` finds the student and converts the displayed lesson number to a stored position exactly as `DeleteLessonCommand` does: both call `LessonCommandUtil#getStoredLessonIndex`, which also rejects a student with no lessons or a number beyond their history. Messages shared by several commands, such as the no-lessons and future-date messages, live in `Messages`. `EditLessonCommand` then checks the new date against today's date from an injected `Clock`, as `LogCommand` does, so tests can fix the date. An edit that would leave both content and date unchanged is rejected before the model changes.
 
@@ -1415,7 +1415,7 @@ Use a separate test folder whose `data/addressbook.json` contains `{"persons": [
 * Production Java: 4,016 lines added and 687 removed across 78 files under `src/main/java` since the fork (`git diff --shortstat`, including comments and blank lines).
 * Test code: 10,516 lines added across 105 files under `src/test`. `@Test` methods grew from 239 to 769, plus 14 `@TestFactory` methods.
 * Commands: 9 new commands, 1 AB3 command (`clear`) removed, and `add`, `edit`, `find`, `list` and `delete` adapted to students.
-* Process: 112 merged pull requests, most reviewed by a teammate, and an alpha test that led to further fixes before v1.5.
+* Process: over 110 merged pull requests, most reviewed by a teammate, and an alpha test that led to further fixes before v1.5.
 
 **Reuse**
 
