@@ -44,7 +44,8 @@ Choose a task below, or use the [command summary](#command-summary) for a quick 
 
 - Replace capitalised words with your details: in `add n/NAME`, replace `NAME` with `Tan Wei Ming`.
 - `[ ... ]` means optional; do not type the brackets. `KEYWORD...` means you may give more than one search word.
-- Command words accept any case: `list`, `LIST` and `LiSt` work alike. Field markers such as `n/` (name) and `c/` (lesson content) must be lowercase.
+- Command words accept any case: `list`, `LIST` and `LiSt` work alike. Field markers
+  (prefixes), such as `n/` (name) and `c/` (lesson content), must be lowercase.
 - Give each field at most once. Fields can appear in any order unless a command says otherwise. Text belongs to the field before it until the next recognised marker.
 - `INDEX` is the student's number in the **list currently shown**, starting at 1. After searching, use the new displayed numbers. Do not use leading zeros, such as `01`.
 - Paste one command at a time, check it, then press Enter. Copied spaces work as separators; pasted tabs and line breaks become spaces.
@@ -55,7 +56,9 @@ Choose a task below, or use the [command summary](#command-summary) for a quick 
 
 </box>
 
-Screenshots use fictional students. Captions give the commands used because successful commands disappear from the command box. Click any screenshot to enlarge it.
+Screenshots use fictional students and are independent examples unless their captions
+describe a sequence. Captions give the commands used because successful commands disappear
+from the command box. Click any screenshot to enlarge it.
 
 ## Features
 
@@ -224,9 +227,13 @@ Find a topic, a date range, or both for one student:
 - All keywords must occur in the lesson content, in any order. Part of a word works, ignoring case. Punctuation is matched as typed; wildcards and spelling correction are not supported.
 - Dates use the format and earliest date described under `loglesson`. Future search dates are allowed. Both boundary dates are included; leave one out for an open-ended range. `from/` cannot be later than `to/`; equal dates search a single day.
 - When both content and dates are supplied, all must match. Records without dates can match content searches, but are excluded whenever a date boundary is supplied.
-- Matching lessons keep their numbers from the **complete history**: results 2 and 4 stay numbered 2 and 4. Use these with `editlesson` or `deletelesson`, and check again after any lesson changes.
+- Matching lessons keep their numbers from the **complete history**: results 2 and 4 stay
+  numbered 2 and 4. `findlesson` does not take a lesson number. Use the returned numbers with
+  `editlesson` or `deletelesson`, and check again after any lesson changes.
 - The matches appear only in the result box. The details panel shows the student's **complete** history, and the student list is unchanged. The search is not remembered.
-- No matches gives `No matching lesson records found for NAME.`; no lessons gives `No lessons logged yet for NAME.`. Search content without `c/`: use `findlesson 1 algebra`. If a search using `c/` or `date/` finds no matches, TutorLah explains the supported format.
+- No matches gives `No matching lesson records found for NAME.`; no lessons gives
+  `No lessons logged yet for NAME.` Search content without `c/`: use `findlesson 1 algebra`.
+  If a search using `c/` or `date/` finds no matches, TutorLah explains the supported format.
 
 Examples:
 
@@ -261,7 +268,10 @@ Format: `deletelesson STUDENT_INDEX LESSON_INDEX`
 
 Deletes just that lesson. The student, their flag, other records and the current student list are kept. Even identical lessons are separate records; only the chosen one is removed. Remaining lessons are renumbered from 1. Removing the final lesson keeps the student with no lessons.
 
-Use exactly two positive whole numbers without leading zeros. Missing or extra values show the command format. Numbers such as `0`, `01` or an unavailable number give a student- or lesson-index error. With no lessons, the message is `No lessons logged yet for NAME.`. **Deletion cannot be undone in the app.**
+Use exactly two positive whole numbers without leading zeros. Missing or extra values show
+the command format. Numbers such as `0`, `01` or an unavailable number give a student- or
+lesson-index error. With no lessons, the message is `No lessons logged yet for NAME.`
+**Deletion cannot be undone in the app.**
 
 **Screenshots:** after the logging example, `view 1` shows Alex's four lessons; Trigonometry is lesson 2.
 
@@ -312,7 +322,8 @@ Format: `help`
 
 Shows a window with the User Guide link. Click **Copy URL** and paste it into your browser.
 
-![Help window with the User Guide link and Copy URL button](images/helpMessage.png)
+<a href="images/helpMessage.png"><img src="images/helpMessage.png"
+  alt="Help window with the User Guide link and Copy URL button" width="556"></a>
 
 #### Exiting the program: `exit`
 

@@ -16,16 +16,18 @@
 * This project is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org).
 * Libraries used: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for reading and writing JSON data files, and [JUnit 5](https://github.com/junit-team/junit5) for automated tests.
 * `FindCommand`, `FindCommandParser` and `StudentContainsKeywordsPredicate` are adapted from AB3's find feature (`NameContainsKeywordsPredicate`), changed from any-keyword, whole-word name search to all-keyword substring matching on names, subjects and levels, with student-specific feedback.
-* OpenAI Codex assisted with the implementation, tests and documentation for student-name search, deleting individual lesson records, Unicode blank-field validation, student follow-up flags and save-failure rollback, and with the Logic/parser diagrams and Developer Guide maintenance.
-* OpenAI Codex, used by zikiai, assisted with the implementation, tests, documentation and screenshots for student summaries and per-student lesson counts.
-* Anthropic Claude Code, used by aerodart, assisted with the implementation, tests and documentation for dated lesson records, logging lessons with a past date, editing lesson records and name, level and subject validation, and with the Developer Guide's architecture, common classes and lesson-logging sections.
-* Anthropic Claude Code, used by srivatsanj27, assisted with the implementation, tests and documentation for finding students by subject and level, handling null GUI settings, renaming `log` to `loglesson` and sharing test helpers, and with pull request reviews and Developer Guide updates.
-* The TutorLah logo (`tutorlah_icon.png`) was created using Google Gemini.
-* OpenAI Codex, used by zikiai, assisted with unreadable-file recovery, safe JSON replacement, their tests and documentation.
-* OpenAI Codex, used by cibichandar, assisted with the implementation, tests,
-  documentation and screenshots for searching lesson histories, and with Unicode
-  whitespace normalization in command-entered phone numbers and its regression tests.
 * The team's agent brief (`tutorlah-agent-brief.md`) and `AGENTS.md` were inspired by the `AGENTS.md` files of teams [CS2103T-T16-1](https://github.com/AY2627S1-CS2103T-T16-1/tp) and [CS2103T-T16-2](https://github.com/AY2627S1-CS2103T-T16-2/tp). The ideas were adapted and the text was written by our team.
+
+All five team members used AI assistance across all commits they authored, rather than
+only for selected features. Assistance included implementation, testing, debugging,
+diagrams, documentation, pull request reviews and repository maintenance, as applicable.
+
+* cibichandar used OpenAI Codex (GPT).
+* zikiai used OpenAI Codex (GPT).
+* fuhlie used OpenAI Codex (GPT).
+* aerodart used Anthropic Claude Code.
+* srivatsanj27 used Anthropic Claude Code.
+* The TutorLah logo (`tutorlah_icon.png`) was created by srivatsanj27 using Google Gemini.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -300,9 +302,23 @@ Failed commands skip these rules, so an error never changes the panel. A failed 
 
 ### Deleting an individual lesson record
 
-`DeleteLessonCommandParser` requires exactly two indexes. Both go through `ParserUtil#parseCommandIndex`, but student and lesson errors use their respective messages. `DeleteLessonCommand` obtains the student from `Model#getFilteredPersonList`, so the student index always refers to the list currently displayed after any search. It validates the student, the presence of lesson records and the lesson index before changing the Model.
+`DeleteLessonCommandParser` requires exactly two indexes and uses `ParserUtil`'s shared
+validation, with separate student- and lesson-index messages. `DeleteLessonCommand` obtains
+the student from `Model#getFilteredPersonList`, so the student index refers to the list
+currently displayed. It then calls `LessonCommandUtil#getStoredLessonIndex`, shared with
+`EditLessonCommand`, to reject an empty history or an unavailable lesson number before mutation.
 
-`view` numbers lessons newest first, whereas `Person#getLessons` stores them oldest first. `Person#withLessonAdded` inserts each lesson in date order, keeping same-date records in logging order. The command therefore converts a one-based displayed lesson number to a zero-based stored position using `lessons.size() - lessonIndex.getOneBased()`. An assertion protects this internal conversion after the user-supplied index has been validated. Removing by position deletes only the selected occurrence even when two lessons have identical content and dates.
+`view` numbers lessons newest first, whereas `Person#getLessons` stores them oldest first.
+The helper converts the displayed number using `lessons.size() - lessonIndex.getOneBased()`;
+its `toStoredLessonIndex` method asserts that this validated position is within the history.
+Undated records are stored before dated ones, so they appear last in `view`.
+
+**Design considerations: selecting a lesson occurrence**
+
+* **By position (current choice):** remove the selected stored position, so identical content
+  and dates do not make the target ambiguous.
+* **By equality:** removing the first equal lesson can remove a different occurrence from the
+  one selected in the newest-first display.
 
 `Person#withLessonRemoved` returns a new student with the selected record omitted
 and every student field and remaining lesson preserved. `Model#setPerson` replaces
@@ -313,7 +329,8 @@ and deleted content. `Messages#formatLessonDate` supplies the date, shown in par
 or `(undated)` for a legacy record. `LogicManager` persists the updated address book
 through the normal save path shown in the architecture sequence diagram.
 
-Deleting the final lesson therefore leaves the student present with an empty history. A later deletion attempt stops before mutation and reports `No lessons logged yet for NAME.`.
+Deleting the final lesson leaves the student with an empty history. A later deletion attempt
+stops before mutation and reports `No lessons logged yet for NAME.`
 
 ### Editing a student
 
@@ -392,7 +409,9 @@ It does not reinterpret keywords, change matching or replace empty-history and i
 
 `FindLessonCommand` reads the selected student's complete history from the filtered student
 list and iterates backwards. It derives each view number from the original stored position
-before collecting matches, so gaps remain and repeated content is not merged. The result
+before collecting matches, so gaps remain and repeated content is not merged. `findlesson`
+takes a student index, not a lesson index; its returned lesson numbers can be supplied to
+`editlesson` and `deletelesson`. A later lesson change can renumber them. The result
 identifies the student, so the UI shows their complete history in the details panel and
 highlights their card. No lesson filter, model update
 or storage field is introduced; `LogicManager` skips saving unchanged data.
@@ -988,10 +1007,11 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 3.  **Portable distribution:** TutorLah should be usable without an installer.
 4.  **Single-file distribution:** TutorLah should be packaged in one JAR file that does not exceed `100 MB`.
 5.  **Typing-first interaction:** A user with above-average typing speed for regular English text should be able to accomplish most tasks faster using commands than using the mouse.
-6.  **Performance:** With up to 1,000 students and 10,000 lesson records, each command should show its result within 2 seconds on a typical laptop.
+6.  **Performance target:** With up to 1,000 students and 10,000 lesson records, each command
+    should show its result within 2 seconds on a typical laptop. This is a target, not a
+    measured performance guarantee.
 7.  **Durability:** A change that TutorLah reports as successful should already be saved, so closing the app straight afterwards loses no data.
 8.  **Data integrity:** A failed command, including one whose changes cannot be saved, should leave the stored student and lesson records unchanged.
-
 9.  **Human-editable storage:** Data should be stored locally in human-editable JSON, without a database management system.
 10. **Offline operation:** Student and lesson management should work offline. Accessing the online User Guide requires an internet connection.
 11. **Screen support:** The GUI should work well at `1920x1080` and higher with 100% and 125% scaling, and remain usable at `1280x720` and higher with 150% scaling.
@@ -1000,13 +1020,13 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 ### Glossary
 
-* **Active student (proposed)**: A student available for normal operations under the future archiving feature. Archiving is not implemented yet.
-
-* **Archived student (proposed)**: A student hidden from the active list while their details and lesson records are retained.
-
 * **Data file**: The JSON file on the user's computer where TutorLah stores all student and lesson data.
 
+* **Details panel**: The right-hand area showing one student's details, flag and complete lesson history.
+
 * **Duplicate student**: A student with the same phone number and the same name, ignoring case, as an existing student.
+
+* **Filter**: A condition that selects which students appear in the list without deleting hidden students.
 
 * **Flag**: A persistent marker that a student needs follow-up, optionally including one reason.
 
@@ -1018,17 +1038,15 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 * **Lesson history**: All lesson records associated with a student.
 
-* **Lesson index**: The lesson number shown by `view`, starting at 1 with the most recent record. `deletelesson` uses this displayed number.
+* **Lesson index**: A student's newest-first history number, starting at 1. `view` shows every
+  number; `findlesson` returns the original numbers of matching records. `editlesson` and
+  `deletelesson` take these numbers as input. Lesson changes can renumber the history.
 
 * **Lesson record**: A record of what was covered in a completed lesson. New records have a lesson date; older undated records show `(undated)`.
 
 * **Level**: The student's stage of education, such as `Sec 3` or `JC1`.
 
-* **One-off lesson (proposed)**: A scheduled lesson outside a weekly slot.
-
-* **Rescheduling (proposed)**: Changing the date or time of a scheduled lesson.
-
-* **Scheduled lesson (proposed)**: A planned lesson that has not yet taken place, either in a weekly slot or as a one-off lesson.
+* **Prefix**: A field marker such as `n/` or `c/` that identifies the value following it in a command.
 
 * **Sec (secondary)**: Secondary school in Singapore, from `Sec 1` to `Sec 4` or `Sec 5`.
 
@@ -1042,13 +1060,12 @@ The stories marked `Yes` in the **MVP** column form the historical MVP scope. Th
 
 * **Tutor**: The freelance or private tutor who uses TutorLah to manage students and lessons.
 
-* **Weekly lesson slot (proposed)**: A fixed day and time reserved each week for a student's regular lesson.
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Appendix: Instructions for manual testing**
 
-Given below are instructions to test the app manually.
+Use Java `25`, fictional students and a separate test folder for each section unless its
+setup says otherwise.
 
 <box type="info" seamless>
 
@@ -1086,32 +1103,31 @@ Use a separate test folder with `data/addressbook.json` containing `{"persons": 
 
 ### Searching lesson histories
 
-Before launching, prepare an isolated test folder with `data/addressbook.json`
-containing `{"persons": []}`. Add Amy Tan and Ben Lim, then use `loglesson` to record `Algebra` for Amy
-on 02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` on
-05/01/2020. Amy is student 1 and Ben is student 2.
+Prepare an isolated folder with `data/addressbook.json` containing `{"persons": []}`.
+Add Amy Tan first and Ben Lim second, using fictional details. Log Amy's `Algebra` on
+02/01/2020, `Geometry` on 03/01/2020, `Algebra` on 04/01/2020 and `Vectors` on 05/01/2020.
+Amy is student 1; Ben is student 2 with no lessons.
 
-1. Enter `findlesson 1 algebra`. Expected: two matches numbered 2 and 4, newest first;
-   Amy is highlighted. `view 1` and a card click still show all four lessons.
-1. Enter `findlesson 1 from/02/01/2020 to/02/01/2020`. Expected: only lesson 4.
-   Repeat with just `from/04/01/2020`, just `to/03/01/2020`, and an upper boundary
-   of `31/12/9999`; endpoints are inclusive and future query limits are accepted.
-1. Enter `find amy`, then `findlesson 1 algebra`. Expected: the same matches and only
-   Amy remains in the student list. Repeat with a flagged Amy and `flagged`.
-1. Enter `editlesson 1 4 c/Algebra corrected`, then `deletelesson 1 2`. Expected:
-   the selected original records change; a new search shows one match, now numbered 3.
-   Restart and check the saved history.
-1. Enter `findlesson 1 missing`, then `list` and `findlesson 2 algebra`. Expected:
-   distinct no-match and no-lessons messages. Try missing criteria, reversed ranges,
-   invalid dates and repeated date prefixes; each reports an error without changing
-   data or the student filter.
-1. Enter `findlesson 1 from/02/01/2020 algebra`, then repeat with `to/04/01/2020`.
-   Expected: a message to put keywords before date prefixes, with a corrected example.
-   `findlesson 1 from/31/02/2020 algebra` still reports an invalid date.
-1. Repeat a content-only search with valid undated legacy records, then supply a date
-   boundary. Expected: undated matches appear only in the content-only search.
-   Check a long search result by resizing the result area and scrolling; another
-   command starts its feedback at the top.
+1. Enter `findlesson 1 algebra`. Expected: matches 2 and 4, newest first. Amy is highlighted;
+   `view 1`, a card click and the details panel still show all four records.
+1. Search with `from/02/01/2020 to/02/01/2020`: only lesson 4 matches. With only
+   `from/04/01/2020`, expect 1 and 2; with only `to/03/01/2020`, expect 3 and 4.
+   An upper boundary of `31/12/9999` includes all four; these queries use `findlesson 1`.
+1. Enter `find amy`, then repeat `findlesson 1 algebra`. Enter `flag 1`, `flagged` and repeat
+   the search. Expected: matches 2 and 4, with only Amy displayed and the filter unchanged.
+   Enter `editlesson 1 4 c/Algebra corrected`, then `deletelesson 1 2`: searching again gives
+   only `Algebra corrected`, numbered 3. Restart: both students reappear and Amy's edited
+   history remains.
+1. Enter `findlesson 1 missing`, then `findlesson 2 algebra`. Expected: respectively,
+   `No matching lesson records found for Amy Tan.` and `No lessons logged yet for Ben Lim.`
+   Try missing criteria, reversed ranges, an invalid date and repeated `from/` prefixes;
+   each gives the corresponding error without changing data or the student filter.
+   `findlesson 1 from/02/01/2020 algebra` gives the keyword-order hint and example;
+   replacing the date with `31/02/2020` gives the date error instead.
+1. Use the legacy-data setup in [Lesson dates and data saved by v1.3](#lesson-dates-and-data-saved-by-v1-3)
+   to prepare a record without a date. Search for its content, then add a date boundary.
+   Expected: the undated record matches only without a date boundary.
+   Resize and scroll a long result: all matches remain reachable and new feedback starts at the top.
 
 ### Adding students
 
@@ -1253,32 +1269,26 @@ loglesson 1 c/Algebra date/20/10/2026
 loglesson 2 c/Calculus date/20/10/2026
 ```
 
-1. Enter `view 1`.<br>
-   Expected: Amy's records appear as `1. 20/10/2026: Algebra`,
-   `2. 19/10/2026: Geometry`, `3. 18/10/2026: Algebra`.
-1. Enter `deletelesson 1 1`, then `view 1`.<br>
-   Expected: `Deleted lesson 1 for Amy Tan (20/10/2026): Algebra`, followed by
-   Geometry as lesson 1 and the older Algebra as lesson 2. Only the newest duplicate
-   was removed, and the confirmation identifies its date.
-1. Enter `deletelesson 1 2`, then `view 1`.<br>
-   Expected: `Deleted lesson 2 for Amy Tan (18/10/2026): Algebra`, then only Geometry
-   remains. Amy's details and Ben's Calculus record are unchanged.
-1. Try `deletelesson 1 0`, `deletelesson 1 01`, `deletelesson 1 2`, `deletelesson 0 1`, `deletelesson`, `deletelesson 1` and `deletelesson 1 1 extra`.<br>
-   Expected: the relevant lesson-index, student-index or usage error appears. Amy's remaining Geometry record is unchanged after every rejected command.
-1. Exit and restart, enter `view 1`, then `deletelesson 1 1` and `view 1`.<br>
-   Expected: Geometry survived the restart, its deletion succeeds, and Amy remains present with `No lessons logged yet for Amy Tan.`. Restart again to confirm the empty history was saved.
-1. Enter `deletelesson 1 1` while Amy's history is empty.<br>
-   Expected: `No lessons logged yet for Amy Tan.`, with both students and saved data unchanged.
-1. Enter `find ben`, then `deletelesson 1 1` and `view 1`.<br>
-   Expected: `Deleted lesson 1 for Ben Lim (20/10/2026): Calculus`, while only Ben's
-   card remains displayed. The view reports `No lessons logged yet for Ben Lim.`.
-   Enter `list` to confirm both students remain; deletion retained the filter and
-   no unrelated student changed.
+1. Enter `view 1`: expect Algebra (20/10/2026), Geometry (19/10/2026), then Algebra
+   (18/10/2026), numbered 1 to 3. Enter `deletelesson 1 1`: expect
+   `Deleted lesson 1 for Amy Tan (20/10/2026): Algebra`. `view 1` shows Geometry as 1
+   and the older Algebra as 2; only the selected occurrence was removed.
+1. Enter `deletelesson 1 2`: expect `Deleted lesson 2 for Amy Tan (18/10/2026): Algebra`.
+   Only Geometry remains; Amy's details and Ben's Calculus record are unchanged.
+   Try `deletelesson 1 0`, `deletelesson 1 01`, `deletelesson 1 2`, `deletelesson 0 1`
+   and `deletelesson 1`: expect lesson-index errors for the first three, a student-index
+   error for the fourth and usage for the last, with no mutation.
+1. Restart, then enter `view 1`, `deletelesson 1 1` and `view 1`. Expected: Geometry survived
+   the restart; deleting it leaves Amy with `No lessons logged yet for Amy Tan.`
+   Restart again and try `deletelesson 1 1`: the same empty-history message appears,
+   with both students and saved data unchanged.
+1. Enter `find ben`, `deletelesson 1 1` and `view 1`. Expected:
+   `Deleted lesson 1 for Ben Lim (20/10/2026): Calculus`, then
+   `No lessons logged yet for Ben Lim.` Only Ben remains displayed. Enter `list`:
+   both students remain, with no lessons, and their other details are unchanged.
 
 For a legacy record without a date, the confirmation uses `(undated)` once, for
 example `Deleted lesson 1 for Amy Tan (undated): Algebra`.
-
-Automated coverage is in `DeleteLessonCommandParserTest`, `DeleteLessonCommandTest`, `PersonTest`, `LessonPersistenceTest`, `AddressBookParserTest` and the command-box deletion case in `PersonListPanelTest`. `FindCommandIntegrationTest` checks typed search followed by lesson deletion, retaining the filter and saving all students. Persistence tests use temporary directories.
 
 ### Editing lesson records
 
