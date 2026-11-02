@@ -12,9 +12,9 @@ TutorLah helps freelance tutors in Singapore keep student details and lesson not
 
 ## Quick start
 
-1. Install Java **25 or later**. Mac users should follow the [Mac installation instructions](https://se-education.org/guides/tutorials/javaInstallationMac.html).
-1. Download `TutorLah.jar` from the [latest release](https://github.com/AY2627S1-CS2103T-T11-1/tp/releases) and place it in a folder of your choice.
-1. Open a terminal, change to that folder with `cd`, and run `java -jar TutorLah.jar`. Start TutorLah from this same folder each time so it finds your saved students.
+1. Install Java **25**. To check, open a terminal and run `java -version`. The first line should show version 25. Mac users should follow the [Mac installation instructions](https://se-education.org/guides/tutorials/javaInstallationMac.html).
+1. Download `TutorLah.jar` from the [latest release](https://github.com/AY2627S1-CS2103T-T11-1/tp/releases) and place it in an empty folder where you can create files, not a write-protected folder. TutorLah saves your students in this folder.
+1. Open a terminal, change to that folder with `cd`, and run `java -jar "TutorLah.jar"`. Double-clicking the JAR file may not start TutorLah correctly on some computers, so use this command. Start TutorLah from this same folder each time so it finds your saved students.
 1. Type a command in the top box and press **Enter**. Your first launch includes sample students to try these commands:
 
    | Command | What it does |
@@ -29,12 +29,14 @@ The screenshot below uses fictional data after `view 1`; your sample students ma
 
 <a href="images/Ui.png"><img src="images/Ui.png" alt="Alex Tan highlighted in the student list, with his details and three dated lesson records in the details panel after view 1" width="726"></a>
 
-The window has four areas:
+Below the menu bar (**File** and **Help**), the window has four areas:
 
 - **Command box** (top): type a command here. It clears after success; a failed command stays for correction.
 - **Result box** (below it): shows what happened. Errors appear in red.
 - **Student list** (left): shows each student's number, name, level, subject and lesson count. A red flag marks someone needing follow-up.
 - **Details panel** (right): shows one student's contact details, flag reason and numbered lesson records.
+
+The status bar at the bottom shows where your students are saved, for example `./data/addressbook.json`.
 
 Choose a task below, or use the [command summary](#command-summary) for a quick reference.
 
@@ -251,7 +253,7 @@ Format: `editlesson STUDENT_INDEX LESSON_INDEX [c/CONTENT] [date/DATE]`
 
 Give content, a date, or both, using the same limits as `loglesson`. The student, other lessons, flags and current student list are kept.
 
-- Omitted fields keep their values. Give at least one field; unchanged content and date gives `The lesson already has those details.`.
+- Omitted fields keep their values. Give at least one field; unchanged content and date gives `The lesson already has those details.`
 - A content-only edit keeps the lesson number. Changing its date moves it into date order and **may change its number**. The confirmation gives the new number; on a shared date, the moved lesson appears first among that date's records.
 - An undated lesson stays undated unless you supply a date. You cannot remove a date from a dated lesson.
 
@@ -287,7 +289,7 @@ Format: `flag INDEX [r/REASON]`
 
 Marks a student needing follow-up. Their card and details show a red flag; the details panel shows the reason or `Flagged (no reason given)`.
 
-- A reason is optional. If given, use 1–100 characters after removing surrounding spaces; it cannot be blank, only invisible characters, or contain control characters such as tabs.
+- A reason is optional. If given, use 1–100 characters after removing surrounding spaces; it cannot be blank or contain only invisible characters. Pasted tabs and line breaks become spaces in the command box; other control characters cannot be part of a reason.
 - Only `r/` is recognised as a field, so reasons can contain text such as `a/level`, `date/` or `c/homework`.
 - Flagging again with a different reason replaces the reason. The same reason gives an already-flagged message. Omitting `r/` keeps an existing reason and reports that the student is already flagged.
 - Flags are saved and kept when you edit student details or change lessons.
@@ -302,13 +304,15 @@ Format: `unflag INDEX`
 
 Removes the flag and reason. If the student is not flagged, TutorLah says so. Both `flag` and `unflag` use the current displayed number and open the student on the right.
 
+Example: `unflag 2` removes student 2's flag and its reason.
+
 #### Listing flagged students: `flagged`
 
 Format: `flagged`
 
 Shows all flagged students, replacing any previous student search. Results keep their original order and are numbered from 1; use those displayed numbers in other commands. If none are flagged, TutorLah suggests `list`.
 
-After `unflag` in this list, the student disappears from the list but stays open on the right. Use `list` to show everyone. Extra text is rejected, and the flagged-only view is not kept after restarting.
+Example: enter `flagged`, then `unflag 1` to resolve the first displayed student's follow-up. The student leaves the flagged-only list but stays open on the right without a flag. Use `list` to show everyone. Extra text is rejected, and the flagged-only view is not kept after restarting.
 
 ### Help and exit
 
@@ -386,7 +390,8 @@ If saving fails, follow [If saving fails](#if-saving-fails). After a forced shut
 
 ## Known issues
 
-If the Help window is minimised, running `help`, choosing Help from the menu or pressing F1 does not restore it. Restore the existing window manually.
+- **Minimized Help window:** if the Help window is minimized, running `help`, choosing Help from the menu or pressing F1 does not restore it. Restore the existing window manually.
+- **Fullscreen on macOS:** if TutorLah is in fullscreen mode, the Help window opens in its own fullscreen space instead of over TutorLah. Pressing F1 again does not bring it back, and it keeps opening in fullscreen even after TutorLah leaves fullscreen mode. The Help window only links to this User Guide, so use this guide directly instead.
 
 ## Command summary
 
