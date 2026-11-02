@@ -81,7 +81,7 @@ Each of the four main components (also shown in the diagram above),
 
 For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram. For example, `UiManager` holds a `Logic`, not a `LogicManager`, and `LogicManager` holds a `Model` and a `Storage`.
 
-<puml src="diagrams/ComponentManagers.puml" width="300" alt="Partial class diagram showing the Ui, Logic, Model and Storage interfaces, the Manager class that implements each, and the references between them" />
+<puml src="diagrams/ComponentManagers.puml" width="540" alt="Partial class diagram showing the Ui, Logic, Model and Storage interfaces, the Manager class that implements each, and the references between them" />
 
 The sections below give more details of each component.
 

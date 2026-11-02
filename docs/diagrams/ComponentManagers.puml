@@ -25,10 +25,10 @@ Class StorageManager STORAGE_COLOR
 
 UiManager .up.|> Ui
 LogicManager .up.|> Logic
-ModelManager .up.|> Model
-StorageManager .up.|> Storage
+ModelManager .right.|> Model
+StorageManager .left.|> Storage
 
-UiManager --> "1" Logic
+UiManager -right-> "1" Logic
 LogicManager --> "1" Model
 LogicManager --> "1" Storage
 @enduml
