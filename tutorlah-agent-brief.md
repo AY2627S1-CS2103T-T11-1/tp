@@ -431,7 +431,8 @@ These are mismatches with this brief. Fix them only if your task covers
 them.
 
 No known mismatches recorded. `docs/images/Ui.png` shows the current TutorLah
-GUI with `view 1` and fictional student and lesson details (issue #93).
+GUI after `findlesson 1 quadratic`, with fictional student and lesson details
+(issue #258).
 
 ---
 

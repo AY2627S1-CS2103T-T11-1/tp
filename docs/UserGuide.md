@@ -25,9 +25,9 @@ TutorLah helps freelance tutors in Singapore keep student details and lesson not
    | `find tan` | Shows students whose names contain `tan`. Use `list` to return to everyone. |
    | `summary` | Shows your total students and lesson records. |
 
-The screenshot below uses fictional data after `view 1`; your sample students may differ.
+The screenshot below uses fictional lessons and flags after `findlesson 1 quadratic`. On first launch, the sample students have neither.
 
-<a href="images/Ui.png"><img src="images/Ui.png" alt="Alex Tan highlighted in the student list, with his details and three dated lesson records in the details panel after view 1" width="726"></a>
+<a href="images/Ui.png"><img src="images/Ui.png" alt="Alex Tan, flagged, highlighted in the student list, with matching lessons 2 and 5 in the result box and his flag reason and six dated lesson records in the details panel after findlesson 1 quadratic" width="726"></a>
 
 Below the menu bar (**File** and **Help**), the window has four areas:
 
@@ -213,7 +213,7 @@ Opens the student's details and complete lesson history on the right, and lists 
 
 ##### The details panel
 
-Commands that view or change one student open their latest details automatically. Other commands keep that student open while they remain in the displayed list. Filtering them out or deleting them clears the panel; failed commands keep it unchanged. After `unflag` in a flagged-only list, the unflagged student leaves the list but stays open so you can see the change.
+`view`, `findlesson`, `loglesson`, `edit`, `editlesson`, `deletelesson`, `flag` and `unflag` open the student they act on, with their latest details. Other commands, including `add`, keep the current student open while they remain in the displayed list. Filtering them out or deleting them clears the panel; failed commands keep it unchanged. After `unflag` in a flagged-only list, the unflagged student leaves the list but stays open so you can see the change.
 
 At startup, nobody is selected. The panel suggests `view 1`, `list` or an `add` command according to whether students are visible, hidden by a search, or absent.
 
@@ -364,7 +364,7 @@ TutorLah shows a warning with the file's location and a short reason, then opens
 
 ### Advanced: editing the saved file
 
-<panel header="Optional file-editing details" collapsed>
+<panel header="Optional file-editing details" expanded>
 
 Use the commands above for normal updates. If you edit `data/addressbook.json` directly, close TutorLah and make a backup first. The file uses **JSON**, a text format with named fields and brackets. Keep it as UTF-8 text without a byte-order mark (BOM), which some editors add at the beginning.
 

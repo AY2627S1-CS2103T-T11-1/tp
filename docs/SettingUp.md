@@ -59,7 +59,7 @@ If the build reports `invalid source release: 25`, check the Gradle JVM and term
 
 1. **Learn the design**
 
-   When you are ready to start coding, we recommend that you get some sense of the overall design by reading about [AddressBook’s architecture](DeveloperGuide.md#architecture).
+   When you are ready to start coding, we recommend that you get some sense of the overall design by reading about [TutorLah's architecture](DeveloperGuide.md#architecture).
 
 1. **Do the tutorials**
    These tutorials will help you get acquainted with the codebase.
