@@ -105,8 +105,8 @@ Main-window guide screenshots use a 1488 x 846 pixel canvas and a 726 pixel
 display width. `Ui.png` keeps that display width but is taller, so that six
 students and a full lesson history fit. The help dialog links to the User
 Guide with a Copy URL button, without individual command hints, and keeps its
-natural proportions. Captures show
-the application window with its title bar, without mouse or assistant overlays.
+natural proportions. Captures show the application window with its title bar,
+without mouse or assistant overlays.
 
 Addresses and lesson content cannot consist only of Unicode whitespace or
 formatting characters, such as non-breaking spaces and zero-width spaces.
